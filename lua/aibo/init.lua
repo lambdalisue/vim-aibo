@@ -13,7 +13,7 @@ local defaults = {
 }
 
 ---@type AiboConfig
-local config = vim.deepcopy(defaults)
+local config = nil
 
 -- Track if setup has been called
 local setup_called = false
@@ -27,6 +27,12 @@ function M.setup(opts)
 	end
 	setup_called = true
 
+	-- Check Neovim version
+	if vim.fn.has("nvim-0.10.0") ~= 1 then
+		vim.api.nvim_err_writeln("vim-aibo requires Neovim 0.10.0 or later")
+		return
+	end
+
 	opts = opts or {}
 	config = vim.tbl_deep_extend("force", defaults, opts)
 
@@ -34,11 +40,37 @@ function M.setup(opts)
 	if type(config.submit_key) == "string" then
 		config.submit_key = vim.api.nvim_replace_termcodes(config.submit_key, true, false, true)
 	end
+
+	-- Setup autocommands
+	local augroup = vim.api.nvim_create_augroup("aibo_plugin", { clear = true })
+	vim.api.nvim_create_autocmd("BufReadCmd", {
+		group = augroup,
+		pattern = "aiboprompt://*",
+		nested = true,
+		callback = function()
+			local bufnr = vim.fn.expand("<abuf>")
+			require("aibo.internal.prompt").init(tonumber(bufnr))
+		end,
+	})
+
+	-- Create user command
+	vim.api.nvim_create_user_command("Aibo", function(cmd_opts)
+		local args = vim.split(cmd_opts.args, "%s+")
+		local cmd = table.remove(args, 1)
+		require("aibo.internal.console").open(cmd, args)
+	end, {
+		nargs = "+",
+		desc = "Open Aibo console with specified command",
+	})
 end
 
 ---Get the configuration
 ---@return AiboConfig Current configuration
 function M.get_config()
+	if not setup_called then
+		vim.notify("Aibo setup() must be called before using the plugin", vim.log.levels.ERROR, { title = "Aibo" })
+		return defaults
+	end
 	return config
 end
 
@@ -52,6 +84,10 @@ end
 ---@param bufnr? integer Buffer number
 ---@return AiboInstance|nil Aibo instance or nil if not found
 local function get_aibo(bufnr)
+	if not setup_called then
+		vim.notify("Aibo setup() must be called before using the plugin", vim.log.levels.ERROR, { title = "Aibo" })
+		return nil
+	end
 	bufnr = bufnr or vim.api.nvim_get_current_buf()
 	local aibo = vim.b[bufnr].aibo
 	if not aibo then
