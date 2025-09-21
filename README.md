@@ -65,7 +65,7 @@ Start an AI session:
 
 This opens a terminal console running the AI agent with a prompt buffer below.
 
-Type in the prompt buffer and press `<CR>` in normal mode to submit. The prompt clears automatically for the next message.
+Type in the prompt buffer and press `<CR>` in normal mode to submit. The prompt clears automatically for the next message. You can also use `<C-Enter>` or `<F5>` to submit even while in insert mode, which is particularly useful for continuous typing.
 
 To close the session, use `:bdelete!` or `:bwipeout!` on the console buffer.
 
