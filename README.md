@@ -19,7 +19,7 @@ Aibo (from Japanese "companion") provides seamless integration with AI assistant
 - Works with any CLI-based AI tool
 - Split-window interface with console and prompt buffers
 - Customizable key mappings and behaviors
-- Agent-specific configurations via ftplugin
+- Agent-specific configurations via setup()
 
 ## Requirements
 
@@ -71,11 +71,75 @@ To close the session, use `:bdelete!` or `:bwipeout!` on the console buffer.
 
 ## Configuration
 
+### Basic Setup
+
 ```lua
 require('aibo').setup({
-  submit_key = '<CR>',        -- Key to submit input
-  submit_delay = 100,         -- Delay in milliseconds
-  prompt_height = 10,         -- Prompt window height
+  submit_delay = 100,         -- Delay in milliseconds (default: 100)
+  prompt_height = 10,         -- Prompt window height (default: 10)
+})
+```
+
+### Advanced Configuration
+
+```lua
+require('aibo').setup({
+  -- Prompt buffer configuration
+  prompt = {
+    keymaps = {
+      submit = "<CR>",                          -- Single key
+      submit_close = { "<C-Enter>", "<F5>" },   -- Multiple keys
+      interrupt = "<C-c>",
+      clear = "<C-l>",
+      next = "<C-n>",
+      prev = "<C-p>",
+      down = "<Down>",
+      up = "<Up>",
+    },
+    buffer_options = {
+      textwidth = 80,
+      expandtab = true,
+    },
+    window_options = {
+      number = false,
+      signcolumn = "no",
+    },
+  },
+
+  -- Console buffer configuration
+  console = {
+    keymaps = {
+      -- Similar structure as prompt
+    },
+  },
+
+  -- Agent-specific overrides
+  agents = {
+    claude = {
+      -- Claude-specific configuration
+      on_attach = function(bufnr, info)
+        -- Custom setup for Claude buffers
+      end,
+    },
+    codex = {
+      -- Codex-specific configuration
+    },
+  },
+})
+```
+
+### Keymap Arrays
+
+You can define multiple keys for the same action:
+
+```lua
+require('aibo').setup({
+  prompt = {
+    keymaps = {
+      submit = { "<CR>", "<C-Enter>", "<F5>" },  -- All three keys will submit
+      interrupt = { "<C-c>", "<Esc><Esc>" },     -- Either key will interrupt
+    }
+  }
 })
 ```
 
@@ -124,48 +188,111 @@ Plus all console buffer mappings.
 
 ## Customization
 
-### Custom Mappings
+### Using Action Functions
+
+Action functions are exposed for custom keymaps and scripting:
 
 ```lua
--- ~/.config/nvim/after/ftplugin/aibo-prompt.lua
-vim.keymap.set('n', '<C-j>', '<Plug>(aibo-submit)', { buffer = true })
-vim.keymap.set('n', '<C-k>', '<Plug>(aibo-submit-close)', { buffer = true })
+-- In your configuration or on_attach callback
+local actions = require('aibo').actions.prompt(bufnr)
+vim.keymap.set('n', '<C-j>', actions.submit, { buffer = bufnr })
+vim.keymap.set('n', '<C-k>', actions.submit_close, { buffer = bufnr })
 ```
 
-### Agent Configuration
+### Agent-Specific Setup
+
+Configure agent-specific behavior through setup:
 
 ```lua
--- ~/.config/nvim/after/ftplugin/aibo-agent-claude.lua
-vim.keymap.set('n', '<leader>m', '<Plug>(aibo-claude-mode)', { buffer = true })
+require('aibo').setup({
+  agents = {
+    claude = {
+      keymaps = {
+        -- Override default keymaps for Claude
+        submit = { "<CR>", "<S-Enter>" },
+      },
+      on_attach = function(bufnr, info)
+        -- Claude-specific setup
+        local claude = require('aibo').actions.claude(bufnr)
+        vim.keymap.set('n', '<leader>m', claude.mode, { buffer = bufnr })
+      end,
+    },
+  },
+})
 ```
 
 ### Adding New Agents
 
-Create a ftplugin file for your agent:
+Define custom agents with their own configuration:
 
 ```lua
--- ~/.config/nvim/after/ftplugin/aibo-agent-myai.lua
-vim.keymap.set('n', '<C-g>', function()
-  require('aibo').send('\007')
-end, { buffer = true })
+require('aibo').setup({
+  agents = {
+    myai = {
+      keymaps = {
+        submit = "<Tab>",
+      },
+      buffer_options = {
+        textwidth = 100,
+      },
+      on_attach = function(bufnr, info)
+        vim.keymap.set('n', '<C-g>', function()
+          require('aibo').send('\007', bufnr)
+        end, { buffer = bufnr })
+      end,
+    },
+  },
+})
 ```
 
 ## API
 
+### Core Functions
+
 ```lua
 local aibo = require('aibo')
 
--- Configure
-aibo.setup({ submit_delay = 150 })
+-- Configure the plugin (call once)
+aibo.setup({
+  submit_delay = 150,
+  -- ... other configuration
+})
 
--- Send raw data
-aibo.send('Hello\n')
+-- Send raw data to terminal
+aibo.send('Hello\n', bufnr)
 
--- Submit with return key
-aibo.submit('What is Neovim?')
+-- Submit with automatic return key
+aibo.submit('What is Neovim?', bufnr)
 
--- Get configuration
+-- Get current configuration
 local config = aibo.get_config()
+
+-- Get buffer-specific configuration
+local prompt_cfg = aibo.get_buffer_config("prompt", "claude")
+```
+
+### Action Functions
+
+```lua
+-- Access action functions directly
+local actions = require('aibo').actions
+
+-- Get prompt buffer actions
+local prompt_actions = actions.prompt(bufnr)
+prompt_actions.submit()      -- Submit content
+prompt_actions.interrupt()   -- Send Ctrl-C
+prompt_actions.clear()        -- Clear terminal
+
+-- Get Claude-specific actions
+local claude_actions = actions.claude(bufnr)
+claude_actions.mode()         -- Toggle mode
+claude_actions.verbose()      -- Toggle verbose
+claude_actions.todo()         -- Show todo
+
+-- Get Codex-specific actions
+local codex_actions = actions.codex(bufnr)
+codex_actions.transcript()    -- Show transcript
+codex_actions.quit()          -- Quit
 ```
 
 ## License
