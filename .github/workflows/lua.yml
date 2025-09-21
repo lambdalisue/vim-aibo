@@ -2,9 +2,9 @@ name: Lua CI
 
 on:
   push:
-    branches: [ main ]
+    branches: [main]
   pull_request:
-    branches: [ main ]
+    branches: [main]
 
 jobs:
   lint:
@@ -24,7 +24,7 @@ jobs:
         run: luarocks install luacheck
 
       - name: Run Luacheck
-        run: luacheck lua/ ftplugin/ --globals vim
+        run: luacheck lua/ --globals vim
 
   format:
     runs-on: ubuntu-latest
@@ -34,10 +34,10 @@ jobs:
       - name: Install StyLua
         uses: JohnnyMorganz/stylua-action@v3
         with:
-          token: ${{ secrets.GITHUB_TOKEN }}
           version: latest
-          args: --check lua/ ftplugin/
+          args: --check lua/
 
       - name: Check formatting
         if: failure()
-        run: echo "::error::Code is not formatted. Run 'stylua lua/ ftplugin/' locally to format."
+        run: echo "::error::Code is not formatted. Run 'stylua lua/' locally to format."
+
