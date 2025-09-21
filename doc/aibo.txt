@@ -42,7 +42,7 @@ Key features:
 =============================================================================
 REQUIREMENTS					*aibo-requirements*
 
-- Neovim 0.8+ (for Lua implementation)
+- Neovim 0.10.0+ (required for full Lua implementation)
 - AI agent executable (e.g., claude, chatgpt, copilot CLI tools)
 
 =============================================================================
@@ -108,9 +108,8 @@ Example: Adding support for a custom AI agent
 		require('aibo').send('\007')
 	end, { buffer = true })
 
-	-- Set agent-specific options
-	vim.b.aibo_submit_key = '\n'
-	vim.b.aibo_submit_delay = 200
+	-- Agent-specific settings can be configured per-buffer
+	-- if needed in custom ftplugin files
 <
 The agent-specific filetype is applied to both console and prompt buffers,
 allowing consistent customization across the entire AI session.
@@ -157,8 +156,25 @@ COMMANDS					*aibo-commands*
 -----------------------------------------------------------------------------
 FUNCTIONS					*aibo-functions*
 
-						*aibo#send()*
-aibo#send({data} [, {bufnr}])
+						*aibo.setup()*
+require('aibo').setup({opts})
+	Configure the aibo plugin with custom options.
+
+	{opts}		Table of configuration options:
+			- submit_key: Key to submit input (default: '<CR>')
+			- submit_delay: Delay in ms (default: 100)
+			- prompt_height: Height of prompt window (default: 10)
+
+	Example:
+>
+		require('aibo').setup({
+		  submit_key = '<CR>',
+		  submit_delay = 100,
+		  prompt_height = 10,
+		})
+<
+						*aibo.send()*
+require('aibo').send({data} [, {bufnr}])
 	Send raw data to the AI agent's terminal. This sends data directly
 	without any processing.
 
@@ -167,45 +183,59 @@ aibo#send({data} [, {bufnr}])
 
 	Example:
 >
-		:call aibo#send("Hello AI\n")
+		require('aibo').send("Hello AI\n")
 <
-						*aibo#submit()*
-aibo#submit({data} [, {bufnr}])
+						*aibo.submit()*
+require('aibo').submit({data} [, {bufnr}])
 	Submit data to the AI agent with the configured submit key. This is
 	equivalent to sending the data followed by the submit key after a
-	small delay. The submit key and delay are configured via
-	|g:aibo#submit_key| and |g:aibo#submit_delay|.
+	small delay.
 
 	{data}		String data to submit
 	{bufnr}		Buffer number (default: current buffer)
 
 	Example:
 >
-		:call aibo#submit("What is Neovim?")
+		require('aibo').submit("What is Neovim?")
+<
+						*aibo.get_config()*
+require('aibo').get_config()
+	Get the current configuration table.
+
+	Returns:
+		Table containing current configuration
+
+	Example:
+>
+		local config = require('aibo').get_config()
+		print(config.submit_delay)
 <
 -----------------------------------------------------------------------------
-VARIABLES					*aibo-variables*
+CONFIGURATION					*aibo-configuration*
 
-						*g:aibo#submit_key*
-g:aibo#submit_key
-	The key sequence to send for submission. This is sent after the
-	user's input to trigger the AI agent's response.
-	Default: "\r" (carriage return)
+The plugin is configured using the setup() function with a Lua table.
+Configuration should be done in your Neovim configuration file.
 
-	Example:
+Configuration options:
+
+	submit_key		The key sequence to send for submission.
+				Default: '<CR>' (carriage return)
+
+	submit_delay		Delay in milliseconds between sending data
+				and the submit key.
+				Default: 100
+
+	prompt_height		Height of the prompt window in lines.
+				Default: 10
+
+Example configuration:
 >
-		let g:aibo#submit_key = "\n"
-<
-						*g:aibo#submit_delay*
-g:aibo#submit_delay
-	Delay in milliseconds between sending data and the submit key.
-	This helps AI agents distinguish between newlines in content and
-	the submission signal.
-	Default: 100
-
-	Example:
->
-		let g:aibo#submit_delay = 200
+	-- In your init.lua or lazy.nvim spec
+	require('aibo').setup({
+	  submit_key = '<CR>',
+	  submit_delay = 150,
+	  prompt_height = 12,
+	})
 <
 -----------------------------------------------------------------------------
 KEY MAPPINGS					*aibo-key-mappings*
@@ -325,8 +355,9 @@ A: Create your own mappings in your init.lua or ftplugin files:
 	vim.keymap.set('n', '<C-k>', '<Plug>(aibo-submit-close)', { buffer = true })
 <
 Q: Why does my AI agent not respond to submissions?
-A: Try adjusting |g:aibo#submit_delay| or |g:aibo#submit_key| to match
-   your AI agent's expectations. Some agents may need "\n" instead of "\r".
+A: Try adjusting the submit_delay or submit_key options in setup() to match
+   your AI agent's expectations. Some agents may need a longer delay or
+   different submit key.
 
 Q: Can I change the prompt buffer position?
 A: The plugin currently opens the prompt below the console. For different
