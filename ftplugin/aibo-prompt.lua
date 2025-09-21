@@ -10,14 +10,18 @@ vim.opt_local.signcolumn = "no"
 
 vim.keymap.set("n", "<CR>", "<Plug>(aibo-submit)", { buffer = true })
 vim.keymap.set("n", "<Esc>", "<Plug>(aibo-esc)", { buffer = true })
-vim.keymap.set("i", "<C-Enter>", "<C-\\><C-o><Plug>(aibo-submit-close)", { buffer = true })
+-- Use <Esc> instead of <C-\><C-o> for submit-close to ensure :wq works properly
+-- <C-\><C-o> only executes one normal command then returns to insert mode,
+-- which prevents the quit part of :wq from completing
+vim.keymap.set("i", "<C-Enter>", "<Esc><Plug>(aibo-submit-close)", { buffer = true })
 vim.keymap.set("n", "<C-Enter>", "<Plug>(aibo-submit-close)", { buffer = true })
 vim.keymap.set("i", "<C-S-Enter>", "<C-\\><C-o><Plug>(aibo-submit)", { buffer = true })
 vim.keymap.set("n", "<C-S-Enter>", "<Plug>(aibo-submit)", { buffer = true })
 
 -- F5 key mappings (alternative submit keys)
 vim.keymap.set("n", "<F5>", "<Plug>(aibo-submit-close)", { buffer = true })
-vim.keymap.set("i", "<F5>", "<C-\\><C-o><Plug>(aibo-submit-close)", { buffer = true })
+-- Use <Esc> for same reason as above - ensures :wq completes properly
+vim.keymap.set("i", "<F5>", "<Esc><Plug>(aibo-submit-close)", { buffer = true })
 vim.keymap.set("n", "<C-F5>", "<Plug>(aibo-submit)", { buffer = true })
 vim.keymap.set("i", "<C-F5>", "<C-\\><C-o><Plug>(aibo-submit)", { buffer = true })
 
