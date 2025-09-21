@@ -58,7 +58,8 @@ Start an AI session:
 
 ```vim
 :Aibo claude
-:Aibo chatgpt
+:Aibo claude --continue
+:Aibo codex
 :Aibo ollama run llama3
 ```
 
