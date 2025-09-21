@@ -1,4 +1,4 @@
-# 🦾 vim-aibo
+# 🦾 nvim-aibo
 
 [![Neovim](https://img.shields.io/badge/Neovim-0.10.0+-blueviolet.svg?style=flat-square&logo=Neovim&logoColor=white)](https://neovim.io/)
 [![Lua](https://img.shields.io/badge/Lua-5.1+-blue.svg?style=flat-square&logo=lua)](https://www.lua.org/)
@@ -34,7 +34,7 @@ Use your preferred plugin manager.
 
 ```lua
 {
-  'lambdalisue/vim-aibo',
+  'lambdalisue/nvim-aibo',
   config = function()
     require('aibo').setup()
   end,
@@ -45,7 +45,7 @@ Use your preferred plugin manager.
 
 ```lua
 use {
-  'lambdalisue/vim-aibo',
+  'lambdalisue/nvim-aibo',
   config = function()
     require('aibo').setup()
   end,

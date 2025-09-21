@@ -29,7 +29,7 @@ function M.setup(opts)
 
 	-- Check Neovim version
 	if vim.fn.has("nvim-0.10.0") ~= 1 then
-		vim.api.nvim_err_writeln("vim-aibo requires Neovim 0.10.0 or later")
+		vim.api.nvim_err_writeln("nvim-aibo requires Neovim 0.10.0 or later")
 		return
 	end
 
