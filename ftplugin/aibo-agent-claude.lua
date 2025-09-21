@@ -13,26 +13,52 @@ vim.keymap.set('', '<Plug>(aibo-claude-undo)', function() aibo.send('\031') end,
 vim.keymap.set('', '<Plug>(aibo-claude-suspend)', function() aibo.send('\026') end, { buffer = true, silent = true })
 vim.keymap.set('', '<Plug>(aibo-claude-paste)', function() aibo.send('\022') end, { buffer = true, silent = true })
 
--- Key mappings
-vim.keymap.set('', '<S-Tab>', '<Plug>(aibo-claude-mode)', { buffer = true })
-vim.keymap.set('', '<F2>', '<Plug>(aibo-claude-mode)', { buffer = true })
-vim.keymap.set('', '<C-o>', '<Plug>(aibo-claude-verbose)', { buffer = true })
-vim.keymap.set('', '<C-t>', '<Plug>(aibo-claude-todo)', { buffer = true })
-vim.keymap.set('', '<C-_>', '<Plug>(aibo-claude-undo)', { buffer = true })
-vim.keymap.set('', '<C-->', '<Plug>(aibo-claude-undo)', { buffer = true })
-vim.keymap.set('', '<C-z>', '<Plug>(aibo-claude-suspend)', { buffer = true })
-vim.keymap.set('', '<C-v>', '<Plug>(aibo-claude-paste)', { buffer = true })
+-- Key mappings for normal and visual modes
+vim.keymap.set({'n', 'v'}, '<S-Tab>', '<Plug>(aibo-claude-mode)', { buffer = true })
+vim.keymap.set({'n', 'v'}, '<F2>', '<Plug>(aibo-claude-mode)', { buffer = true })
+vim.keymap.set({'n', 'v'}, '<C-o>', '<Plug>(aibo-claude-verbose)', { buffer = true })
+vim.keymap.set({'n', 'v'}, '<C-t>', '<Plug>(aibo-claude-todo)', { buffer = true })
+vim.keymap.set({'n', 'v'}, '<C-_>', '<Plug>(aibo-claude-undo)', { buffer = true })
+vim.keymap.set({'n', 'v'}, '<C-->', '<Plug>(aibo-claude-undo)', { buffer = true })
+vim.keymap.set({'n', 'v'}, '<C-z>', '<Plug>(aibo-claude-suspend)', { buffer = true })
+vim.keymap.set({'n', 'v'}, '<C-v>', '<Plug>(aibo-claude-paste)', { buffer = true })
+
+-- Key mappings for insert mode (use <C-\><C-o> to execute normal mode command without leaving insert)
+vim.keymap.set('i', '<S-Tab>', '<C-\\><C-o><Plug>(aibo-claude-mode)', { buffer = true })
+vim.keymap.set('i', '<F2>', '<C-\\><C-o><Plug>(aibo-claude-mode)', { buffer = true })
+vim.keymap.set('i', '<C-o>', '<C-\\><C-o><Plug>(aibo-claude-verbose)', { buffer = true })
+vim.keymap.set('i', '<C-t>', '<C-\\><C-o><Plug>(aibo-claude-todo)', { buffer = true })
+vim.keymap.set('i', '<C-_>', '<C-\\><C-o><Plug>(aibo-claude-undo)', { buffer = true })
+vim.keymap.set('i', '<C-->', '<C-\\><C-o><Plug>(aibo-claude-undo)', { buffer = true })
+vim.keymap.set('i', '<C-z>', '<C-\\><C-o><Plug>(aibo-claude-suspend)', { buffer = true })
+vim.keymap.set('i', '<C-v>', '<C-\\><C-o><Plug>(aibo-claude-paste)', { buffer = true })
 
 -- Setup undo_ftplugin
 local undo_commands = {
-  'silent! unmap <buffer> <S-Tab>',
-  'silent! unmap <buffer> <F2>',
-  'silent! unmap <buffer> <C-o>',
-  'silent! unmap <buffer> <C-t>',
-  'silent! unmap <buffer> <C-_>',
-  'silent! unmap <buffer> <C-->',
-  'silent! unmap <buffer> <C-z>',
-  'silent! unmap <buffer> <C-v>',
+  'silent! nunmap <buffer> <S-Tab>',
+  'silent! iunmap <buffer> <S-Tab>',
+  'silent! vunmap <buffer> <S-Tab>',
+  'silent! nunmap <buffer> <F2>',
+  'silent! iunmap <buffer> <F2>',
+  'silent! vunmap <buffer> <F2>',
+  'silent! nunmap <buffer> <C-o>',
+  'silent! iunmap <buffer> <C-o>',
+  'silent! vunmap <buffer> <C-o>',
+  'silent! nunmap <buffer> <C-t>',
+  'silent! iunmap <buffer> <C-t>',
+  'silent! vunmap <buffer> <C-t>',
+  'silent! nunmap <buffer> <C-_>',
+  'silent! iunmap <buffer> <C-_>',
+  'silent! vunmap <buffer> <C-_>',
+  'silent! nunmap <buffer> <C-->',
+  'silent! iunmap <buffer> <C-->',
+  'silent! vunmap <buffer> <C-->',
+  'silent! nunmap <buffer> <C-z>',
+  'silent! iunmap <buffer> <C-z>',
+  'silent! vunmap <buffer> <C-z>',
+  'silent! nunmap <buffer> <C-v>',
+  'silent! iunmap <buffer> <C-v>',
+  'silent! vunmap <buffer> <C-v>',
 }
 
 local existing_undo = vim.b.undo_ftplugin or ''
