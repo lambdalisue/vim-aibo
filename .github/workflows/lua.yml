@@ -34,6 +34,7 @@ jobs:
       - name: Install StyLua
         uses: JohnnyMorganz/stylua-action@v3
         with:
+          token: ${{ secrets.GITHUB_TOKEN }}
           version: latest
           args: --check lua/
 
