@@ -6,8 +6,8 @@ default:
 
 # Run luacheck for linting
 lint:
-	@luacheck lua/ ftplugin/ --globals vim
+	@luacheck lua/ --globals vim
 
 # Format code with stylua
 fmt:
-	@stylua lua/ ftplugin/
+	@stylua lua/

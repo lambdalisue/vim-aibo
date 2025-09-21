@@ -16,6 +16,7 @@ globals = {
 
 -- Ignore some warnings
 ignore = {
+    "122", -- Setting read-only field (false positive for vim.bo, vim.wo, vim.b in Neovim)
     "212", -- Unused argument
     "213", -- Unused loop variable
     "631", -- Line too long
