@@ -127,7 +127,7 @@ function M.init(prompt_bufnr)
 
 	-- Create keymaps helper
 	local function create_keymap(name, rhs)
-		vim.keymap.set("", name, rhs, { buffer = prompt_bufnr, silent = true })
+		vim.keymap.set({ "n", "v" }, name, rhs, { buffer = prompt_bufnr, silent = true })
 	end
 
 	-- Helper for terminal key sends

@@ -8,22 +8,28 @@ local aibo = require("aibo")
 vim.keymap.set("n", "<CR>", "<Plug>(aibo-submit)", { buffer = true })
 vim.keymap.set("n", "<Esc>", "<Plug>(aibo-esc)", { buffer = true })
 
-vim.keymap.set("", "<C-c>", "<Plug>(aibo-interrupt)", { buffer = true })
-vim.keymap.set("", "<C-l>", "<Plug>(aibo-clear)", { buffer = true })
-vim.keymap.set("", "<C-n>", "<Plug>(aibo-next)", { buffer = true })
-vim.keymap.set("", "<C-p>", "<Plug>(aibo-prev)", { buffer = true })
-vim.keymap.set("", "<Down>", "<Plug>(aibo-down)", { buffer = true })
-vim.keymap.set("", "<Up>", "<Plug>(aibo-up)", { buffer = true })
+vim.keymap.set({ "n", "v" }, "<C-c>", "<Plug>(aibo-interrupt)", { buffer = true })
+vim.keymap.set({ "n", "v" }, "<C-l>", "<Plug>(aibo-clear)", { buffer = true })
+vim.keymap.set({ "n", "v" }, "<C-n>", "<Plug>(aibo-next)", { buffer = true })
+vim.keymap.set({ "n", "v" }, "<C-p>", "<Plug>(aibo-prev)", { buffer = true })
+vim.keymap.set({ "n", "v" }, "<Down>", "<Plug>(aibo-down)", { buffer = true })
+vim.keymap.set({ "n", "v" }, "<Up>", "<Plug>(aibo-up)", { buffer = true })
 
 local undo_commands = {
-	"silent! unmap <buffer> <CR>",
-	"silent! unmap <buffer> <Esc>",
-	"silent! unmap <buffer> <C-c>",
-	"silent! unmap <buffer> <C-l>",
-	"silent! unmap <buffer> <C-n>",
-	"silent! unmap <buffer> <C-p>",
-	"silent! unmap <buffer> <Down>",
-	"silent! unmap <buffer> <Up>",
+	"silent! nunmap <buffer> <CR>",
+	"silent! nunmap <buffer> <Esc>",
+	"silent! nunmap <buffer> <C-c>",
+	"silent! vunmap <buffer> <C-c>",
+	"silent! nunmap <buffer> <C-l>",
+	"silent! vunmap <buffer> <C-l>",
+	"silent! nunmap <buffer> <C-n>",
+	"silent! vunmap <buffer> <C-n>",
+	"silent! nunmap <buffer> <C-p>",
+	"silent! vunmap <buffer> <C-p>",
+	"silent! nunmap <buffer> <Down>",
+	"silent! vunmap <buffer> <Down>",
+	"silent! nunmap <buffer> <Up>",
+	"silent! vunmap <buffer> <Up>",
 }
 
 local existing_undo = vim.b.undo_ftplugin or ""

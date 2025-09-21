@@ -10,33 +10,39 @@ vim.opt_local.signcolumn = "no"
 
 vim.keymap.set("n", "<CR>", "<Plug>(aibo-submit)", { buffer = true })
 vim.keymap.set("n", "<Esc>", "<Plug>(aibo-esc)", { buffer = true })
-vim.keymap.set("i", "<C-Enter>", "<Esc><Plug>(aibo-submit-close)", { buffer = true })
+vim.keymap.set("i", "<C-Enter>", "<C-\><C-o><Plug>(aibo-submit-close)", { buffer = true })
 vim.keymap.set("n", "<C-Enter>", "<Plug>(aibo-submit-close)", { buffer = true })
-vim.keymap.set("i", "<C-S-Enter>", "<Esc><Plug>(aibo-submit)i", { buffer = true })
+vim.keymap.set("i", "<C-S-Enter>", "<C-\><C-o><Plug>(aibo-submit)", { buffer = true })
 vim.keymap.set("n", "<C-S-Enter>", "<Plug>(aibo-submit)", { buffer = true })
 
 -- F5 key mappings (alternative submit keys)
 vim.keymap.set("n", "<F5>", "<Plug>(aibo-submit-close)", { buffer = true })
-vim.keymap.set("i", "<F5>", "<Esc><Plug>(aibo-submit-close)", { buffer = true })
+vim.keymap.set("i", "<F5>", "<C-\><C-o><Plug>(aibo-submit-close)", { buffer = true })
 vim.keymap.set("n", "<C-F5>", "<Plug>(aibo-submit)", { buffer = true })
-vim.keymap.set("i", "<C-F5>", "<Esc><Plug>(aibo-submit)i", { buffer = true })
+vim.keymap.set("i", "<C-F5>", "<C-\><C-o><Plug>(aibo-submit)", { buffer = true })
 
-vim.keymap.set("", "<C-c>", "<Plug>(aibo-interrupt)", { buffer = true })
-vim.keymap.set("", "<C-l>", "<Plug>(aibo-clear)", { buffer = true })
-vim.keymap.set("", "<C-n>", "<Plug>(aibo-next)", { buffer = true })
-vim.keymap.set("", "<C-p>", "<Plug>(aibo-prev)", { buffer = true })
-vim.keymap.set("", "<Down>", "<Plug>(aibo-down)", { buffer = true })
-vim.keymap.set("", "<Up>", "<Plug>(aibo-up)", { buffer = true })
+vim.keymap.set({ "n", "v" }, "<C-c>", "<Plug>(aibo-interrupt)", { buffer = true })
+vim.keymap.set({ "n", "v" }, "<C-l>", "<Plug>(aibo-clear)", { buffer = true })
+vim.keymap.set({ "n", "v" }, "<C-n>", "<Plug>(aibo-next)", { buffer = true })
+vim.keymap.set({ "n", "v" }, "<C-p>", "<Plug>(aibo-prev)", { buffer = true })
+vim.keymap.set({ "n", "v" }, "<Down>", "<Plug>(aibo-down)", { buffer = true })
+vim.keymap.set({ "n", "v" }, "<Up>", "<Plug>(aibo-up)", { buffer = true })
 
 local undo_commands = {
 	"silent! nunmap <buffer> <CR>",
 	"silent! nunmap <buffer> <Esc>",
-	"silent! unmap <buffer> <C-c>",
-	"silent! unmap <buffer> <C-l>",
-	"silent! unmap <buffer> <C-n>",
-	"silent! unmap <buffer> <C-p>",
-	"silent! unmap <buffer> <Down>",
-	"silent! unmap <buffer> <Up>",
+	"silent! nunmap <buffer> <C-c>",
+	"silent! vunmap <buffer> <C-c>",
+	"silent! nunmap <buffer> <C-l>",
+	"silent! vunmap <buffer> <C-l>",
+	"silent! nunmap <buffer> <C-n>",
+	"silent! vunmap <buffer> <C-n>",
+	"silent! nunmap <buffer> <C-p>",
+	"silent! vunmap <buffer> <C-p>",
+	"silent! nunmap <buffer> <Down>",
+	"silent! vunmap <buffer> <Down>",
+	"silent! nunmap <buffer> <Up>",
+	"silent! vunmap <buffer> <Up>",
 	"silent! nunmap <buffer> <C-Enter>",
 	"silent! iunmap <buffer> <C-Enter>",
 	"silent! nunmap <buffer> <C-S-Enter>",

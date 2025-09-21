@@ -110,7 +110,7 @@ function M.open(cmd, args)
 
 	-- Create keymaps helper
 	local function create_keymap(name, rhs)
-		vim.keymap.set("", name, rhs, { buffer = true, silent = true })
+		vim.keymap.set({ "n", "v" }, name, rhs, { buffer = true, silent = true })
 	end
 
 	-- Helper for terminal key sends
