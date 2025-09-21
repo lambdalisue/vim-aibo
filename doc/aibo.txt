@@ -24,7 +24,8 @@ INTRODUCTION					*aibo-introduction*
 *aibo.vim* (*aibo*) is a Neovim plugin that provides seamless integration
 with AI assistants through terminal interfaces. The name "aibo" comes from
 the Japanese word for "companion," reflecting the plugin's role as your AI
-companion in Neovim.
+companion in Neovim. This plugin is written in Lua for optimal performance
+and maintainability.
 
 The plugin creates a split-window interface with:
 - A terminal console where AI agents run
@@ -41,7 +42,7 @@ Key features:
 =============================================================================
 REQUIREMENTS					*aibo-requirements*
 
-- Neovim 0.5+
+- Neovim 0.8+ (for Lua implementation)
 - AI agent executable (e.g., claude, chatgpt, copilot CLI tools)
 
 =============================================================================
@@ -84,28 +85,32 @@ word of your AI agent command.
 
 Example: Customizing Claude agent behavior
 >
-	" In ~/.config/nvim/after/ftplugin/aibo-agent-claude.vim
-	" Override default mappings
-	nunmap <buffer> <S-Tab>
-	nmap <buffer> <leader>m <Plug>(aibo-claude-mode)
+	-- In ~/.config/nvim/after/ftplugin/aibo-agent-claude.lua
+	-- Override default mappings
+	vim.keymap.del('n', '<S-Tab>', { buffer = true })
+	vim.keymap.set('n', '<leader>m', '<Plug>(aibo-claude-mode)', { buffer = true })
 
-	" Add custom settings
-	setlocal updatetime=100
+	-- Add custom settings
+	vim.bo.updatetime = 100
 
-	" Add custom mappings
-	nnoremap <buffer> <leader>r :call aibo#send("\<C-r>")<CR>
+	-- Add custom mappings
+	vim.keymap.set('n', '<leader>r', function()
+		require('aibo').send('\027[18~')
+	end, { buffer = true })
 <
 Example: Adding support for a custom AI agent
 >
-	" If you use ':Aibo myai', create:
-	" ~/.config/nvim/after/ftplugin/aibo-agent-myai.vim
+	-- If you use ':Aibo myai', create:
+	-- ~/.config/nvim/after/ftplugin/aibo-agent-myai.lua
 
-	" Define agent-specific mappings
-	noremap <buffer> <C-g> <Cmd>call aibo#send("\<C-g>")<CR>
+	-- Define agent-specific mappings
+	vim.keymap.set('', '<C-g>', function()
+		require('aibo').send('\007')
+	end, { buffer = true })
 
-	" Set agent-specific options
-	let b:aibo_submit_key = "\n"
-	let b:aibo_submit_delay = 200
+	-- Set agent-specific options
+	vim.b.aibo_submit_key = '\n'
+	vim.b.aibo_submit_delay = 200
 <
 The agent-specific filetype is applied to both console and prompt buffers,
 allowing consistent customization across the entire AI session.
@@ -116,18 +121,18 @@ Customizing key mappings~
 You can customize key mappings by using the provided |<Plug>| mappings.
 Create ftplugin files in your Neovim configuration directory:
 >
-	" In ~/.config/nvim/after/ftplugin/aibo-prompt.vim
-	nmap <buffer> <C-j> <Plug>(aibo-submit)
-	nmap <buffer> <C-k> <Plug>(aibo-submit-close)
-	nmap <buffer> <leader>c <Plug>(aibo-clear)
+	-- In ~/.config/nvim/after/ftplugin/aibo-prompt.lua
+	vim.keymap.set('n', '<C-j>', '<Plug>(aibo-submit)', { buffer = true })
+	vim.keymap.set('n', '<C-k>', '<Plug>(aibo-submit-close)', { buffer = true })
+	vim.keymap.set('n', '<leader>c', '<Plug>(aibo-clear)', { buffer = true })
 <
 For agent-specific mappings:
 >
-	" In ~/.config/nvim/after/ftplugin/aibo-agent-claude.vim
-	" Remap Claude-specific features
-	nunmap <buffer> <S-Tab>
-	nmap <buffer> <leader>m <Plug>(aibo-claude-mode)
-	nmap <buffer> <leader>v <Plug>(aibo-claude-verbose)
+	-- In ~/.config/nvim/after/ftplugin/aibo-agent-claude.lua
+	-- Remap Claude-specific features
+	vim.keymap.del('n', '<S-Tab>', { buffer = true })
+	vim.keymap.set('n', '<leader>m', '<Plug>(aibo-claude-mode)', { buffer = true })
+	vim.keymap.set('n', '<leader>v', '<Plug>(aibo-claude-verbose)', { buffer = true })
 <
 See |aibo-key-mappings| for a complete list of available |<Plug>| mappings.
 
@@ -287,13 +292,13 @@ Codex-specific mappings (when using Codex agent):
 
 Example customization:
 >
-	" In ~/.config/nvim/after/ftplugin/aibo-prompt.vim
-	nmap <buffer> <C-j> <Plug>(aibo-submit)
-	nmap <buffer> <C-k> <Plug>(aibo-submit-close)
+	-- In ~/.config/nvim/after/ftplugin/aibo-prompt.lua
+	vim.keymap.set('n', '<C-j>', '<Plug>(aibo-submit)', { buffer = true })
+	vim.keymap.set('n', '<C-k>', '<Plug>(aibo-submit-close)', { buffer = true })
 
-	" In ~/.config/nvim/after/ftplugin/aibo-agent-claude.vim
-	nmap <buffer> <leader>m <Plug>(aibo-claude-mode)
-	nmap <buffer> <leader>v <Plug>(aibo-claude-verbose)
+	-- In ~/.config/nvim/after/ftplugin/aibo-agent-claude.lua
+	vim.keymap.set('n', '<leader>m', '<Plug>(aibo-claude-mode)', { buffer = true })
+	vim.keymap.set('n', '<leader>v', '<Plug>(aibo-claude-verbose)', { buffer = true })
 <
 =============================================================================
 FAQ						*aibo-faq*
@@ -315,9 +320,9 @@ A: Yes, you can open multiple |:Aibo| sessions with different commands.
 Q: How do I customize key mappings?
 A: Create your own mappings in your init.lua or ftplugin files:
 >
-	" In ~/.config/nvim/after/ftplugin/aibo-prompt.vim
-	nmap <buffer> <C-j> <Plug>(aibo-submit)
-	nmap <buffer> <C-k> <Plug>(aibo-submit-close)
+	-- In ~/.config/nvim/after/ftplugin/aibo-prompt.lua
+	vim.keymap.set('n', '<C-j>', '<Plug>(aibo-submit)', { buffer = true })
+	vim.keymap.set('n', '<C-k>', '<Plug>(aibo-submit-close)', { buffer = true })
 <
 Q: Why does my AI agent not respond to submissions?
 A: Try adjusting |g:aibo#submit_delay| or |g:aibo#submit_key| to match
