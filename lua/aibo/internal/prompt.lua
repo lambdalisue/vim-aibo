@@ -120,7 +120,6 @@ function M.init(prompt_bufnr)
 
   -- Set window options for the current window
   local winid = vim.api.nvim_get_current_win()
-  vim.wo[winid].winfixbuf = true
   vim.wo[winid].winfixheight = true
 
   local aibo_module = require("aibo")
