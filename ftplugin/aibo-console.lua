@@ -3,8 +3,7 @@ if vim.b.did_ftplugin_aibo_console then
 end
 vim.b.did_ftplugin_aibo_console = 1
 
-local aibo = require("aibo")
-
+-- Setup keymaps
 vim.keymap.set("n", "<CR>", "<Plug>(aibo-submit)", { buffer = true })
 vim.keymap.set("n", "<Esc>", "<Plug>(aibo-esc)", { buffer = true })
 

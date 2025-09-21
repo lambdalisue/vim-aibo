@@ -37,7 +37,6 @@ end
 local function InsertEnter()
 	local winid = vim.api.nvim_get_current_win()
 	local bufname = format_prompt_bufname(winid)
-	local bufnr = vim.fn.bufnr(bufname)
 	local prompt_winid = vim.fn.bufwinid(bufname)
 
 	if prompt_winid == -1 then
