@@ -1,0 +1,330 @@
+*aibo.txt*	AI Bot Integration and Orchestration for Neovim
+
+Author:  lambdalisue <lambdalisue@gmail.com>
+License: MIT license
+
+=============================================================================
+CONTENTS					*aibo-contents*
+
+INTRODUCTION				|aibo-introduction|
+REQUIREMENTS				|aibo-requirements|
+USAGE					|aibo-usage|
+CUSTOMIZATION				|aibo-customization|
+INTERFACE				|aibo-interface|
+  COMMANDS				|aibo-commands|
+  FUNCTIONS				|aibo-functions|
+  VARIABLES				|aibo-variables|
+  KEY MAPPINGS				|aibo-key-mappings|
+  PLUG MAPPINGS				|aibo-plug-mappings|
+FAQ					|aibo-faq|
+
+=============================================================================
+INTRODUCTION					*aibo-introduction*
+
+*aibo.vim* (*aibo*) is a Neovim plugin that provides seamless integration
+with AI assistants through terminal interfaces. The name "aibo" comes from
+the Japanese word for "companion," reflecting the plugin's role as your AI
+companion in Neovim.
+
+The plugin creates a split-window interface with:
+- A terminal console where AI agents run
+- A dedicated prompt buffer for user input
+- Smart key mappings for efficient interaction
+
+Key features:
+- Cross-platform support for Neovim
+- Flexible AI agent integration
+- Customizable submission keys and delays
+- Clean separation between console and prompt
+- Automatic buffer management
+
+=============================================================================
+REQUIREMENTS					*aibo-requirements*
+
+- Neovim 0.5+
+- AI agent executable (e.g., claude, chatgpt, copilot CLI tools)
+
+=============================================================================
+USAGE						*aibo-usage*
+
+Start an AI session with the |:Aibo| command:
+>
+	:Aibo claude
+<
+This opens a terminal console running the specified AI agent and creates a
+prompt buffer below it for your input.
+
+Type your message in the prompt buffer and press |<CR>| in normal mode to
+submit. You can also use |<F5>| or |<C-Enter>| to submit from insert mode.
+The message will be sent to the AI agent and the prompt buffer will be
+cleared for your next input.
+
+To close the session, delete or wipeout the console buffer using
+|:bdelete!| or |:bwipeout!| (the ! is required to force deletion). Simply
+closing the console window will not terminate the AI agent process. Deleting
+the buffer will terminate the process and automatically close the associated
+prompt buffer.
+
+=============================================================================
+CUSTOMIZATION					*aibo-customization*
+
+						*aibo-agent-filetypes*
+Agent-specific filetypes~
+
+The plugin automatically applies agent-specific filetypes based on the
+command used with |:Aibo|. This allows for agent-specific configurations
+and mappings:
+
+- `aibo-agent-claude`: Applied when using `claude` command
+- `aibo-agent-codex`: Applied when using `codex` command
+
+You can create custom configurations for any AI agent by creating ftplugin
+files. The pattern is `aibo-agent-{command}` where {command} is the first
+word of your AI agent command.
+
+Example: Customizing Claude agent behavior
+>
+	" In ~/.config/nvim/after/ftplugin/aibo-agent-claude.vim
+	" Override default mappings
+	nunmap <buffer> <S-Tab>
+	nmap <buffer> <leader>m <Plug>(aibo-claude-mode)
+
+	" Add custom settings
+	setlocal updatetime=100
+
+	" Add custom mappings
+	nnoremap <buffer> <leader>r :call aibo#send("\<C-r>")<CR>
+<
+Example: Adding support for a custom AI agent
+>
+	" If you use ':Aibo myai', create:
+	" ~/.config/nvim/after/ftplugin/aibo-agent-myai.vim
+
+	" Define agent-specific mappings
+	noremap <buffer> <C-g> <Cmd>call aibo#send("\<C-g>")<CR>
+
+	" Set agent-specific options
+	let b:aibo_submit_key = "\n"
+	let b:aibo_submit_delay = 200
+<
+The agent-specific filetype is applied to both console and prompt buffers,
+allowing consistent customization across the entire AI session.
+
+-----------------------------------------------------------------------------
+Customizing key mappings~
+
+You can customize key mappings by using the provided |<Plug>| mappings.
+Create ftplugin files in your Neovim configuration directory:
+>
+	" In ~/.config/nvim/after/ftplugin/aibo-prompt.vim
+	nmap <buffer> <C-j> <Plug>(aibo-submit)
+	nmap <buffer> <C-k> <Plug>(aibo-submit-close)
+	nmap <buffer> <leader>c <Plug>(aibo-clear)
+<
+For agent-specific mappings:
+>
+	" In ~/.config/nvim/after/ftplugin/aibo-agent-claude.vim
+	" Remap Claude-specific features
+	nunmap <buffer> <S-Tab>
+	nmap <buffer> <leader>m <Plug>(aibo-claude-mode)
+	nmap <buffer> <leader>v <Plug>(aibo-claude-verbose)
+<
+See |aibo-key-mappings| for a complete list of available |<Plug>| mappings.
+
+=============================================================================
+INTERFACE					*aibo-interface*
+
+-----------------------------------------------------------------------------
+COMMANDS					*aibo-commands*
+
+						*:Aibo*
+:Aibo {cmd} [{args}...]
+	Start an AI session with the specified command and optional arguments.
+	Opens a terminal console running the command and creates a prompt
+	buffer for user input.
+
+	The command accepts additional arguments to pass to the AI agent:
+>
+		:Aibo claude
+		:Aibo claude --profile development
+		:Aibo codex
+<
+-----------------------------------------------------------------------------
+FUNCTIONS					*aibo-functions*
+
+						*aibo#send()*
+aibo#send({data} [, {bufnr}])
+	Send raw data to the AI agent's terminal. This sends data directly
+	without any processing.
+
+	{data}		String data to send
+	{bufnr}		Buffer number (default: current buffer)
+
+	Example:
+>
+		:call aibo#send("Hello AI\n")
+<
+						*aibo#submit()*
+aibo#submit({data} [, {bufnr}])
+	Submit data to the AI agent with the configured submit key. This is
+	equivalent to sending the data followed by the submit key after a
+	small delay. The submit key and delay are configured via
+	|g:aibo#submit_key| and |g:aibo#submit_delay|.
+
+	{data}		String data to submit
+	{bufnr}		Buffer number (default: current buffer)
+
+	Example:
+>
+		:call aibo#submit("What is Neovim?")
+<
+-----------------------------------------------------------------------------
+VARIABLES					*aibo-variables*
+
+						*g:aibo#submit_key*
+g:aibo#submit_key
+	The key sequence to send for submission. This is sent after the
+	user's input to trigger the AI agent's response.
+	Default: "\r" (carriage return)
+
+	Example:
+>
+		let g:aibo#submit_key = "\n"
+<
+						*g:aibo#submit_delay*
+g:aibo#submit_delay
+	Delay in milliseconds between sending data and the submit key.
+	This helps AI agents distinguish between newlines in content and
+	the submission signal.
+	Default: 100
+
+	Example:
+>
+		let g:aibo#submit_delay = 200
+<
+-----------------------------------------------------------------------------
+KEY MAPPINGS					*aibo-key-mappings*
+
+Console buffer mappings (aibo-console filetype):
+
+<CR>			Submit an empty line (useful for confirming prompts)
+<Esc>			Send escape key to the terminal
+<C-c>			Send interrupt signal to the terminal
+<C-l>			Clear the terminal screen
+<C-n>			Send next command (down arrow) to the terminal
+<C-p>			Send previous command (up arrow) to the terminal
+<Down>			Send down arrow key to the terminal
+<Up>			Send up arrow key to the terminal
+<S-Tab>			Send Shift-Tab sequence to the terminal
+			(useful for navigating backward in interactive menus)
+
+Prompt buffer mappings (aibo-prompt filetype):
+
+<CR>			Submit the prompt buffer contents (normal mode)
+<C-Enter>		Submit the prompt buffer contents (insert mode)
+<F5>			Submit the prompt buffer contents (insert mode)
+<C-S-Enter>		Submit the prompt buffer contents
+<C-F5>			Submit the prompt buffer contents
+
+<S-Tab>			Send Shift-Tab to console
+			(useful for navigating backward in interactive menus)
+
+Note: Some key combinations like <C-Enter>, <C-S-Enter>, and <S-Tab> may
+not work in all terminal emulators due to terminal limitations.
+
+-----------------------------------------------------------------------------
+PLUG MAPPINGS					*aibo-plug-mappings*
+
+The plugin provides the following <Plug> mappings for customization:
+
+Console buffer mappings:
+						*<Plug>(aibo-submit)*
+<Plug>(aibo-submit)		Submit an empty line (useful for confirmations)
+						*<Plug>(aibo-esc)*
+<Plug>(aibo-esc)		Send escape key to terminal
+						*<Plug>(aibo-interrupt)*
+<Plug>(aibo-interrupt)		Send interrupt signal (Ctrl-C)
+						*<Plug>(aibo-clear)*
+<Plug>(aibo-clear)		Clear terminal screen (Ctrl-L)
+						*<Plug>(aibo-next)*
+<Plug>(aibo-next)		Send next command (Ctrl-N)
+						*<Plug>(aibo-prev)*
+<Plug>(aibo-prev)		Send previous command (Ctrl-P)
+						*<Plug>(aibo-down)*
+<Plug>(aibo-down)		Send down arrow key
+						*<Plug>(aibo-up)*
+<Plug>(aibo-up)			Send up arrow key
+
+Prompt buffer mappings:
+<Plug>(aibo-submit)		Submit the prompt buffer contents
+						*<Plug>(aibo-submit-close)*
+<Plug>(aibo-submit-close)	Submit and close the prompt buffer
+<Plug>(aibo-esc)		Send escape key to terminal
+<Plug>(aibo-interrupt)		Send interrupt signal (Ctrl-C)
+<Plug>(aibo-clear)		Clear terminal screen (Ctrl-L)
+<Plug>(aibo-next)		Send next command (Ctrl-N)
+<Plug>(aibo-prev)		Send previous command (Ctrl-P)
+<Plug>(aibo-down)		Send down arrow key
+<Plug>(aibo-up)			Send up arrow key
+
+Claude-specific mappings (when using Claude agent):
+						*<Plug>(aibo-claude-mode)*
+<Plug>(aibo-claude-mode)	Switch Claude mode (Shift-Tab)
+						*<Plug>(aibo-claude-verbose)*
+<Plug>(aibo-claude-verbose)	Toggle verbose mode (Ctrl-O)
+						*<Plug>(aibo-claude-todo)*
+<Plug>(aibo-claude-todo)	Show todo list (Ctrl-T)
+						*<Plug>(aibo-claude-undo)*
+<Plug>(aibo-claude-undo)	Undo last action (Ctrl-_)
+						*<Plug>(aibo-claude-suspend)*
+<Plug>(aibo-claude-suspend)	Suspend Claude (Ctrl-Z)
+						*<Plug>(aibo-claude-paste)*
+<Plug>(aibo-claude-paste)	Paste content (Ctrl-V)
+
+Codex-specific mappings (when using Codex agent):
+						*<Plug>(aibo-codex-transcript)*
+<Plug>(aibo-codex-transcript)	Show transcript (Ctrl-T)
+
+Example customization:
+>
+	" In ~/.config/nvim/after/ftplugin/aibo-prompt.vim
+	nmap <buffer> <C-j> <Plug>(aibo-submit)
+	nmap <buffer> <C-k> <Plug>(aibo-submit-close)
+
+	" In ~/.config/nvim/after/ftplugin/aibo-agent-claude.vim
+	nmap <buffer> <leader>m <Plug>(aibo-claude-mode)
+	nmap <buffer> <leader>v <Plug>(aibo-claude-verbose)
+<
+=============================================================================
+FAQ						*aibo-faq*
+
+Q: How do I integrate with Claude CLI?
+A: Install the Claude CLI tool and use:
+>
+	:Aibo claude
+<
+Q: How do I integrate with Codex?
+A: If you have a Codex CLI tool installed, use:
+>
+	:Aibo codex
+<
+Q: Can I use multiple AI agents simultaneously?
+A: Yes, you can open multiple |:Aibo| sessions with different commands.
+   Each will have its own console and prompt buffer.
+
+Q: How do I customize key mappings?
+A: Create your own mappings in your init.lua or ftplugin files:
+>
+	" In ~/.config/nvim/after/ftplugin/aibo-prompt.vim
+	nmap <buffer> <C-j> <Plug>(aibo-submit)
+	nmap <buffer> <C-k> <Plug>(aibo-submit-close)
+<
+Q: Why does my AI agent not respond to submissions?
+A: Try adjusting |g:aibo#submit_delay| or |g:aibo#submit_key| to match
+   your AI agent's expectations. Some agents may need "\n" instead of "\r".
+
+Q: Can I change the prompt buffer position?
+A: The plugin currently opens the prompt below the console. For different
+   layouts, you can manually rearrange windows after opening.
+=============================================================================
+vim:tw=78:ts=8:ft=help:norl:noet:fen:fdl=0:
