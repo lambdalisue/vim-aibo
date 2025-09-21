@@ -3,6 +3,7 @@
 [![Neovim](https://img.shields.io/badge/Neovim-0.10.0+-blueviolet.svg?style=flat-square&logo=Neovim&logoColor=white)](https://neovim.io/)
 [![Lua](https://img.shields.io/badge/Lua-5.1+-blue.svg?style=flat-square&logo=lua)](https://www.lua.org/)
 [![MIT License](https://img.shields.io/badge/license-MIT-green.svg?style=flat-square)](LICENSE)
+[![Lua CI](https://github.com/lambdalisue/vim-aibo/actions/workflows/lua.yml/badge.svg)](https://github.com/lambdalisue/vim-aibo/actions/workflows/lua.yml)
 
 AI Bot Integration and Orchestration for Neovim
 
