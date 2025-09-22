@@ -80,7 +80,7 @@ Start an AI session:
 ```vim
 " Open with custom window command
 :Aibo -opener=vsplit claude
-:Aibo -opener="botright split" claude
+:Aibo -opener=botright\ split claude
 
 " Stay in current window after opening
 :Aibo -stay claude

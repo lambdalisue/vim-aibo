@@ -266,7 +266,7 @@ COMMANDS					*aibo-commands*
 
 	Options:~
 		-opener={cmd}	Use custom window command for opening
-				Example: -opener=vsplit, -opener="botright split"
+				Example: -opener=vsplit, -opener=botright\ split
 		-stay		Keep focus on current window after opening
 		-toggle		Toggle visibility of existing console or open new
 		-jump		Jump to existing console or open new one
@@ -394,8 +394,8 @@ Window Control Options~
 
 	-opener={cmd}		Use a custom window command:
 				- split, vsplit, tabedit, edit
-				- "topleft split", "botright vsplit"
-				- "leftabove split", "rightbelow vsplit"
+				- topleft\ split, botright\ vsplit
+				- leftabove\ split, rightbelow\ vsplit
 
 	-stay			Stay in the current window after opening
 				the AI console. Useful when you want to
