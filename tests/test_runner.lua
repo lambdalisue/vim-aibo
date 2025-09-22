@@ -1,6 +1,8 @@
 -- Simple test runner for aibo.nvim
 -- Run with: nvim --headless -c "luafile tests/test_runner.lua" -c "qa!"
 
+local M = {}
+
 -- Get test directory
 local test_dir = debug.getinfo(1, "S").source:sub(2):match("(.*/)") or "./"
 local project_root = vim.fn.fnamemodify(test_dir, ":h")
@@ -37,6 +39,8 @@ mini_test.setup()
 local test_files = {
   "test_aibo",
   "test_plugin",
+  "test_send",
+  "test_integration_send",
   "test_integration_claude",
   "test_integration_ollama",
   "test_integration_codex",
@@ -111,3 +115,15 @@ if #errors > 0 then
 else
   print("\nAll tests passed!")
 end
+
+-- Function to run a specific test file
+function M.run_file(test_file)
+  local ok, test_set = pcall(dofile, test_file)
+  if ok and test_set then
+    require("mini.test").run(test_set)
+  else
+    print("Failed to load test file: " .. tostring(test_set))
+  end
+end
+
+return M

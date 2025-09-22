@@ -80,12 +80,8 @@ _G._aibo_complete = function(arglead, cmdline, cursorpos)
 
   -- Strip "Aibo " prefix to pass cleaner cmdline to integrations
   -- This allows adding Aibo options between "Aibo" and the tool name in the future
-  -- e.g., "Aibo -opener=split ollama run ..." -> "ollama run ..."
+  -- e.g., "Aibo --opener split ollama run ..." -> "ollama run ..."
   local tool_cmdline = cmdline:gsub("^Aibo%s+", "")
-  -- Also strip the -opener=... option if present
-  if parts[2] and parts[2]:match("^-opener=") then
-    tool_cmdline = tool_cmdline:gsub("^%-opener=[^%s]+%s+", "")
-  end
   local tool_cursorpos = cursorpos - #("Aibo ")
   if tool_cursorpos < 0 then
     tool_cursorpos = 0
@@ -161,4 +157,41 @@ end, {
   nargs = "+",
   desc = "Start an AI bot session",
   complete = _G._aibo_complete,
+})
+
+-- Create AiboSend command
+vim.api.nvim_create_user_command("AiboSend", function(cmd_opts)
+  -- Parse options
+  local input = false
+  local submit = false
+  local replace = false
+  local args = cmd_opts.fargs or {}
+
+  for _, arg in ipairs(args) do
+    if arg == "-input" then
+      input = true
+    elseif arg == "-submit" then
+      submit = true
+    elseif arg == "-replace" then
+      replace = true
+    end
+  end
+
+  require("aibo.internal.send").send({
+    line1 = cmd_opts.line1,
+    line2 = cmd_opts.line2,
+    input = input,
+    submit = submit,
+    replace = replace,
+  })
+end, {
+  range = true,
+  nargs = "*",
+  desc = "Send buffer content to Aibo console prompt",
+  complete = function(arglead, cmdline, cursorpos)
+    if arglead == "" or arglead:match("^%-") then
+      return { "-input", "-submit", "-replace" }
+    end
+    return {}
+  end,
 })
