@@ -51,8 +51,8 @@ end, { buffer = bufnr, desc = "Move up" })
 local cfg = aibo.get_buffer_config("prompt")
 if not (cfg and cfg.no_default_mappings) then
   vim.keymap.set("n", "<CR>", "<Plug>(aibo-prompt-submit)", { buffer = bufnr })
-  vim.keymap.set({ "n", "i" }, "<C-Enter>", "<Plug>(aibo-prompt-submit-close)", { buffer = bufnr })
-  vim.keymap.set({ "n", "i" }, "<F5>", "<Plug>(aibo-prompt-submit-close)", { buffer = bufnr })
+  vim.keymap.set("n", "<C-Enter>", "<Plug>(aibo-prompt-submit-close)", { buffer = bufnr })
+  vim.keymap.set("n", "<F5>", "<Plug>(aibo-prompt-submit-close)", { buffer = bufnr })
   vim.keymap.set("n", "<Esc>", "<Plug>(aibo-prompt-esc)", { buffer = bufnr })
   vim.keymap.set("n", "<C-c>", "<Plug>(aibo-prompt-interrupt)", { buffer = bufnr })
   vim.keymap.set("n", "<C-l>", "<Plug>(aibo-prompt-clear)", { buffer = bufnr })
@@ -60,4 +60,7 @@ if not (cfg and cfg.no_default_mappings) then
   vim.keymap.set("n", "<C-p>", "<Plug>(aibo-prompt-prev)", { buffer = bufnr })
   vim.keymap.set("n", "<Down>", "<Plug>(aibo-prompt-down)", { buffer = bufnr })
   vim.keymap.set("n", "<Up>", "<Plug>(aibo-prompt-up)", { buffer = bufnr })
+  -- It seems <Esc> is required to properly close after submit
+  vim.keymap.set("i", "<C-Enter>", "<Esc><Plug>(aibo-prompt-submit-close)", { buffer = bufnr })
+  vim.keymap.set("i", "<F5>", "<Esc><Plug>(aibo-prompt-submit-close)", { buffer = bufnr })
 end

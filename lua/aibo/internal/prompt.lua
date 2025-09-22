@@ -32,7 +32,6 @@ local function submit_content(bufnr)
   aibo.submit(content, bufnr)
 
   vim.api.nvim_buf_set_lines(bufnr, 0, -1, false, {})
-  vim.bo[bufnr].modified = false
   vim.api.nvim_win_set_cursor(0, { 1, 0 })
 end
 
@@ -52,8 +51,9 @@ end
 ---Handle BufWriteCmd event
 ---@return nil
 local function BufWriteCmd()
-  submit_content(vim.api.nvim_get_current_buf())
-  vim.bo.modified = false
+  local bufnr = vim.api.nvim_get_current_buf()
+  submit_content(bufnr)
+  vim.bo[bufnr].modified = false
 end
 
 ---Handle QuitPre event
@@ -133,7 +133,7 @@ local global_augroup = vim.api.nvim_create_augroup("aibo_prompt_global", { clear
 vim.api.nvim_create_autocmd("QuitPre", {
   group = global_augroup,
   pattern = "*",
-  nested = true,
+  nested = false,
   callback = QuitPre,
 })
 
