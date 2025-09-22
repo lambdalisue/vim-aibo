@@ -65,9 +65,14 @@ end
 ---Open aibo console with command
 ---@param cmd string Command to execute
 ---@param args string[] Arguments for command
+---@param opener? string Optional window opener command (e.g., "20vsplit", "tabedit")
 ---@return nil
-function M.open(cmd, args)
-  vim.cmd("silent terminal " .. cmd .. " " .. table.concat(args, " "))
+function M.open(cmd, args, opener)
+  local open_cmd = opener or ""
+  if open_cmd ~= "" then
+    open_cmd = open_cmd .. " | "
+  end
+  vim.cmd(open_cmd .. "silent terminal " .. cmd .. " " .. table.concat(args, " "))
 
   local bufnr = vim.api.nvim_get_current_buf()
   local winid = vim.api.nvim_get_current_win()
