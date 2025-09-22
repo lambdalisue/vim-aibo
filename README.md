@@ -306,8 +306,18 @@ Plus all console buffer mappings.
 | `<C-o>` | Toggle verbose |
 | `<C-t>` | Show todo |
 | `<C-_>` | Undo |
-| `<C-z>` | Suspend |
 | `<C-v>` | Paste |
+
+### Agent-Specific (Codex)
+
+| Key | Action |
+|-----|--------|
+| `<C-t>` | Show transcript |
+| `<Home>` | Home |
+| `<End>` | End |
+| `<PageUp>` | Page up |
+| `<PageDown>` | Page down |
+| `q` | Quit |
 
 > [!IMPORTANT]
 > Some key combinations (`<C-Enter>`, `<S-Tab>`) require modern terminal emulators like Kitty, WezTerm, or Ghostty. Use alternatives like `<F5>` or `:w` if these don't work.
@@ -362,7 +372,6 @@ vim.keymap.set('n', '<C-k>', '<Plug>(aibo-prompt-submit-close)', { buffer = bufn
 | `<Plug>(aibo-claude-verbose)` | Toggle verbose |
 | `<Plug>(aibo-claude-todo)` | Show todo |
 | `<Plug>(aibo-claude-undo)` | Undo |
-| `<Plug>(aibo-claude-suspend)` | Suspend |
 | `<Plug>(aibo-claude-paste)` | Paste |
 
 #### Codex Agent

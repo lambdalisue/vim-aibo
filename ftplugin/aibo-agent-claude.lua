@@ -11,7 +11,6 @@ local CLAUDE_CODES = {
   verbose = "\015",
   todo = "\020",
   undo = "\031",
-  suspend = "\026",
   paste = "\022",
 }
 

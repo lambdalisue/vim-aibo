@@ -522,7 +522,6 @@ Claude agent mappings (normal and insert mode):
 	<C-o>		Toggle verbose
 	<C-t>		Show todo
 	<C-_>		Undo (also <C-->)
-	<C-z>		Suspend
 	<C-v>		Paste
 	?		Show shortcuts
 	!		Enter bash mode
@@ -578,7 +577,6 @@ Claude agent <Plug> mappings~
 	<Plug>(aibo-claude-verbose)		Toggle verbose
 	<Plug>(aibo-claude-todo)		Show todo
 	<Plug>(aibo-claude-undo)		Undo
-	<Plug>(aibo-claude-suspend)		Suspend
 	<Plug>(aibo-claude-paste)		Paste
 	<Plug>(aibo-claude-shortcuts)		Show shortcuts
 	<Plug>(aibo-claude-bash-mode)		Enter bash mode
