@@ -50,10 +50,9 @@ end, { buffer = bufnr, desc = "Move up" })
 -- Default mappings (unless disabled in config)
 local cfg = aibo.get_buffer_config("prompt")
 if not (cfg and cfg.no_default_mappings) then
-  -- Normal mode mappings
   vim.keymap.set("n", "<CR>", "<Plug>(aibo-prompt-submit)", { buffer = bufnr })
-  vim.keymap.set("n", "<C-Enter>", "<Plug>(aibo-prompt-submit-close)", { buffer = bufnr })
-  vim.keymap.set("n", "<F5>", "<Plug>(aibo-prompt-submit-close)", { buffer = bufnr })
+  vim.keymap.set({ "n", "i" }, "<C-Enter>", "<Plug>(aibo-prompt-submit-close)", { buffer = bufnr })
+  vim.keymap.set({ "n", "i" }, "<F5>", "<Plug>(aibo-prompt-submit-close)", { buffer = bufnr })
   vim.keymap.set("n", "<Esc>", "<Plug>(aibo-prompt-esc)", { buffer = bufnr })
   vim.keymap.set("n", "<C-c>", "<Plug>(aibo-prompt-interrupt)", { buffer = bufnr })
   vim.keymap.set("n", "<C-l>", "<Plug>(aibo-prompt-clear)", { buffer = bufnr })
@@ -61,8 +60,4 @@ if not (cfg and cfg.no_default_mappings) then
   vim.keymap.set("n", "<C-p>", "<Plug>(aibo-prompt-prev)", { buffer = bufnr })
   vim.keymap.set("n", "<Down>", "<Plug>(aibo-prompt-down)", { buffer = bufnr })
   vim.keymap.set("n", "<Up>", "<Plug>(aibo-prompt-up)", { buffer = bufnr })
-
-  -- Insert mode mappings
-  vim.keymap.set("i", "<C-Enter>", "<C-\\><C-o><Plug>(aibo-prompt-submit-close)", { buffer = bufnr })
-  vim.keymap.set("i", "<F5>", "<C-\\><C-o><Plug>(aibo-prompt-submit-close)", { buffer = bufnr })
 end

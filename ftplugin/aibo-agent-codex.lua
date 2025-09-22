@@ -37,17 +37,10 @@ end, { buffer = bufnr, desc = "Quit" })
 -- Default mappings (unless disabled in config)
 local cfg = aibo.get_agent_config("codex")
 if not (cfg and cfg.no_default_mappings) then
-  vim.keymap.set({ "n" }, "<C-t>", "<Plug>(aibo-codex-transcript)", { buffer = bufnr })
-  vim.keymap.set({ "n" }, "<Home>", "<Plug>(aibo-codex-home)", { buffer = bufnr })
-  vim.keymap.set({ "n" }, "<End>", "<Plug>(aibo-codex-end)", { buffer = bufnr })
-  vim.keymap.set({ "n" }, "<PageUp>", "<Plug>(aibo-codex-page-up)", { buffer = bufnr })
-  vim.keymap.set({ "n" }, "<PageDown>", "<Plug>(aibo-codex-page-down)", { buffer = bufnr })
+  vim.keymap.set({ "n", "i" }, "<C-t>", "<Plug>(aibo-codex-transcript)", { buffer = bufnr })
+  vim.keymap.set({ "n", "i" }, "<Home>", "<Plug>(aibo-codex-home)", { buffer = bufnr })
+  vim.keymap.set({ "n", "i" }, "<End>", "<Plug>(aibo-codex-end)", { buffer = bufnr })
+  vim.keymap.set({ "n", "i" }, "<PageUp>", "<Plug>(aibo-codex-page-up)", { buffer = bufnr })
+  vim.keymap.set({ "n", "i" }, "<PageDown>", "<Plug>(aibo-codex-page-down)", { buffer = bufnr })
   vim.keymap.set({ "n" }, "q", "<Plug>(aibo-codex-quit)", { buffer = bufnr })
-
-  -- Insert mode mappings
-  vim.keymap.set("i", "<C-t>", "<C-\\><C-o><Plug>(aibo-codex-transcript)", { buffer = bufnr })
-  vim.keymap.set("i", "<Home>", "<C-\\><C-o><Plug>(aibo-codex-home)", { buffer = bufnr })
-  vim.keymap.set("i", "<End>", "<C-\\><C-o><Plug>(aibo-codex-end)", { buffer = bufnr })
-  vim.keymap.set("i", "<PageUp>", "<C-\\><C-o><Plug>(aibo-codex-page-up)", { buffer = bufnr })
-  vim.keymap.set("i", "<PageDown>", "<C-\\><C-o><Plug>(aibo-codex-page-down)", { buffer = bufnr })
 end
