@@ -4,7 +4,8 @@
 local M = {}
 
 -- Get test directory
-local test_dir = debug.getinfo(1, "S").source:sub(2):match("(.*/)") or "./"
+local test_file = debug.getinfo(1, "S").source:sub(2)
+local test_dir = vim.fn.fnamemodify(test_file, ":h")
 local project_root = vim.fn.fnamemodify(test_dir, ":h")
 
 -- Add project root to runtimepath and package.path
@@ -58,7 +59,7 @@ local errors = {}
 
 -- Simple test runner
 for _, file in ipairs(test_files) do
-  local test_path = test_dir .. file .. ".lua"
+  local test_path = test_dir .. "/" .. file .. ".lua"
   local ok, test_set = pcall(dofile, test_path)
 
   if ok and test_set then
