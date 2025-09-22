@@ -252,9 +252,23 @@ vim.api.nvim_create_user_command("AiboSend", function(cmd_opts)
     end
   end
 
+  -- Check if a range was explicitly provided
+  -- When no range is given, line1 == line2 == current line
+  -- In that case, send the whole buffer
+  local line1, line2
+  if cmd_opts.range == 0 then
+    -- No range provided, send whole buffer
+    line1 = nil
+    line2 = nil
+  else
+    -- Range provided, use it
+    line1 = cmd_opts.line1
+    line2 = cmd_opts.line2
+  end
+
   require("aibo.internal.send").send({
-    line1 = cmd_opts.line1,
-    line2 = cmd_opts.line2,
+    line1 = line1,
+    line2 = line2,
     input = input,
     submit = submit,
     replace = replace,

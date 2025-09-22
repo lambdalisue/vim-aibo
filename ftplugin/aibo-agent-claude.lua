@@ -31,10 +31,6 @@ vim.keymap.set({ "n", "i" }, "<Plug>(aibo-claude-undo)", function()
   aibo.send(CLAUDE_CODES.undo, bufnr)
 end, { buffer = bufnr, desc = "Undo (Ctrl+Y)" })
 
-vim.keymap.set({ "n", "i" }, "<Plug>(aibo-claude-suspend)", function()
-  aibo.send(CLAUDE_CODES.suspend, bufnr)
-end, { buffer = bufnr, desc = "Suspend (Ctrl+Z)" })
-
 vim.keymap.set({ "n", "i" }, "<Plug>(aibo-claude-paste)", function()
   aibo.send(CLAUDE_CODES.paste, bufnr)
 end, { buffer = bufnr, desc = "Paste (Ctrl+V)" })
@@ -60,7 +56,6 @@ if not (cfg and cfg.no_default_mappings) then
   vim.keymap.set({ "n", "i" }, "<C-t>", "<Plug>(aibo-claude-todo)", { buffer = bufnr })
   vim.keymap.set({ "n", "i" }, "<C-_>", "<Plug>(aibo-claude-undo)", { buffer = bufnr })
   vim.keymap.set({ "n", "i" }, "<C-->", "<Plug>(aibo-claude-undo)", { buffer = bufnr })
-  vim.keymap.set({ "n", "i" }, "<C-z>", "<Plug>(aibo-claude-suspend)", { buffer = bufnr })
   vim.keymap.set({ "n", "i" }, "<C-v>", "<Plug>(aibo-claude-paste)", { buffer = bufnr })
   vim.keymap.set("n", "?", "<Plug>(aibo-claude-shortcuts)", { buffer = bufnr })
   vim.keymap.set("n", "!", "<Plug>(aibo-claude-bash-mode)", { buffer = bufnr })

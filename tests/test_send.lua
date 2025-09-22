@@ -45,7 +45,7 @@ local test_set = T.new_set({
 test_set["AiboSend command exists"] = function()
   local commands = vim.api.nvim_get_commands({})
   T.expect.equality(commands["AiboSend"] ~= nil, true)
-  T.expect.equality(commands["AiboSend"].range, ".")  -- range returns "." string not true
+  T.expect.equality(commands["AiboSend"].range, ".") -- range returns "." string not true
   T.expect.equality(commands["AiboSend"].nargs, "*")
 end
 

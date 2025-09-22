@@ -85,7 +85,6 @@ local function send_to_prompt(content, prompt_bufnr, replace)
     lines = content
   end
 
-
   if replace then
     -- Replace entire buffer content
     vim.api.nvim_buf_set_lines(prompt_bufnr, 0, -1, false, lines)
@@ -93,7 +92,7 @@ local function send_to_prompt(content, prompt_bufnr, replace)
     -- Get existing content in prompt buffer
     local existing = vim.api.nvim_buf_get_lines(prompt_bufnr, 0, -1, false)
 
-    -- If prompt buffer is not empty, append to existing content
+    -- If prompt buffer is empty (single empty line), replace it
     if #existing == 1 and existing[1] == "" then
       vim.api.nvim_buf_set_lines(prompt_bufnr, 0, -1, false, lines)
     else
