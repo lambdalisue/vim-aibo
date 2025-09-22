@@ -146,30 +146,30 @@ function M.get_command_completions(arglead, cmdline, cursorpos)
   local parts = parse_command(cmdline)
   local part_count = #parts
 
-  -- Position 2: After "Aibo ollama"
-  if part_count == 2 then
+  -- Position 1: After "ollama"
+  if part_count == 1 then
     if has_trailing_space or arglead == "" then
       -- Complete the subcommand "run"
       table.insert(completions, "run")
     end
 
-  -- Position 3: After "Aibo ollama [run|partial]"
-  elseif part_count == 3 then
-    local third_arg = parts[3]
+  -- Position 2: After "ollama [run|partial]"
+  elseif part_count == 2 then
+    local second_arg = parts[2]
 
-    if third_arg ~= "run" then
+    if second_arg ~= "run" then
       -- Complete partial "run" command
-      if string.find("run", "^" .. vim.pesc(third_arg)) then
+      if string.find("run", "^" .. vim.pesc(second_arg)) then
         table.insert(completions, "run")
       end
     elseif has_trailing_space or arglead == "" then
-      -- After "Aibo ollama run " - show models and flags
+      -- After "ollama run " - show models and flags
       add_model_completions(completions, "")
       add_flag_completions(completions, "")
     end
 
-  -- Position 4+: After "Aibo ollama run ..."
-  elseif part_count >= 4 and parts[3] == "run" then
+  -- Position 3+: After "ollama run ..."
+  elseif part_count >= 3 and parts[2] == "run" then
     if arglead ~= "" then
       -- Completing a partial argument - could be model or flag
       add_model_completions(completions, arglead)

@@ -170,7 +170,7 @@ function M.get_command_completions(arglead, cmdline, cursorpos)
   local part_count = #parts
 
   -- Check if we're completing a value for the previous argument
-  if part_count >= 3 then
+  if part_count >= 2 then
     local prev_arg
     if arglead == parts[part_count] then
       -- We're completing the current partial argument

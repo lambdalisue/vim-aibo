@@ -40,17 +40,17 @@ test_set["Ollama run subcommand completion"] = function()
   local ollama = require("aibo.integration.ollama")
 
   -- Test completing "run" after "ollama"
-  local completions = ollama.get_command_completions("", "Aibo ollama ", 12)
+  local completions = ollama.get_command_completions("", "ollama ", 7)
   T.expect.equality(#completions, 1)
   T.expect.equality(completions[1], "run")
 
   -- Test partial "run" completion
-  completions = ollama.get_command_completions("r", "Aibo ollama r", 13)
+  completions = ollama.get_command_completions("r", "ollama r", 8)
   T.expect.equality(#completions, 1)
   T.expect.equality(completions[1], "run")
 
   -- Test with "ru"
-  completions = ollama.get_command_completions("ru", "Aibo ollama ru", 14)
+  completions = ollama.get_command_completions("ru", "ollama ru", 9)
   T.expect.equality(#completions, 1)
   T.expect.equality(completions[1], "run")
 end
@@ -71,19 +71,19 @@ qwen3:latest          ghi789          5.2 GB    3 months ago]],
   })
 
   -- Test completing models after "run"
-  local completions = ollama.get_command_completions("", "Aibo ollama run ", 16)
+  local completions = ollama.get_command_completions("", "ollama run ", 11)
   T.expect.equality(vim.tbl_contains(completions, "llama3:latest"), true)
   T.expect.equality(vim.tbl_contains(completions, "mistral:latest"), true)
   T.expect.equality(vim.tbl_contains(completions, "qwen3:latest"), true)
   T.expect.equality(vim.tbl_contains(completions, "--format"), true) -- Should also include flags
 
   -- Test partial model completion
-  completions = ollama.get_command_completions("ll", "Aibo ollama run ll", 18)
+  completions = ollama.get_command_completions("ll", "ollama run ll", 13)
   T.expect.equality(vim.tbl_contains(completions, "llama3:latest"), true)
   T.expect.equality(vim.tbl_contains(completions, "mistral:latest"), false)
 
   -- Test completion starting with "q"
-  completions = ollama.get_command_completions("q", "Aibo ollama run q", 17)
+  completions = ollama.get_command_completions("q", "ollama run q", 12)
   T.expect.equality(vim.tbl_contains(completions, "qwen3:latest"), true)
   T.expect.equality(vim.tbl_contains(completions, "llama3:latest"), false)
 
@@ -103,19 +103,19 @@ test_set["Ollama flag completions"] = function()
   })
 
   -- Test flag completion after model
-  local completions = ollama.get_command_completions("", "Aibo ollama run llama3:latest ", 31)
+  local completions = ollama.get_command_completions("", "ollama run llama3:latest ", 26)
   T.expect.equality(vim.tbl_contains(completions, "--format"), true)
   T.expect.equality(vim.tbl_contains(completions, "--verbose"), true)
   T.expect.equality(vim.tbl_contains(completions, "--keepalive"), true)
   T.expect.equality(vim.tbl_contains(completions, "--think"), true)
 
   -- Test partial flag completion
-  completions = ollama.get_command_completions("--v", "Aibo ollama run llama3:latest --v", 34)
+  completions = ollama.get_command_completions("--v", "ollama run llama3:latest --v", 29)
   T.expect.equality(vim.tbl_contains(completions, "--verbose"), true)
   T.expect.equality(vim.tbl_contains(completions, "--format"), false)
 
   -- Test flags starting with --k
-  completions = ollama.get_command_completions("--k", "Aibo ollama run llama3:latest --k", 34)
+  completions = ollama.get_command_completions("--k", "ollama run llama3:latest --k", 29)
   T.expect.equality(vim.tbl_contains(completions, "--keepalive"), true)
   T.expect.equality(vim.tbl_contains(completions, "--verbose"), false)
 
@@ -127,18 +127,18 @@ test_set["Ollama flag value completions"] = function()
   local ollama = require("aibo.integration.ollama")
 
   -- Test format value completion
-  local completions = ollama.get_command_completions("", "Aibo ollama run llama3 --format ", 33)
+  local completions = ollama.get_command_completions("", "ollama run llama3 --format ", 28)
   T.expect.equality(vim.tbl_contains(completions, "json"), true)
 
   -- Test keepalive value completion
-  completions = ollama.get_command_completions("", "Aibo ollama run llama3 --keepalive ", 36)
+  completions = ollama.get_command_completions("", "ollama run llama3 --keepalive ", 31)
   T.expect.equality(vim.tbl_contains(completions, "5m"), true)
   T.expect.equality(vim.tbl_contains(completions, "10m"), true)
   T.expect.equality(vim.tbl_contains(completions, "1h"), true)
   T.expect.equality(vim.tbl_contains(completions, "24h"), true)
 
   -- Test think value completion
-  completions = ollama.get_command_completions("", "Aibo ollama run llama3 --think ", 32)
+  completions = ollama.get_command_completions("", "ollama run llama3 --think ", 27)
   T.expect.equality(vim.tbl_contains(completions, "true"), true)
   T.expect.equality(vim.tbl_contains(completions, "false"), true)
   T.expect.equality(vim.tbl_contains(completions, "high"), true)
@@ -146,7 +146,7 @@ test_set["Ollama flag value completions"] = function()
   T.expect.equality(vim.tbl_contains(completions, "low"), true)
 
   -- Test partial value completion
-  completions = ollama.get_command_completions("h", "Aibo ollama run llama3 --think h", 33)
+  completions = ollama.get_command_completions("h", "ollama run llama3 --think h", 28)
   T.expect.equality(vim.tbl_contains(completions, "high"), true)
   T.expect.equality(vim.tbl_contains(completions, "low"), false)
 end
@@ -164,7 +164,7 @@ test_set["Ollama no models available"] = function()
   })
 
   -- Should still show flags even with no models
-  local completions = ollama.get_command_completions("", "Aibo ollama run ", 16)
+  local completions = ollama.get_command_completions("", "ollama run ", 11)
   T.expect.equality(vim.tbl_contains(completions, "--format"), true)
   T.expect.equality(vim.tbl_contains(completions, "--verbose"), true)
 

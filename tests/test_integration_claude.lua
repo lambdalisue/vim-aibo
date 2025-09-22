@@ -40,18 +40,18 @@ test_set["Claude argument completions"] = function()
   local claude = require("aibo.integration.claude")
 
   -- Test completing arguments at the start
-  local completions = claude.get_command_completions("", "Aibo claude ", 12)
+  local completions = claude.get_command_completions("", "claude ", 7)
   T.expect.equality(vim.tbl_contains(completions, "--continue"), true)
   T.expect.equality(vim.tbl_contains(completions, "--model"), true)
   T.expect.equality(vim.tbl_contains(completions, "--permission-mode"), true)
 
   -- Test completing partial argument
-  completions = claude.get_command_completions("--con", "Aibo claude --con", 17)
+  completions = claude.get_command_completions("--con", "claude --con", 12)
   T.expect.equality(vim.tbl_contains(completions, "--continue"), true)
   T.expect.equality(vim.tbl_contains(completions, "--model"), false)
 
   -- Test completing short form
-  completions = claude.get_command_completions("-c", "Aibo claude -c", 14)
+  completions = claude.get_command_completions("-c", "claude -c", 9)
   T.expect.equality(vim.tbl_contains(completions, "-c"), true)
   T.expect.equality(vim.tbl_contains(completions, "--continue"), false)
 end
@@ -61,19 +61,19 @@ test_set["Claude model value completions"] = function()
   local claude = require("aibo.integration.claude")
 
   -- Test completing model values
-  local completions = claude.get_command_completions("", "Aibo claude --model ", 20)
+  local completions = claude.get_command_completions("", "claude --model ", 15)
   T.expect.equality(vim.tbl_contains(completions, "sonnet"), true)
   T.expect.equality(vim.tbl_contains(completions, "opus"), true)
   T.expect.equality(vim.tbl_contains(completions, "haiku"), true)
   T.expect.equality(vim.tbl_contains(completions, "claude-3-5-sonnet-latest"), true)
 
   -- Test partial model completion
-  completions = claude.get_command_completions("son", "Aibo claude --model son", 23)
+  completions = claude.get_command_completions("son", "claude --model son", 18)
   T.expect.equality(vim.tbl_contains(completions, "sonnet"), true)
   T.expect.equality(vim.tbl_contains(completions, "opus"), false)
 
   -- Test with short form
-  completions = claude.get_command_completions("", "Aibo claude -m ", 15)
+  completions = claude.get_command_completions("", "claude -m ", 10)
   T.expect.equality(#completions == 0, true) -- Short form not recognized for --model
 end
 
@@ -82,14 +82,14 @@ test_set["Claude permission-mode value completions"] = function()
   local claude = require("aibo.integration.claude")
 
   -- Test completing permission modes
-  local completions = claude.get_command_completions("", "Aibo claude --permission-mode ", 31)
+  local completions = claude.get_command_completions("", "claude --permission-mode ", 26)
   T.expect.equality(vim.tbl_contains(completions, "default"), true)
   T.expect.equality(vim.tbl_contains(completions, "acceptEdits"), true)
   T.expect.equality(vim.tbl_contains(completions, "bypassPermissions"), true)
   T.expect.equality(vim.tbl_contains(completions, "plan"), true)
 
   -- Test partial completion
-  completions = claude.get_command_completions("acc", "Aibo claude --permission-mode acc", 34)
+  completions = claude.get_command_completions("acc", "claude --permission-mode acc", 29)
   T.expect.equality(vim.tbl_contains(completions, "acceptEdits"), true)
   T.expect.equality(vim.tbl_contains(completions, "default"), false)
 end
@@ -110,12 +110,12 @@ test_set["Claude file and directory completions"] = function()
   end
 
   -- Test --add-dir completion
-  local completions = claude.get_command_completions("", "Aibo claude --add-dir ", 22)
+  local completions = claude.get_command_completions("", "claude --add-dir ", 17)
   T.expect.equality(vim.tbl_contains(completions, "/home/user/"), true)
   T.expect.equality(vim.tbl_contains(completions, "/tmp/"), true)
 
   -- Test --settings completion
-  completions = claude.get_command_completions("", "Aibo claude --settings ", 23)
+  completions = claude.get_command_completions("", "claude --settings ", 18)
   T.expect.equality(vim.tbl_contains(completions, "config.json"), true)
   T.expect.equality(vim.tbl_contains(completions, "settings.json"), true)
 

@@ -42,10 +42,20 @@ _G._aibo_complete = function(arglead, cmdline, cursorpos)
 
     -- Provide tool-specific argument completions based on the AI tool
     local tool = parts[2]
+
+    -- Strip "Aibo " prefix to pass cleaner cmdline to integrations
+    -- This allows adding Aibo options between "Aibo" and the tool name in the future
+    -- e.g., "Aibo --opener split ollama run ..." -> "ollama run ..."
+    local tool_cmdline = cmdline:gsub("^Aibo%s+", "")
+    local tool_cursorpos = cursorpos - #("Aibo ")
+    if tool_cursorpos < 0 then
+      tool_cursorpos = 0
+    end
+
     if tool == "claude" then
       local ok, integration = pcall(require, "aibo.integration.claude")
       if ok and integration.get_command_completions then
-        local comp_ok, completions = pcall(integration.get_command_completions, arglead, cmdline, cursorpos)
+        local comp_ok, completions = pcall(integration.get_command_completions, arglead, tool_cmdline, tool_cursorpos)
         if comp_ok then
           return completions
         end
@@ -53,7 +63,7 @@ _G._aibo_complete = function(arglead, cmdline, cursorpos)
     elseif tool == "codex" then
       local ok, integration = pcall(require, "aibo.integration.codex")
       if ok and integration.get_command_completions then
-        local comp_ok, completions = pcall(integration.get_command_completions, arglead, cmdline, cursorpos)
+        local comp_ok, completions = pcall(integration.get_command_completions, arglead, tool_cmdline, tool_cursorpos)
         if comp_ok then
           return completions
         end
@@ -61,7 +71,7 @@ _G._aibo_complete = function(arglead, cmdline, cursorpos)
     elseif tool == "ollama" then
       local ok, integration = pcall(require, "aibo.integration.ollama")
       if ok and integration.get_command_completions then
-        local comp_ok, completions = pcall(integration.get_command_completions, arglead, cmdline, cursorpos)
+        local comp_ok, completions = pcall(integration.get_command_completions, arglead, tool_cmdline, tool_cursorpos)
         if comp_ok then
           return completions
         end
