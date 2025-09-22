@@ -63,7 +63,11 @@ end
 ---Follow terminal output to bottom
 ---@param winid integer Window ID
 ---@return nil
-local function follow(winid)
+local function follow(bufnr)
+  local winid = vim.fn.bufwinid(bufnr)
+  if winid == -1 then
+    return
+  end
   vim.api.nvim_win_call(winid, function()
     vim.cmd("normal! G")
   end)
@@ -155,7 +159,7 @@ function M.open(cmd, args, opener, stay)
     args = args,
     controller = controller,
     follow = function()
-      follow(winid)
+      follow(bufnr)
     end,
   }
 
