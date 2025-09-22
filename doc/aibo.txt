@@ -342,22 +342,25 @@ Prompt buffer mappings:
 	:w		Submit content (command)
 	:wq		Submit and close (command)
 
-Claude agent mappings (normal mode):
+Claude agent mappings (normal and insert mode):
 	<S-Tab>		Switch mode
 	<F2>		Switch mode (alternative)
 	<C-o>		Toggle verbose
 	<C-t>		Show todo
-	<C-_>		Undo
+	<C-_>		Undo (also <C-->)
 	<C-z>		Suspend
 	<C-v>		Paste
+	?		Show shortcuts
+	!		Enter bash mode
+	#		Memorize context
 
-Codex agent mappings (normal mode):
-	<C-t>		Show transcript
-	<Home>		Move to beginning
-	<End>		Move to end
-	<PageUp>	Page up
-	<PageDown>	Page down
-	q		Quit
+Codex agent mappings:
+	<C-t>		Show transcript (normal/insert mode)
+	<Home>		Move to beginning (normal/insert mode)
+	<End>		Move to end (normal/insert mode)
+	<PageUp>	Page up (normal/insert mode)
+	<PageDown>	Page down (normal/insert mode)
+	q		Quit (normal mode only)
 
 Note: Some key combinations require modern terminal emulators. Use
 alternatives like <F5> if certain combinations don't work.
@@ -403,6 +406,9 @@ Claude agent <Plug> mappings~
 	<Plug>(aibo-claude-undo)		Undo
 	<Plug>(aibo-claude-suspend)		Suspend
 	<Plug>(aibo-claude-paste)		Paste
+	<Plug>(aibo-claude-shortcuts)		Show shortcuts
+	<Plug>(aibo-claude-bash-mode)		Enter bash mode
+	<Plug>(aibo-claude-memorize)		Memorize context
 
 						*aibo-plug-codex*
 Codex agent <Plug> mappings~
