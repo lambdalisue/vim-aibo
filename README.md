@@ -36,6 +36,7 @@ Use your preferred plugin manager.
 ```lua
 {
   'lambdalisue/nvim-aibo',
+  -- Optional: setup can be omitted for default configuration
   config = function()
     require('aibo').setup()
   end,
@@ -47,11 +48,16 @@ Use your preferred plugin manager.
 ```lua
 use {
   'lambdalisue/nvim-aibo',
+  -- Optional: setup can be omitted for default configuration
   config = function()
     require('aibo').setup()
   end,
 }
 ```
+
+## Health Check
+
+Run `:checkhealth aibo` to verify your installation and diagnose any issues.
 
 ## Usage
 
@@ -82,6 +88,9 @@ require('aibo').setup({
 ```
 
 ### Advanced Configuration
+
+The plugin works without any configuration, but you can customize it using `setup()`.
+The setup function can be called multiple times to update configuration:
 
 ```lua
 require('aibo').setup({

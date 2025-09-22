@@ -16,6 +16,7 @@ INTERFACE				|aibo-interface|
   FUNCTIONS				|aibo-functions|
   KEY MAPPINGS				|aibo-key-mappings|
   PLUG MAPPINGS				|aibo-plug-mappings|
+HEALTH CHECK				|aibo-health|
 FAQ					|aibo-faq|
 
 =============================================================================
@@ -69,11 +70,22 @@ prompt buffer.
 =============================================================================
 CONFIGURATION					*aibo-configuration*
 
-Call |aibo.setup()| in your configuration to initialize the plugin:
+The plugin works out of the box without any configuration. Optionally, you
+can call |aibo.setup()| in your configuration to customize the plugin.
+The setup function can be called multiple times to update configuration:
 >
 	require('aibo').setup({
 	  submit_delay = 100,    -- Delay before submit in ms (default: 100)
 	  prompt_height = 10,    -- Height of prompt window (default: 10)
+	})
+
+	-- Can be called again later to update configuration
+	require('aibo').setup({
+	  agents = {
+	    claude = {
+	      no_default_mappings = true,
+	    },
+	  },
 	})
 <
 Full configuration structure:
@@ -254,7 +266,9 @@ FUNCTIONS					*aibo-functions*
 
 						*aibo.setup()*
 aibo.setup({config})
-	Configure the plugin. Call this once in your init.lua or init.vim:
+	Configure the plugin. Optional - the plugin works with defaults if
+	not called. Can be called multiple times to update configuration.
+	Each call merges the new options with the existing configuration.
 >
 		require('aibo').setup({
 		  submit_delay = 100,
@@ -427,6 +441,22 @@ Example usage:
 	vim.keymap.set('n', '<leader>m', '<Plug>(aibo-claude-mode)',
 	               { buffer = bufnr })
 <
+
+=============================================================================
+HEALTH CHECK					*aibo-health*
+
+Run `:checkhealth aibo` to diagnose your aibo.nvim installation.
+
+The health check will verify:
+- Neovim version compatibility (0.10.0+)
+- Plugin installation status
+- Configuration loading
+- Available AI agent CLI tools
+- Terminal feature support
+- Ftplugin file presence
+
+This is useful for troubleshooting issues with the plugin or verifying that
+your environment is properly configured for using aibo.nvim.
 
 =============================================================================
 FAQ						*aibo-faq*
