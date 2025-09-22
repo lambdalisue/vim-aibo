@@ -287,35 +287,37 @@ test_set["AiboSend moves cursor to end of prompt"] = function()
   vim.api.nvim_set_current_buf(test_buf)
   vim.api.nvim_buf_set_lines(test_buf, 0, -1, false, { "line1", "line2 with more content" })
 
-  -- Run AiboSend
-  vim.cmd("AiboSend")
-
-  -- Get prompt buffer
+  -- Get prompt buffer name
   local prompt_bufname = string.format("aiboprompt://%d", console_win)
+
+  -- Open prompt buffer in a window BEFORE sending to test cursor positioning
   local prompt_buf = vim.fn.bufnr(prompt_bufname)
-
-  -- Open prompt buffer in a window to check cursor
-  if prompt_buf ~= -1 then
-    local prompt_win = vim.api.nvim_open_win(prompt_buf, true, {
-      relative = "editor",
-      width = 40,
-      height = 10,
-      row = 0,
-      col = 45,
-    })
-
-    -- Check cursor position
-    local cursor = vim.api.nvim_win_get_cursor(prompt_win)
-    T.expect.equality(cursor[1], 2) -- Should be on last line
-    -- The column should be at the end of the last line
-    local last_line = vim.api.nvim_buf_get_lines(prompt_buf, 1, 2, false)[1]
-    T.expect.equality(cursor[2], vim.fn.strdisplaywidth(last_line))
-
-    -- Clean up
-    vim.api.nvim_win_close(prompt_win, true)
+  if prompt_buf == -1 then
+    -- Create prompt buffer if it doesn't exist yet
+    prompt_buf = vim.api.nvim_create_buf(false, true)
+    vim.api.nvim_buf_set_name(prompt_buf, prompt_bufname)
   end
 
+  -- Open prompt buffer in a window
+  vim.cmd("vsplit")
+  vim.api.nvim_set_current_buf(prompt_buf)
+  local prompt_win = vim.api.nvim_get_current_win()
+
+  -- Go back to test buffer
+  vim.cmd("wincmd p")
+
+  -- Run AiboSend - this should position cursor in the existing prompt window
+  vim.cmd("AiboSend")
+
+  -- Check cursor position in the prompt window
+  local cursor = vim.api.nvim_win_get_cursor(prompt_win)
+  T.expect.equality(cursor[1], 2) -- Should be on last line (line 2)
+  -- The column should be at the end of the last line
+  local last_line = vim.api.nvim_buf_get_lines(prompt_buf, 1, 2, false)[1]
+  T.expect.equality(cursor[2], vim.fn.strdisplaywidth(last_line))
+
   -- Clean up
+  vim.api.nvim_win_close(prompt_win, true)
   vim.api.nvim_win_close(console_win, true)
 end
 
