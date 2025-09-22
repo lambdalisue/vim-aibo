@@ -45,7 +45,7 @@ local test_set = T.new_set({
 test_set["AiboSend command exists"] = function()
   local commands = vim.api.nvim_get_commands({})
   T.expect.equality(commands["AiboSend"] ~= nil, true)
-  T.expect.equality(commands["AiboSend"].range, true)
+  T.expect.equality(commands["AiboSend"].range, ".")  -- range returns "." string not true
   T.expect.equality(commands["AiboSend"].nargs, "*")
 end
 
@@ -96,14 +96,11 @@ test_set["AiboSend with single console"] = function()
     args = { "arg1" },
   }
 
-  -- Open console in a window
-  local console_win = vim.api.nvim_open_win(console_buf, false, {
-    relative = "editor",
-    width = 40,
-    height = 10,
-    row = 0,
-    col = 0,
-  })
+  -- Open console in a window (use normal split, not floating window)
+  vim.cmd("split")
+  vim.api.nvim_set_current_buf(console_buf)
+  local console_win = vim.api.nvim_get_current_win()
+  vim.cmd("wincmd p") -- Go back to previous window
 
   -- Create a test buffer with content
   local test_buf = vim.api.nvim_create_buf(false, true)
@@ -142,14 +139,11 @@ test_set["AiboSend with range"] = function()
     args = {},
   }
 
-  -- Open console in a window
-  local console_win = vim.api.nvim_open_win(console_buf, false, {
-    relative = "editor",
-    width = 40,
-    height = 10,
-    row = 0,
-    col = 0,
-  })
+  -- Open console in a window (use normal split, not floating window)
+  vim.cmd("split")
+  vim.api.nvim_set_current_buf(console_buf)
+  local console_win = vim.api.nvim_get_current_win()
+  vim.cmd("wincmd p") -- Go back to previous window
 
   -- Create a test buffer with content
   local test_buf = vim.api.nvim_create_buf(false, true)
@@ -235,14 +229,11 @@ test_set["AiboSend with both options shows warning"] = function()
     args = {},
   }
 
-  -- Open console in a window
-  local console_win = vim.api.nvim_open_win(console_buf, false, {
-    relative = "editor",
-    width = 40,
-    height = 10,
-    row = 0,
-    col = 0,
-  })
+  -- Open console in a window (use normal split, not floating window)
+  vim.cmd("split")
+  vim.api.nvim_set_current_buf(console_buf)
+  local console_win = vim.api.nvim_get_current_win()
+  vim.cmd("wincmd p") -- Go back to previous window
 
   -- Create a test buffer with content
   local test_buf = vim.api.nvim_create_buf(false, true)
@@ -285,14 +276,11 @@ test_set["AiboSend moves cursor to end of prompt"] = function()
     args = {},
   }
 
-  -- Open console in a window
-  local console_win = vim.api.nvim_open_win(console_buf, false, {
-    relative = "editor",
-    width = 40,
-    height = 10,
-    row = 0,
-    col = 0,
-  })
+  -- Open console in a window (use normal split, not floating window)
+  vim.cmd("split")
+  vim.api.nvim_set_current_buf(console_buf)
+  local console_win = vim.api.nvim_get_current_win()
+  vim.cmd("wincmd p") -- Go back to previous window
 
   -- Create a test buffer with content
   local test_buf = vim.api.nvim_create_buf(false, true)
@@ -342,14 +330,11 @@ test_set["AiboSend appends to existing prompt content"] = function()
     args = {},
   }
 
-  -- Open console in a window
-  local console_win = vim.api.nvim_open_win(console_buf, false, {
-    relative = "editor",
-    width = 40,
-    height = 10,
-    row = 0,
-    col = 0,
-  })
+  -- Open console in a window (use normal split, not floating window)
+  vim.cmd("split")
+  vim.api.nvim_set_current_buf(console_buf)
+  local console_win = vim.api.nvim_get_current_win()
+  vim.cmd("wincmd p") -- Go back to previous window
 
   -- Create a test buffer with content
   local test_buf = vim.api.nvim_create_buf(false, true)

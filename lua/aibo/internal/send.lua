@@ -85,6 +85,7 @@ local function send_to_prompt(content, prompt_bufnr, replace)
     lines = content
   end
 
+
   if replace then
     -- Replace entire buffer content
     vim.api.nvim_buf_set_lines(prompt_bufnr, 0, -1, false, lines)

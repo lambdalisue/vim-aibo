@@ -11,6 +11,10 @@ vim.wo.number = false
 vim.wo.relativenumber = false
 vim.wo.signcolumn = "no"
 
+-- Avoid "Cannot make changes, 'modifiable' is off" errors on o/O
+vim.keymap.set("n", "o", "i", { buffer = bufnr, desc = "Enter insert mode" })
+vim.keymap.set("n", "O", "i", { buffer = bufnr, desc = "Enter insert mode" })
+
 vim.keymap.set("n", "<Plug>(aibo-console-submit)", function()
   aibo.submit("", bufnr)
 end, { buffer = bufnr, desc = "Submit empty message" })

@@ -60,14 +60,11 @@ test_set["AiboSend -replace replaces prompt content"] = function()
     args = {},
   }
 
-  -- Open console in a window
-  local console_win = vim.api.nvim_open_win(console_buf, false, {
-    relative = "editor",
-    width = 40,
-    height = 10,
-    row = 0,
-    col = 0,
-  })
+  -- Open console in a window (use normal split, not floating window)
+  vim.cmd("split")
+  vim.api.nvim_set_current_buf(console_buf)
+  local console_win = vim.api.nvim_get_current_win()
+  vim.cmd("wincmd p") -- Go back to previous window
 
   -- Create a test buffer with content
   local test_buf = vim.api.nvim_create_buf(false, true)
@@ -116,14 +113,11 @@ test_set["AiboSend append vs replace behavior"] = function()
     args = {},
   }
 
-  -- Open console in a window
-  local console_win = vim.api.nvim_open_win(console_buf, false, {
-    relative = "editor",
-    width = 40,
-    height = 10,
-    row = 0,
-    col = 0,
-  })
+  -- Open console in a window (use normal split, not floating window)
+  vim.cmd("split")
+  vim.api.nvim_set_current_buf(console_buf)
+  local console_win = vim.api.nvim_get_current_win()
+  vim.cmd("wincmd p") -- Go back to previous window
 
   -- Create a test buffer
   local test_buf = vim.api.nvim_create_buf(false, true)
@@ -187,14 +181,11 @@ test_set["AiboSend -replace with range"] = function()
     args = {},
   }
 
-  -- Open console in a window
-  local console_win = vim.api.nvim_open_win(console_buf, false, {
-    relative = "editor",
-    width = 40,
-    height = 10,
-    row = 0,
-    col = 0,
-  })
+  -- Open console in a window (use normal split, not floating window)
+  vim.cmd("split")
+  vim.api.nvim_set_current_buf(console_buf)
+  local console_win = vim.api.nvim_get_current_win()
+  vim.cmd("wincmd p") -- Go back to previous window
 
   -- Create a test buffer with multiple lines
   local test_buf = vim.api.nvim_create_buf(false, true)
