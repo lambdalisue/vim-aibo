@@ -255,12 +255,95 @@ COMMANDS					*aibo-commands*
 	Opens a terminal console running the command and creates a prompt
 	buffer for user input.
 
-	The command accepts additional arguments to pass to the AI agent:
+	Examples:
 >
 		:Aibo claude
-		:Aibo claude --profile development
-		:Aibo codex
+		:Aibo claude --continue
+		:Aibo claude --model sonnet
+		:Aibo claude --permission-mode plan
+		:Aibo codex --model claude-3.5-sonnet
+		:Aibo codex resume --last
+		:Aibo ollama run llama3
+		:Aibo ollama run qwen3:latest --verbose
 <
+						*aibo-completion*
+	Intelligent Command Completion~
+
+	The plugin provides comprehensive tab completion for all AI tools:
+
+	- Tool names: Press <Tab> after ":Aibo " to see available tools
+	- Subcommands: Complete subcommands (e.g., "run" for ollama)
+	- Arguments: Complete available flags and options
+	- Values: Complete predefined values (models, modes, etc.)
+	- Models: For ollama, auto-completes installed model names
+	- Files/Directories: Smart completion for file arguments
+
+	Completion examples:
+>
+		:Aibo <Tab>                  " Shows: claude, codex, ollama
+		:Aibo claude --<Tab>         " Shows all Claude arguments
+		:Aibo claude --model <Tab>   " Shows: sonnet, opus, haiku...
+		:Aibo ollama <Tab>           " Shows: run
+		:Aibo ollama run <Tab>       " Shows models and flags
+		:Aibo ollama run q<Tab>      " Completes to: qwen3:latest
+		:Aibo codex --sandbox <Tab>  " Shows: none, read-only...
+<
+						*aibo-claude-arguments*
+	Claude Arguments~
+
+	--continue, -c        Continue the most recent conversation
+	--resume, -r {id}     Resume a specific conversation
+	--fork-session        Create new session ID when resuming
+	--verbose             Override verbose mode setting
+	--model {model}       Choose model:
+	                      sonnet, opus, haiku,
+	                      claude-3-5-sonnet-latest,
+	                      claude-3-5-haiku-latest,
+	                      claude-3-opus-latest
+	--permission-mode {m} Permission mode:
+	                      default, acceptEdits,
+	                      bypassPermissions, plan
+	--add-dir {dir}       Additional directories for tool access
+	--ide                 Auto-connect to IDE on startup
+	--settings {file}     Path to settings JSON file
+	--allowed-tools       Comma-separated list of allowed tools
+	--disallowed-tools    Comma-separated list of denied tools
+
+						*aibo-codex-arguments*
+	Codex Arguments~
+
+	--model, -m {model}   Choose model:
+	                      o3, claude-3.5-sonnet,
+	                      gpt-4-turbo, gemini-pro
+	--config, -c {val}    Override configuration value
+	--profile, -p {name}  Configuration profile from config.toml
+	--sandbox, -s {mode}  Sandbox policy:
+	                      none, read-only, restricted, full
+	--oss                 Use local Ollama provider
+	--image, -i {file}    Attach image(s) to initial prompt
+	resume                Resume a previous session
+	resume --last         Resume the most recent session
+
+						*aibo-ollama-arguments*
+	Ollama Arguments~
+
+	Ollama requires the "run" subcommand followed by a model name:
+>
+		:Aibo ollama run llama3.2
+		:Aibo ollama run mistral --verbose
+<
+	Models are auto-completed from locally installed models.
+	Use "ollama list" to see available models.
+
+	Options:
+	--format {fmt}        Response format (e.g., json)
+	--hidethinking        Hide thinking output
+	--keepalive {dur}     Duration to keep model loaded:
+	                      5m, 10m, 30m, 1h, 24h
+	--nowordwrap          Don't wrap words automatically
+	--think {level}       Enable thinking mode:
+	                      true, false, high, medium, low
+	--verbose             Show response timings
 -----------------------------------------------------------------------------
 FUNCTIONS					*aibo-functions*
 

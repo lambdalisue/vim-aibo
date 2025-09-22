@@ -33,14 +33,45 @@ end, {
   nargs = "+",
   desc = "Start an AI bot session",
   complete = function(arglead, cmdline, cursorpos)
-    -- Basic completion for common AI tools
-    local completions = { "claude", "codex", "gh", "ollama" }
-    if arglead == "" then
-      return completions
+    -- Parse command line to get the AI tool
+    local parts = vim.split(cmdline, "%s+")
+
+    -- If we're still on the first argument (the AI tool name)
+    -- Only complete tool names if we're at position 2 or if parts[2] isn't a known tool
+    local known_tools = { "claude", "codex", "ollama" }
+    local is_known_tool = vim.tbl_contains(known_tools, parts[2] or "")
+
+    if #parts <= 2 or (not is_known_tool and arglead:match("^%w")) then
+      -- Basic completion for common AI tools
+      if arglead == "" then
+        return known_tools
+      end
+      return vim.tbl_filter(function(val)
+        return val:find("^" .. vim.pesc(arglead))
+      end, known_tools)
     end
-    return vim.tbl_filter(function(val)
-      return val:find("^" .. vim.pesc(arglead))
-    end, completions)
+
+    -- Provide tool-specific argument completions based on the AI tool
+    local tool = parts[2]
+    if tool == "claude" then
+      local ok, integration = pcall(require, "aibo.integration.claude")
+      if ok then
+        return integration.get_command_completions(arglead, cmdline, cursorpos)
+      end
+    elseif tool == "codex" then
+      local ok, integration = pcall(require, "aibo.integration.codex")
+      if ok then
+        return integration.get_command_completions(arglead, cmdline, cursorpos)
+      end
+    elseif tool == "ollama" then
+      local ok, integration = pcall(require, "aibo.integration.ollama")
+      if ok then
+        return integration.get_command_completions(arglead, cmdline, cursorpos)
+      end
+    end
+
+    -- No completions for unknown tools
+    return {}
   end,
 })
 

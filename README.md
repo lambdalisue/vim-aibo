@@ -66,8 +66,35 @@ Start an AI session:
 ```vim
 :Aibo claude
 :Aibo claude --continue
+:Aibo claude --model sonnet
+:Aibo claude --permission-mode plan
 :Aibo codex
+:Aibo codex --model claude-3.5-sonnet
+:Aibo codex resume --last
 :Aibo ollama run llama3
+:Aibo ollama run qwen3:latest --verbose
+```
+
+### Intelligent Command Completion
+
+The plugin provides comprehensive tab completion for all supported AI tools:
+
+- **Tool names**: Press `<Tab>` after `:Aibo ` to see available tools (claude, codex, ollama)
+- **Subcommands**: For ollama, complete `run` subcommand
+- **Arguments**: Complete available flags and options for each tool
+- **Values**: Complete predefined values for arguments (models, modes, etc.)
+- **Models**: For ollama, automatically completes locally installed model names
+- **Files/Directories**: Intelligent completion for file and directory arguments
+
+Examples:
+```vim
+:Aibo <Tab>                     " Shows: claude, codex, ollama
+:Aibo claude --<Tab>            " Shows all Claude arguments
+:Aibo claude --model <Tab>      " Shows: sonnet, opus, haiku, etc.
+:Aibo ollama <Tab>              " Shows: run
+:Aibo ollama run <Tab>          " Shows installed models and flags
+:Aibo ollama run qwen<Tab>      " Completes to: qwen3:latest
+:Aibo codex --sandbox <Tab>     " Shows: none, read-only, restricted, full
 ```
 
 This opens a terminal console running the AI agent with a prompt buffer below.
