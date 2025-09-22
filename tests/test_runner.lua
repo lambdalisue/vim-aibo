@@ -7,8 +7,9 @@ local M = {}
 local test_dir = debug.getinfo(1, "S").source:sub(2):match("(.*/)") or "./"
 local project_root = vim.fn.fnamemodify(test_dir, ":h")
 
--- Add project root to runtimepath
+-- Add project root to runtimepath and package.path
 vim.opt.runtimepath:prepend(project_root)
+package.path = project_root .. "/lua/?.lua;" .. project_root .. "/lua/?/init.lua;" .. package.path
 
 -- Load the plugin to register commands and setup
 vim.cmd("runtime plugin/aibo.lua")
