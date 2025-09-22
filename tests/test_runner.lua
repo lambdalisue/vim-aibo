@@ -10,6 +10,9 @@ local project_root = vim.fn.fnamemodify(test_dir, ":h")
 -- Add project root to runtimepath
 vim.opt.runtimepath:prepend(project_root)
 
+-- Load the plugin to register commands and setup
+vim.cmd("runtime plugin/aibo.lua")
+
 -- Bootstrap mini.nvim if not installed
 local mini_path = vim.fn.stdpath("data") .. "/site/pack/deps/start/mini.nvim"
 if not vim.loop.fs_stat(mini_path) then
