@@ -66,8 +66,15 @@ end
 ---@param cmd string Command to execute
 ---@param args string[] Arguments for command
 ---@param opener? string Optional window opener command (e.g., "20vsplit", "tabedit")
+---@param stay? boolean Whether to stay in the original window after opening
 ---@return nil
-function M.open(cmd, args, opener)
+function M.open(cmd, args, opener, stay)
+  -- Save the current window if we need to stay
+  local orig_win = nil
+  if stay then
+    orig_win = vim.api.nvim_get_current_win()
+  end
+
   local open_cmd = opener or ""
   if open_cmd ~= "" then
     open_cmd = open_cmd .. " | "
@@ -133,10 +140,16 @@ function M.open(cmd, args, opener)
   if agent_cfg.on_attach then
     agent_cfg.on_attach(bufnr, info)
   end
+
   vim.cmd("stopinsert")
 
   follow(winid)
   InsertEnter()
+
+  -- Restore focus to original window if stay option is set
+  if stay and orig_win and vim.api.nvim_win_is_valid(orig_win) then
+    vim.api.nvim_set_current_win(orig_win)
+  end
 end
 
 return M

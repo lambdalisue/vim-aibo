@@ -50,10 +50,14 @@ _G._aibo_complete = function(arglead, cmdline, cursorpos)
     end, openers)
   end
 
-  -- Skip -opener=... when looking for the tool
+  -- Skip options when looking for the tool
   local tool_index = 2
-  if parts[2] and parts[2]:match("^-opener=") then
-    tool_index = 3
+  for i = 2, #parts do
+    if parts[i] and (parts[i]:match("^-opener=") or parts[i] == "-stay") then
+      tool_index = i + 1
+    else
+      break
+    end
   end
 
   -- If we're still on the first argument (the AI tool name)
@@ -62,9 +66,26 @@ _G._aibo_complete = function(arglead, cmdline, cursorpos)
   local is_known_tool = vim.tbl_contains(known_tools, parts[tool_index] or "")
 
   if #parts <= tool_index or (not is_known_tool and arglead:match("^%w")) then
-    -- Also offer -opener= if we're at the beginning
-    if #parts == 2 and arglead:match("^%-") then
-      return { "-opener=" }
+    -- Also offer options if we're at the beginning
+    if arglead:match("^%-") then
+      local options = {}
+      -- Check which options haven't been used yet
+      local has_opener = false
+      local has_stay = false
+      for _, part in ipairs(parts) do
+        if part:match("^-opener=") then
+          has_opener = true
+        elseif part == "-stay" then
+          has_stay = true
+        end
+      end
+      if not has_opener then
+        table.insert(options, "-opener=")
+      end
+      if not has_stay then
+        table.insert(options, "-stay")
+      end
+      return options
     end
     -- Basic completion for common AI tools
     if arglead == "" then
@@ -80,8 +101,15 @@ _G._aibo_complete = function(arglead, cmdline, cursorpos)
 
   -- Strip "Aibo " prefix to pass cleaner cmdline to integrations
   -- This allows adding Aibo options between "Aibo" and the tool name in the future
-  -- e.g., "Aibo --opener split ollama run ..." -> "ollama run ..."
+  -- e.g., "Aibo -opener=split -stay ollama run ..." -> "ollama run ..."
   local tool_cmdline = cmdline:gsub("^Aibo%s+", "")
+  -- Strip all options before the tool
+  tool_cmdline = tool_cmdline:gsub("^%-opener=[^%s]+%s+", "")
+  tool_cmdline = tool_cmdline:gsub("^%-stay%s+", "")
+  -- Continue stripping if both options are present in any order
+  tool_cmdline = tool_cmdline:gsub("^%-opener=[^%s]+%s+", "")
+  tool_cmdline = tool_cmdline:gsub("^%-stay%s+", "")
+
   local tool_cursorpos = cursorpos - #("Aibo ")
   if tool_cursorpos < 0 then
     tool_cursorpos = 0
@@ -121,24 +149,34 @@ end
 vim.api.nvim_create_user_command("Aibo", function(cmd_opts)
   local args = cmd_opts.fargs
   if #args == 0 then
-    vim.api.nvim_err_writeln("Usage: :Aibo [-opener=<opener>] <cmd> [args...]")
+    vim.api.nvim_err_writeln("Usage: :Aibo [-opener=<opener>] [-stay] <cmd> [args...]")
     return
   end
 
-  -- Parse -opener option
+  -- Parse options
   local opener = nil
-  if args[1] and args[1]:match("^-opener=") then
-    opener = args[1]:match("^-opener=(.+)")
-    if not opener or opener == "" then
-      vim.api.nvim_err_writeln("Usage: :Aibo [-opener=<opener>] <cmd> [args...]")
-      vim.api.nvim_err_writeln("Example: :Aibo -opener=vsplit ollama run llama3.2")
-      return
+  local stay = false
+
+  -- Process all options at the beginning of args
+  while #args > 0 do
+    if args[1] and args[1]:match("^-opener=") then
+      opener = args[1]:match("^-opener=(.+)")
+      if not opener or opener == "" then
+        vim.api.nvim_err_writeln("Usage: :Aibo [-opener=<opener>] [-stay] <cmd> [args...]")
+        vim.api.nvim_err_writeln("Example: :Aibo -opener=vsplit -stay ollama run llama3.2")
+        return
+      end
+      table.remove(args, 1) -- remove "-opener=..."
+    elseif args[1] == "-stay" then
+      stay = true
+      table.remove(args, 1) -- remove "-stay"
+    else
+      break -- not an option, must be the command
     end
-    table.remove(args, 1) -- remove "-opener=..."
   end
 
   if #args == 0 then
-    vim.api.nvim_err_writeln("Usage: :Aibo [-opener=<opener>] <cmd> [args...]")
+    vim.api.nvim_err_writeln("Usage: :Aibo [-opener=<opener>] [-stay] <cmd> [args...]")
     return
   end
 
@@ -152,7 +190,7 @@ vim.api.nvim_create_user_command("Aibo", function(cmd_opts)
     return
   end
 
-  require("aibo.internal.console").open(cmd, args, opener)
+  require("aibo.internal.console").open(cmd, args, opener, stay)
 end, {
   nargs = "+",
   desc = "Start an AI bot session",
