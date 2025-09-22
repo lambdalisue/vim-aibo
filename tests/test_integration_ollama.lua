@@ -126,6 +126,14 @@ end
 test_set["Ollama flag value completions"] = function()
   local ollama = require("aibo.integration.ollama")
 
+  -- Mock ollama list to avoid executing ollama
+  local restore = helpers.mock_system({
+    ["ollama list"] = {
+      result = "NAME ID SIZE MODIFIED\nllama3:latest abc123 5.5GB 2 days ago",
+      error = 0,
+    },
+  })
+
   -- Test format value completion
   local completions = ollama.get_command_completions("", "ollama run llama3 --format ", 28)
   T.expect.equality(vim.tbl_contains(completions, "json"), true)
@@ -149,6 +157,8 @@ test_set["Ollama flag value completions"] = function()
   completions = ollama.get_command_completions("h", "ollama run llama3 --think h", 28)
   T.expect.equality(vim.tbl_contains(completions, "high"), true)
   T.expect.equality(vim.tbl_contains(completions, "low"), false)
+
+  restore()
 end
 
 -- Test Ollama with no models available
