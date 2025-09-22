@@ -68,4 +68,15 @@ function M.select_or_first(items, prompt, get_display, get_value)
   return selected
 end
 
+---Restore focus to a window if it's still valid
+---@param win_id integer|nil Window ID to restore focus to
+---@return boolean Whether the window was restored
+function M.restore_window_focus(win_id)
+  if win_id and vim.api.nvim_win_is_valid(win_id) then
+    vim.api.nvim_set_current_win(win_id)
+    return true
+  end
+  return false
+end
+
 return M

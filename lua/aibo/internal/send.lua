@@ -190,9 +190,7 @@ function M.send(opts)
         vim.cmd("wq")
         -- Focus back to the original window
         vim.schedule(function()
-          if vim.api.nvim_win_is_valid(orig_win) then
-            vim.api.nvim_set_current_win(orig_win)
-          end
+          utils.restore_window_focus(orig_win)
         end)
       end
     end)
