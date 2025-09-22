@@ -9,7 +9,7 @@
 AI Bot Integration and Orchestration for Neovim
 
 > [!WARNING]
-> This plugin is currently in **alpha stage**. The API and features may change significantly.
+> This plugin is currently in **beta stage**. The API and features may change.
 
 https://github.com/user-attachments/assets/18dcdc91-fb8c-4243-af15-df7f0c2fbd02
 
