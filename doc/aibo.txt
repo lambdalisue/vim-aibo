@@ -259,10 +259,19 @@ INTERFACE					*aibo-interface*
 COMMANDS					*aibo-commands*
 
 						*:Aibo*
-:Aibo {cmd} [{args}...]
+:Aibo [{options}] {cmd} [{args}...]
 	Start an AI session with the specified command and optional arguments.
 	Opens a terminal console running the command and creates a prompt
 	buffer for user input.
+
+	Options:~
+		-opener={cmd}	Use custom window command for opening
+				Example: -opener=vsplit, -opener="botright split"
+		-stay		Keep focus on current window after opening
+		-toggle		Toggle visibility of existing console or open new
+		-jump		Jump to existing console or open new one
+
+	Note: -toggle and -jump are mutually exclusive.
 
 	Examples:
 >
@@ -270,9 +279,10 @@ COMMANDS					*aibo-commands*
 		:Aibo claude --continue
 		:Aibo claude --model sonnet
 		:Aibo claude --permission-mode plan
-		:Aibo codex --model claude-3.5-sonnet
-		:Aibo codex resume --last
-		:Aibo ollama run llama3
+		:Aibo -opener=vsplit claude
+		:Aibo -stay codex --model claude-3.5-sonnet
+		:Aibo -toggle claude
+		:Aibo -jump ollama run llama3
 		:Aibo ollama run qwen3:latest --verbose
 <
 						*aibo-completion*
@@ -353,6 +363,65 @@ COMMANDS					*aibo-commands*
 	--think {level}       Enable thinking mode:
 	                      true, false, high, medium, low
 	--verbose             Show response timings
+
+						*:AiboSend*
+:AiboSend [{options}]
+:{range}AiboSend [{options}]
+	Send buffer content to an Aibo console prompt. Without a range,
+	sends the entire buffer. With a range, sends only the specified lines.
+
+	Options:~
+		-input		Open prompt window and enter insert mode
+		-submit		Submit content immediately after sending
+		-replace	Replace prompt content instead of appending
+
+	Examples:
+>
+		:AiboSend                   " Send whole buffer
+		:'<,'>AiboSend              " Send visual selection
+		:10,20AiboSend              " Send lines 10-20
+		:AiboSend -input            " Send and open prompt
+		:AiboSend -submit           " Send and submit
+		:AiboSend -replace -submit  " Replace and submit
+<
+	If multiple Aibo consoles are open in the current tabpage, you'll
+	be prompted to select which one to send to.
+						*aibo-window-control*
+Window Control Options~
+
+	The Aibo command supports several options for controlling window
+	behavior when opening AI consoles:
+
+	-opener={cmd}		Use a custom window command:
+				- split, vsplit, tabedit, edit
+				- "topleft split", "botright vsplit"
+				- "leftabove split", "rightbelow vsplit"
+
+	-stay			Stay in the current window after opening
+				the AI console. Useful when you want to
+				continue editing while the AI loads.
+
+	-toggle			Intelligently toggle console visibility:
+				- If console exists and is visible: hide it
+				- If console exists but hidden: show it
+				- If console doesn't exist: create it
+
+	-jump			Jump to existing console or create new:
+				- If console exists: focus it
+				- If console doesn't exist: create it
+				Always focuses the console window.
+
+	Examples:
+>
+		" Open Claude in vertical split, stay in current window
+		:Aibo -opener=vsplit -stay claude
+
+		" Toggle Claude console visibility
+		:Aibo -toggle claude
+
+		" Jump to or create Ollama console
+		:Aibo -jump ollama run llama3
+<
 -----------------------------------------------------------------------------
 FUNCTIONS					*aibo-functions*
 

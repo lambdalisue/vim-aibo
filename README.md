@@ -75,6 +75,23 @@ Start an AI session:
 :Aibo ollama run qwen3:latest --verbose
 ```
 
+### Window Control Options
+
+```vim
+" Open with custom window command
+:Aibo -opener=vsplit claude
+:Aibo -opener="botright split" claude
+
+" Stay in current window after opening
+:Aibo -stay claude
+
+" Toggle visibility of existing console
+:Aibo -toggle claude
+
+" Jump to existing console or open new one
+:Aibo -jump claude
+```
+
 ### Intelligent Command Completion
 
 The plugin provides comprehensive tab completion for all supported AI tools:
@@ -102,6 +119,28 @@ This opens a terminal console running the AI agent with a prompt buffer below.
 Type in the prompt buffer and press `<CR>` in normal mode to submit. The prompt clears automatically for the next message. You can also use `<C-Enter>` or `<F5>` to submit even while in insert mode, which is particularly useful for continuous typing.
 
 To close the session, use `:bdelete!` or `:bwipeout!` on the console buffer.
+
+### Sending Content to AI
+
+You can send buffer content directly to an AI console using the `:AiboSend` command:
+
+```vim
+" Send whole buffer to prompt
+:AiboSend
+
+" Send selected lines (visual mode)
+:'<,'>AiboSend
+
+" Send with options
+:AiboSend -input    " Open prompt and enter insert mode
+:AiboSend -submit   " Send and submit immediately
+:AiboSend -replace  " Replace prompt content instead of appending
+
+" Send specific line range
+:10,20AiboSend
+```
+
+This is particularly useful for sending code snippets, error messages, or other content to the AI without manual copy-paste.
 
 ## Configuration
 
