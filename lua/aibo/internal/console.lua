@@ -62,37 +62,6 @@ local function WinClosed(winid)
   end
 end
 
----Apply keymaps from configuration
----@param bufnr integer Buffer number
----@param keymaps table<string, string|string[]|false> Keymap configuration
----@param actions table<string, function> Action functions
----@return nil
-local function apply_keymaps(bufnr, keymaps, actions)
-  if not keymaps then
-    return
-  end
-
-  for action, lhs_config in pairs(keymaps) do
-    if lhs_config and lhs_config ~= false and actions[action] then
-      -- Convert single string to array for uniform handling
-      local lhs_list = type(lhs_config) == "table" and lhs_config or { lhs_config }
-
-      -- Apply mapping for each key in the list
-      for _, lhs in ipairs(lhs_list) do
-        -- Handle different actions with appropriate modes (matching original ftplugin)
-        if vim.tbl_contains({ "submit", "esc", "close" }, action) then
-          vim.keymap.set("n", lhs, actions[action], { buffer = bufnr, silent = true })
-        elseif vim.tbl_contains({ "interrupt", "clear", "next", "prev", "down", "up" }, action) then
-          vim.keymap.set({ "n", "v" }, lhs, actions[action], { buffer = bufnr, silent = true })
-        else
-          -- Default to normal mode for unknown actions
-          vim.keymap.set("n", lhs, actions[action], { buffer = bufnr, silent = true })
-        end
-      end
-    end
-  end
-end
-
 ---Open aibo console with command
 ---@param cmd string Command to execute
 ---@param args string[] Arguments for command
@@ -137,44 +106,19 @@ function M.open(cmd, args)
     callback = InsertEnter,
   })
 
-  -- Get configuration for this buffer type and agent
+  -- Set filetype (this triggers ftplugin files)
+  vim.bo[bufnr].filetype = string.format("aibo-console.aibo-agent-%s", cmd)
+
+  -- Call on_attach AFTER ftplugin files have run
   local aibo_module = require("aibo")
   local cfg = aibo_module.get_buffer_config("console", cmd)
-
-  -- Apply buffer options from configuration
-  if cfg.buffer_options then
-    for option, value in pairs(cfg.buffer_options) do
-      vim.bo[bufnr][option] = value
-    end
-  end
-
-  -- Apply window options from configuration
-  if cfg.window_options then
-    for option, value in pairs(cfg.window_options) do
-      vim.wo[winid][option] = value
-    end
-  end
-
-  -- Get action functions for this buffer
-  local actions = require("aibo.actions").console(bufnr)
-
-  -- Apply keymaps from configuration
-  if cfg.keymaps then
-    apply_keymaps(bufnr, cfg.keymaps, actions)
-  end
-
-  -- Finally, call on_attach if provided
-  if cfg.on_attach then
+  if cfg and cfg.on_attach then
     cfg.on_attach(bufnr, {
       type = "console",
       agent = cmd,
       aibo = vim.b.aibo,
-      actions = actions,
     })
   end
-
-  -- Set filetype
-  vim.bo[bufnr].filetype = string.format("aibo-console.aibo-agent-%s", cmd)
   vim.cmd("stopinsert")
 
   follow(winid)

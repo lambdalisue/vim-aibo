@@ -1,13 +1,8 @@
 local M = {}
 
--- Expose actions for users
-M.actions = require("aibo.actions")
-
 ---@class AiboBufferConfig
----@field keymaps? table<string, string|string[]|false> Key mappings for buffer actions (string for single, array for multiple, false to disable)
 ---@field on_attach? fun(bufnr: integer, info: table) Callback for buffer attachment
----@field buffer_options? table<string, any> Buffer-local options (vim.bo)
----@field window_options? table<string, any> Window-local options (vim.wo)
+---@field no_default_mappings? boolean Disable default key mappings
 
 ---@class AiboConfig
 ---@field prompt? AiboBufferConfig Configuration for prompt buffers
@@ -19,130 +14,15 @@ M.actions = require("aibo.actions")
 ---@type AiboConfig
 local defaults = {
   prompt = {
-    keymaps = {
-      submit = "<CR>",
-      submit_close = { "<C-Enter>", "<F5>" },
-      esc = "<Esc>",
-      interrupt = "<C-c>",
-      clear = "<C-l>",
-      next = "<C-n>",
-      prev = "<C-p>",
-      down = "<Down>",
-      up = "<Up>",
-    },
-    buffer_options = {},
-    window_options = {
-      number = false,
-      relativenumber = false,
-      signcolumn = "no",
-    },
     on_attach = nil,
+    no_default_mappings = false,
   },
   console = {
-    keymaps = {
-      -- Console had these in the original ftplugin
-      submit = "<CR>",
-      esc = "<Esc>",
-      interrupt = "<C-c>",
-      clear = "<C-l>",
-      next = "<C-n>",
-      prev = "<C-p>",
-      down = "<Down>",
-      up = "<Up>",
-    },
-    buffer_options = {},
-    window_options = {
-      number = false,
-      relativenumber = false,
-      signcolumn = "no",
-    },
     on_attach = nil,
+    no_default_mappings = false,
   },
-  -- Agent-specific configurations (matching the original ftplugin files)
-  agents = {
-    -- Claude agent with special Claude-specific commands
-    claude = {
-      on_attach = function(bufnr, info)
-        -- Get Claude-specific actions
-        local claude_actions = require("aibo.actions").claude(bufnr)
-
-        -- Map Claude specific commands (from original ftplugin/aibo-agent-claude.lua)
-        vim.keymap.set({ "n", "v" }, "<S-Tab>", claude_actions.mode, { buffer = bufnr })
-        vim.keymap.set({ "n", "v" }, "<F2>", claude_actions.mode, { buffer = bufnr })
-        vim.keymap.set({ "n", "v" }, "<C-o>", claude_actions.verbose, { buffer = bufnr })
-        vim.keymap.set({ "n", "v" }, "<C-t>", claude_actions.todo, { buffer = bufnr })
-        vim.keymap.set({ "n", "v" }, "<C-_>", claude_actions.undo, { buffer = bufnr })
-        vim.keymap.set({ "n", "v" }, "<C-->", claude_actions.undo, { buffer = bufnr })
-        vim.keymap.set({ "n", "v" }, "<C-z>", claude_actions.suspend, { buffer = bufnr })
-        vim.keymap.set({ "n", "v" }, "<C-v>", claude_actions.paste, { buffer = bufnr })
-
-        -- Insert mode mappings (use <C-\><C-o> to execute normal mode command)
-        vim.keymap.set(
-          "i",
-          "<S-Tab>",
-          "<C-\\><C-o>:lua require('aibo.actions').claude(" .. bufnr .. ").mode()<CR>",
-          { buffer = bufnr }
-        )
-        vim.keymap.set(
-          "i",
-          "<F2>",
-          "<C-\\><C-o>:lua require('aibo.actions').claude(" .. bufnr .. ").mode()<CR>",
-          { buffer = bufnr }
-        )
-        vim.keymap.set(
-          "i",
-          "<C-o>",
-          "<C-\\><C-o>:lua require('aibo.actions').claude(" .. bufnr .. ").verbose()<CR>",
-          { buffer = bufnr }
-        )
-        vim.keymap.set(
-          "i",
-          "<C-t>",
-          "<C-\\><C-o>:lua require('aibo.actions').claude(" .. bufnr .. ").todo()<CR>",
-          { buffer = bufnr }
-        )
-        vim.keymap.set(
-          "i",
-          "<C-_>",
-          "<C-\\><C-o>:lua require('aibo.actions').claude(" .. bufnr .. ").undo()<CR>",
-          { buffer = bufnr }
-        )
-        vim.keymap.set(
-          "i",
-          "<C-->",
-          "<C-\\><C-o>:lua require('aibo.actions').claude(" .. bufnr .. ").undo()<CR>",
-          { buffer = bufnr }
-        )
-        vim.keymap.set(
-          "i",
-          "<C-z>",
-          "<C-\\><C-o>:lua require('aibo.actions').claude(" .. bufnr .. ").suspend()<CR>",
-          { buffer = bufnr }
-        )
-        vim.keymap.set(
-          "i",
-          "<C-v>",
-          "<C-\\><C-o>:lua require('aibo.actions').claude(" .. bufnr .. ").paste()<CR>",
-          { buffer = bufnr }
-        )
-      end,
-    },
-    -- Codex agent with special Codex-specific commands
-    codex = {
-      on_attach = function(bufnr, info)
-        -- Get Codex-specific actions
-        local codex_actions = require("aibo.actions").codex(bufnr)
-
-        -- Map Codex specific commands (from original ftplugin/aibo-agent-codex.lua)
-        vim.keymap.set({ "n", "v" }, "<C-t>", codex_actions.transcript, { buffer = bufnr })
-        vim.keymap.set({ "n", "v" }, "<Home>", codex_actions.home, { buffer = bufnr })
-        vim.keymap.set({ "n", "v" }, "<End>", codex_actions.end_key, { buffer = bufnr })
-        vim.keymap.set({ "n", "v" }, "<PageUp>", codex_actions.page_up, { buffer = bufnr })
-        vim.keymap.set({ "n", "v" }, "<PageDown>", codex_actions.page_down, { buffer = bufnr })
-        vim.keymap.set({ "n", "v" }, "q", codex_actions.quit, { buffer = bufnr })
-      end,
-    },
-  },
+  -- Agent-specific configurations can be added here
+  agents = {},
   submit_delay = 100,
   prompt_height = 10,
 }
@@ -204,6 +84,22 @@ function M.get_config()
   return config
 end
 
+---Get configuration for a specific agent
+---@param agent string Agent name (e.g., "claude", "codex")
+---@return AiboBufferConfig Configuration for the agent
+function M.get_agent_config(agent)
+  if not setup_called then
+    vim.notify("Aibo setup() must be called before using the plugin", vim.log.levels.ERROR, { title = "Aibo" })
+    return {}
+  end
+
+  -- Start with base configuration for buffer type
+  if agent and config.agents and config.agents[agent] then
+    return config.agents[agent]
+  end
+  return {}
+end
+
 ---Get configuration for a specific buffer type and agent
 ---@param buftype "prompt"|"console" Buffer type
 ---@param agent? string Agent name (e.g., "claude", "codex")
@@ -215,29 +111,16 @@ function M.get_buffer_config(buftype, agent)
   end
 
   -- Start with base configuration for buffer type
-  local cfg = vim.deepcopy(config[buftype] or {})
+  local cfg = config[buftype] or {}
 
   -- Merge agent-specific configuration if it exists
   if agent and config.agents and config.agents[agent] then
-    -- Merge keymaps
-    if config.agents[agent].keymaps then
-      cfg.keymaps = vim.tbl_deep_extend("force", cfg.keymaps or {}, config.agents[agent].keymaps)
-    end
-
-    -- Merge buffer options
-    if config.agents[agent].buffer_options then
-      cfg.buffer_options = vim.tbl_deep_extend("force", cfg.buffer_options or {}, config.agents[agent].buffer_options)
-    end
-
-    -- Merge window options
-    if config.agents[agent].window_options then
-      cfg.window_options = vim.tbl_deep_extend("force", cfg.window_options or {}, config.agents[agent].window_options)
-    end
-
     -- Chain on_attach functions
     local base_on_attach = cfg.on_attach
     local agent_on_attach = config.agents[agent].on_attach
 
+    --- Deep copy to avoid mutating original configs
+    cfg = vim.deepcopy(cfg)
     if base_on_attach and agent_on_attach then
       cfg.on_attach = function(bufnr, info)
         base_on_attach(bufnr, info)
@@ -297,13 +180,8 @@ function M.submit(data, bufnr)
 
   aibo.controller.send(data)
 
-  -- Convert submit key to terminal codes if needed
-  local submit_key = "<CR>"
-  local prompt_cfg = M.get_buffer_config("prompt", aibo.cmd)
-  if prompt_cfg.keymaps and prompt_cfg.keymaps.submit then
-    submit_key = prompt_cfg.keymaps.submit
-  end
-  submit_key = vim.api.nvim_replace_termcodes(submit_key, true, false, true)
+  -- Convert submit key to terminal codes
+  local submit_key = vim.api.nvim_replace_termcodes("<CR>", true, false, true)
 
   vim.defer_fn(function()
     aibo.controller.send(submit_key)
