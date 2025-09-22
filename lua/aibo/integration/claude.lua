@@ -179,9 +179,15 @@ function M.get_command_completions(arglead, cmdline, cursorpos)
       prev_arg = parts[part_count] or ""
     end
 
-    local value_completions = get_value_completions(prev_arg, arglead)
-    if value_completions then
-      return value_completions
+    -- Check if previous argument might need a value
+    if prev_arg:match("^%-") then
+      local value_completions = get_value_completions(prev_arg, arglead)
+      if value_completions then
+        return value_completions
+      else
+        -- Unknown flag - don't complete anything
+        return {}
+      end
     end
   end
 

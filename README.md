@@ -158,6 +158,13 @@ require('aibo').setup({
 })
 ```
 
+#### Callback Order
+
+When both buffer type and agent-specific `on_attach` callbacks are defined, both are called in this order:
+
+1. Buffer type `on_attach` (e.g., `prompt.on_attach`)
+2. Agent-specific `on_attach` (e.g., `agents.claude.on_attach`)
+
 ### Customizing Keymaps
 
 Default keymaps are defined in ftplugin files. You can customize them in several ways:
@@ -389,11 +396,69 @@ aibo.submit('What is Neovim?', bufnr)
 -- Get current configuration
 local config = aibo.get_config()
 
--- Get buffer-specific configuration
-local prompt_cfg = aibo.get_buffer_config("prompt", "claude")
+-- Get buffer type configuration
+local prompt_cfg = aibo.get_buffer_config("prompt")
 
 -- Get agent-specific configuration
 local agent_cfg = aibo.get_agent_config("claude")
+```
+
+## Testing
+
+The project uses [mini.test](https://github.com/echasnovski/mini.nvim/blob/main/readmes/mini-test.md) for unit testing.
+
+### Running Tests
+
+Using `just`:
+```bash
+just test           # Run all tests
+just test-file aibo # Run specific test file
+just test-watch     # Run tests in watch mode
+just check          # Run lint, format, and tests
+```
+
+Direct execution:
+```bash
+nvim --headless -c "luafile tests/test_runner.lua" -c "qa!"
+```
+
+### Test Structure
+
+```
+tests/
+├── helpers.lua                 # Common test utilities
+├── test_runner.lua            # Main test runner
+├── test_aibo.lua              # Core module tests
+├── test_plugin.lua            # Plugin command tests
+├── test_integration_claude.lua # Claude integration tests
+├── test_integration_codex.lua  # Codex integration tests
+└── test_integration_ollama.lua # Ollama integration tests
+```
+
+### Writing Tests
+
+Tests are organized using mini.test's test sets. Each test file should return a test set:
+
+```lua
+local helpers = require("tests.helpers")
+local T = require("mini.test")
+
+local test_set = T.new_set()
+
+test_set.hooks.pre_case = function()
+  helpers.setup()  -- Clean environment
+end
+
+test_set.hooks.post_case = function()
+  helpers.cleanup()  -- Clean up
+end
+
+T.add_test("my test", function()
+  -- Test code
+  T.expect.equality(actual, expected)
+end)
+
+return test_set
 ```
 
 ## License
@@ -402,4 +467,8 @@ MIT License
 
 ## Contributing
 
-Contributions welcome. Please report issues and submit pull requests on GitHub.
+Contributions welcome. Please:
+1. Write tests for new features
+2. Ensure all tests pass with `just test`
+3. Run `just check` before submitting
+4. Report issues and submit pull requests on GitHub

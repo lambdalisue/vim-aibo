@@ -58,30 +58,11 @@ function M.get_agent_config(agent)
   return {}
 end
 
----Get configuration for a specific buffer type and agent
+---Get configuration for a specific buffer type
 ---@param buftype "prompt"|"console" Buffer type
----@param agent? string Agent name (e.g., "claude", "codex")
----@return AiboBufferConfig Configuration for the buffer
-function M.get_buffer_config(buftype, agent)
-  -- Start with base configuration for buffer type
-  local cfg = vim.deepcopy(config[buftype] or {})
-
-  -- Merge agent-specific configuration if it exists
-  if agent and config.agents and config.agents[agent] then
-    -- Chain on_attach functions
-    local base_on_attach = cfg.on_attach
-    local agent_on_attach = config.agents[agent].on_attach
-    if base_on_attach and agent_on_attach then
-      cfg.on_attach = function(bufnr, info)
-        base_on_attach(bufnr, info)
-        agent_on_attach(bufnr, info)
-      end
-    elseif agent_on_attach then
-      cfg.on_attach = agent_on_attach
-    end
-  end
-
-  return cfg
+---@return AiboBufferConfig Buffer type configuration
+function M.get_buffer_config(buftype)
+  return vim.deepcopy(config[buftype] or {})
 end
 
 ---@class AiboInstance

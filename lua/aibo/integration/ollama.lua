@@ -174,9 +174,13 @@ function M.get_command_completions(arglead, cmdline, cursorpos)
       -- Completing a partial argument - could be model or flag
       add_model_completions(completions, arglead)
       add_flag_completions(completions, arglead)
+
+      -- Also check if we're completing a flag value
+      local prev_arg = parts[part_count - 1]
+      add_flag_value_completions(completions, prev_arg, arglead)
     else
       -- Check if previous argument is a flag that needs a value
-      local prev_arg = parts[part_count]
+      local prev_arg = has_trailing_space and parts[part_count] or parts[part_count - 1]
       if not add_flag_value_completions(completions, prev_arg, "") then
         -- No flag value needed, show available flags
         add_flag_completions(completions, "")

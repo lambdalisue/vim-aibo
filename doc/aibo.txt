@@ -208,7 +208,8 @@ Set `no_default_mappings = true` to disable default key mappings:
 						*aibo-agent-specific*
 Agent-specific configuration~
 
-Configure agent-specific behavior through the setup function:
+Configure agent-specific behavior through the setup function. Agent-specific
+configurations have higher priority than buffer type configurations:
 >
 	require('aibo').setup({
 	  agents = {
@@ -224,6 +225,14 @@ Configure agent-specific behavior through the setup function:
 	  },
 	})
 <
+						*aibo-callback-order*
+Callback Order~
+
+When both buffer type and agent-specific `on_attach` callbacks are defined,
+both are called in this order:
+
+1. Buffer type on_attach (e.g., prompt.on_attach)
+2. Agent-specific on_attach (e.g., agents.claude.on_attach)
 						*aibo-custom-agents*
 Adding custom agents~
 
@@ -404,17 +413,16 @@ aibo.get_agent_config({agent})
 		Agent configuration table
 
 						*aibo.get_buffer_config()*
-aibo.get_buffer_config({buftype}, {agent})
-	Get configuration for a specific buffer type and agent.
+aibo.get_buffer_config({buftype})
+	Get configuration for a specific buffer type.
 >
-		local cfg = require('aibo').get_buffer_config('prompt', 'claude')
+		local cfg = require('aibo').get_buffer_config('prompt')
 <
 	Parameters:~
 		{buftype}  "prompt" or "console"
-		{agent}    Agent name (e.g., "claude", "codex")
 
 	Returns:~
-		Buffer configuration table
+		Buffer type configuration table
 
 -----------------------------------------------------------------------------
 KEY MAPPINGS					*aibo-key-mappings*
@@ -540,6 +548,42 @@ The health check will verify:
 
 This is useful for troubleshooting issues with the plugin or verifying that
 your environment is properly configured for using aibo.nvim.
+
+=============================================================================
+TESTING						*aibo-testing*
+
+The project uses mini.test for unit testing.
+
+Running tests~
+
+Using `just`:
+>
+	just test           # Run all tests
+	just test-file aibo # Run specific test file
+	just test-watch     # Run tests in watch mode
+	just check          # Run lint, format, and tests
+<
+
+Direct execution:
+>
+	nvim --headless -c "luafile tests/test_runner.lua" -c "qa!"
+<
+
+Test structure~
+
+	tests/
+	├── helpers.lua                 # Common test utilities
+	├── test_runner.lua            # Main test runner
+	├── test_aibo.lua              # Core module tests
+	├── test_plugin.lua            # Plugin command tests
+	├── test_integration_claude.lua # Claude integration tests
+	├── test_integration_codex.lua  # Codex integration tests
+	└── test_integration_ollama.lua # Ollama integration tests
+
+Writing tests~
+
+Tests are organized using mini.test's test sets. See the existing test
+files for examples of how to write tests for aibo.nvim.
 
 =============================================================================
 FAQ						*aibo-faq*

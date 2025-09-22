@@ -109,15 +109,24 @@ function M.open(cmd, args)
   -- Set filetype (this triggers ftplugin files)
   vim.bo[bufnr].filetype = string.format("aibo-console.aibo-agent-%s", cmd)
 
-  -- Call on_attach AFTER ftplugin files have run
+  -- Call on_attach callbacks AFTER ftplugin files have run
   local aibo_module = require("aibo")
-  local cfg = aibo_module.get_buffer_config("console", cmd)
-  if cfg and cfg.on_attach then
-    cfg.on_attach(bufnr, {
-      type = "console",
-      agent = cmd,
-      aibo = vim.b.aibo,
-    })
+  local info = {
+    type = "console",
+    agent = cmd,
+    aibo = vim.b.aibo,
+  }
+
+  -- Call buffer type on_attach
+  local buffer_cfg = aibo_module.get_buffer_config("console")
+  if buffer_cfg.on_attach then
+    buffer_cfg.on_attach(bufnr, info)
+  end
+
+  -- Call agent-specific on_attach
+  local agent_cfg = aibo_module.get_agent_config(cmd)
+  if agent_cfg.on_attach then
+    agent_cfg.on_attach(bufnr, info)
   end
   vim.cmd("stopinsert")
 

@@ -116,15 +116,24 @@ function M.init(prompt_bufnr)
   -- Set filetype (this triggers ftplugin files)
   vim.bo[prompt_bufnr].filetype = string.format("aibo-prompt.aibo-agent-%s", aibo.cmd)
 
-  -- Call on_attach AFTER ftplugin files have run
+  -- Call on_attach callbacks AFTER ftplugin files have run
   local aibo_module = require("aibo")
-  local cfg = aibo_module.get_buffer_config("prompt", aibo.cmd)
-  if cfg and cfg.on_attach then
-    cfg.on_attach(prompt_bufnr, {
-      type = "prompt",
-      agent = aibo.cmd,
-      aibo = aibo,
-    })
+  local info = {
+    type = "prompt",
+    agent = aibo.cmd,
+    aibo = aibo,
+  }
+
+  -- Call buffer type on_attach
+  local buffer_cfg = aibo_module.get_buffer_config("prompt")
+  if buffer_cfg.on_attach then
+    buffer_cfg.on_attach(prompt_bufnr, info)
+  end
+
+  -- Call agent-specific on_attach
+  local agent_cfg = aibo_module.get_agent_config(aibo.cmd)
+  if agent_cfg.on_attach then
+    agent_cfg.on_attach(prompt_bufnr, info)
   end
 end
 

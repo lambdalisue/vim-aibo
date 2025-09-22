@@ -20,19 +20,8 @@ vim.api.nvim_create_autocmd("BufReadCmd", {
   end,
 })
 
--- Create user command
-vim.api.nvim_create_user_command("Aibo", function(cmd_opts)
-  local args = vim.split(cmd_opts.args, "%s+")
-  if #args == 0 then
-    vim.api.nvim_err_writeln("Usage: :Aibo <cmd> [args...]")
-    return
-  end
-  local cmd = table.remove(args, 1)
-  require("aibo.internal.console").open(cmd, args)
-end, {
-  nargs = "+",
-  desc = "Start an AI bot session",
-  complete = function(arglead, cmdline, cursorpos)
+-- Store completion function globally for testing
+_G._aibo_complete = function(arglead, cmdline, cursorpos)
     -- Parse command line to get the AI tool
     local parts = vim.split(cmdline, "%s+")
 
@@ -55,23 +44,46 @@ end, {
     local tool = parts[2]
     if tool == "claude" then
       local ok, integration = pcall(require, "aibo.integration.claude")
-      if ok then
-        return integration.get_command_completions(arglead, cmdline, cursorpos)
+      if ok and integration.get_command_completions then
+        local comp_ok, completions = pcall(integration.get_command_completions, arglead, cmdline, cursorpos)
+        if comp_ok then
+          return completions
+        end
       end
     elseif tool == "codex" then
       local ok, integration = pcall(require, "aibo.integration.codex")
-      if ok then
-        return integration.get_command_completions(arglead, cmdline, cursorpos)
+      if ok and integration.get_command_completions then
+        local comp_ok, completions = pcall(integration.get_command_completions, arglead, cmdline, cursorpos)
+        if comp_ok then
+          return completions
+        end
       end
     elseif tool == "ollama" then
       local ok, integration = pcall(require, "aibo.integration.ollama")
-      if ok then
-        return integration.get_command_completions(arglead, cmdline, cursorpos)
+      if ok and integration.get_command_completions then
+        local comp_ok, completions = pcall(integration.get_command_completions, arglead, cmdline, cursorpos)
+        if comp_ok then
+          return completions
+        end
       end
     end
 
     -- No completions for unknown tools
     return {}
-  end,
+end
+
+-- Create user command
+vim.api.nvim_create_user_command("Aibo", function(cmd_opts)
+  local args = vim.split(cmd_opts.args, "%s+")
+  if #args == 0 then
+    vim.api.nvim_err_writeln("Usage: :Aibo <cmd> [args...]")
+    return
+  end
+  local cmd = table.remove(args, 1)
+  require("aibo.internal.console").open(cmd, args)
+end, {
+  nargs = "+",
+  desc = "Start an AI bot session",
+  complete = _G._aibo_complete,
 })
 
