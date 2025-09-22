@@ -39,6 +39,18 @@ vim.keymap.set({ "n", "i" }, "<Plug>(aibo-claude-paste)", function()
   aibo.send(CLAUDE_CODES.paste, bufnr)
 end, { buffer = bufnr, desc = "Paste (Ctrl+V)" })
 
+vim.keymap.set({ "n", "i" }, "<Plug>(aibo-claude-shortcuts)", function()
+  aibo.send("?", bufnr)
+end, { buffer = bufnr, desc = "Shortcuts (?)" })
+
+vim.keymap.set({ "n", "i" }, "<Plug>(aibo-claude-bash-mode)", function()
+  aibo.send("!", bufnr)
+end, { buffer = bufnr, desc = "Bash mode (!)" })
+
+vim.keymap.set({ "n", "i" }, "<Plug>(aibo-claude-memorize)", function()
+  aibo.send("#", bufnr)
+end, { buffer = bufnr, desc = "Memorize (#)" })
+
 -- Default mappings (unless disabled in config)
 local cfg = aibo.get_agent_config("claude")
 if not (cfg and cfg.no_default_mappings) then
@@ -50,4 +62,7 @@ if not (cfg and cfg.no_default_mappings) then
   vim.keymap.set({ "n", "i" }, "<C-->", "<Plug>(aibo-claude-undo)", { buffer = bufnr })
   vim.keymap.set({ "n", "i" }, "<C-z>", "<Plug>(aibo-claude-suspend)", { buffer = bufnr })
   vim.keymap.set({ "n", "i" }, "<C-v>", "<Plug>(aibo-claude-paste)", { buffer = bufnr })
+  vim.keymap.set({ "n", "i" }, "?", "<Plug>(aibo-claude-shortcuts)", { buffer = bufnr })
+  vim.keymap.set({ "n", "i" }, "!", "<Plug>(aibo-claude-bash-mode)", { buffer = bufnr })
+  vim.keymap.set({ "n", "i" }, "#", "<Plug>(aibo-claude-memorize)", { buffer = bufnr })
 end
