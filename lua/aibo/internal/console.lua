@@ -316,6 +316,11 @@ function M.toggle(cmd, args, opener, stay)
     local open_cmd = opener or "split"
     vim.cmd(open_cmd .. " | buffer " .. console_bufnr)
 
+    -- Enter insert mode when console becomes visible (unless stay option is set)
+    if not stay then
+      vim.cmd("startinsert")
+    end
+
     -- Restore focus to original window if stay option is set
     if stay and orig_win and vim.api.nvim_win_is_valid(orig_win) then
       vim.api.nvim_set_current_win(orig_win)
