@@ -1,55 +1,6 @@
+local utils = require("aibo.internal.utils")
+
 local M = {}
-
----Check if running in headless mode
----@return boolean
-local function is_headless()
-  return #vim.api.nvim_list_uis() == 0
-end
-
----Select from multiple options, automatically choosing first in headless mode
----@param items table List of items to choose from
----@param prompt string Prompt message for interactive selection
----@param get_display function Function to get display string for an item
----@param get_value function Function to get value from an item
----@return any|nil Selected value or nil if cancelled
-local function select_or_first(items, prompt, get_display, get_value)
-  if #items == 0 then
-    return nil
-  end
-
-  if #items == 1 then
-    return get_value(items[1])
-  end
-
-  if is_headless() then
-    -- Headless mode - just use the first one
-    return get_value(items[1])
-  end
-
-  -- Interactive mode - let user choose
-  local choices = {}
-  local value_map = {}
-
-  for _, item in ipairs(items) do
-    local display = get_display(item)
-    table.insert(choices, display)
-    value_map[display] = get_value(item)
-  end
-
-  local selected = nil
-  vim.ui.select(choices, {
-    prompt = prompt,
-    format_item = function(item)
-      return item
-    end,
-  }, function(choice)
-    if choice then
-      selected = value_map[choice]
-    end
-  end)
-
-  return selected
-end
 
 ---Find all console buffers matching the given cmd and args
 ---@param cmd string Command to match
@@ -305,7 +256,7 @@ function M.toggle(cmd, args, opener, stay)
     return true
   elseif #visible_in_tabpage > 1 then
     -- Multiple visible consoles in tabpage
-    local win_to_close = select_or_first(visible_in_tabpage, "Select console to hide:", function(item)
+    local win_to_close = utils.select_or_first(visible_in_tabpage, "Select console to hide:", function(item)
       return string.format("Buffer %d (Window %d)", item.bufnr, item.win)
     end, function(item)
       return item.win
@@ -318,7 +269,7 @@ function M.toggle(cmd, args, opener, stay)
   end
 
   -- No visible consoles in current tabpage, need to show one
-  local console_bufnr = select_or_first(matching_buffers, "Select console to show:", function(bufnr)
+  local console_bufnr = utils.select_or_first(matching_buffers, "Select console to show:", function(bufnr)
     local display = string.format("Buffer %d", bufnr)
     -- Add status if visible in another tabpage
     local win = find_buffer_window(bufnr)
@@ -397,7 +348,7 @@ function M.jump(cmd, args, opener, stay)
     return true
   elseif #visible_in_tabpage > 1 then
     -- Multiple visible consoles in tabpage
-    local win_to_focus = select_or_first(visible_in_tabpage, "Select console to focus:", function(item)
+    local win_to_focus = utils.select_or_first(visible_in_tabpage, "Select console to focus:", function(item)
       return string.format("Buffer %d (Window %d)", item.bufnr, item.win)
     end, function(item)
       return item.win
@@ -420,7 +371,7 @@ function M.jump(cmd, args, opener, stay)
   end
 
   -- No visible consoles in current tabpage, need to show one
-  local console_bufnr = select_or_first(matching_buffers, "Select console to show:", function(bufnr)
+  local console_bufnr = utils.select_or_first(matching_buffers, "Select console to show:", function(bufnr)
     local display = string.format("Buffer %d", bufnr)
     -- Add status if visible in another tabpage
     local win = find_buffer_window(bufnr)

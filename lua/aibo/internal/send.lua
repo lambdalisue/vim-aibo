@@ -1,3 +1,5 @@
+local utils = require("aibo.internal.utils")
+
 local M = {}
 
 ---Find all console buffers in the current tabpage
@@ -124,43 +126,20 @@ function M.send(opts)
     return
   end
 
-  local console_bufnr
+  -- Convert console_buffers dictionary to array for selection
+  local console_items = {}
+  for bufnr, display in pairs(console_buffers) do
+    table.insert(console_items, { bufnr = bufnr, display = display })
+  end
 
-  -- If only one console buffer, use it directly
-  if vim.tbl_count(console_buffers) == 1 then
-    console_bufnr = next(console_buffers)
-  else
-    -- Multiple console buffers, let user select
-    -- Check if in headless mode
-    if #vim.api.nvim_list_uis() == 0 then
-      -- Headless mode - just use the first console
-      console_bufnr = next(console_buffers)
-    else
-      -- Interactive mode - let user choose
-      local choices = {}
-      local bufnr_map = {}
+  local console_bufnr = utils.select_or_first(console_items, "Select Aibo console to send to:", function(item)
+    return item.display
+  end, function(item)
+    return item.bufnr
+  end)
 
-      for bufnr, display in pairs(console_buffers) do
-        table.insert(choices, display)
-        bufnr_map[display] = bufnr
-      end
-
-      vim.ui.select(choices, {
-        prompt = "Select Aibo console to send to:",
-        format_item = function(item)
-          return item
-        end,
-      }, function(choice)
-        if choice then
-          console_bufnr = bufnr_map[choice]
-        end
-      end)
-    end
-
-    -- If user cancelled selection or no console in headless mode
-    if not console_bufnr then
-      return
-    end
+  if not console_bufnr then
+    return
   end
 
   -- Find or create the prompt buffer for the selected console
