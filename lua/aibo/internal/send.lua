@@ -131,26 +131,33 @@ function M.send(opts)
     console_bufnr = next(console_buffers)
   else
     -- Multiple console buffers, let user select
-    local choices = {}
-    local bufnr_map = {}
+    -- Check if in headless mode
+    if #vim.api.nvim_list_uis() == 0 then
+      -- Headless mode - just use the first console
+      console_bufnr = next(console_buffers)
+    else
+      -- Interactive mode - let user choose
+      local choices = {}
+      local bufnr_map = {}
 
-    for bufnr, display in pairs(console_buffers) do
-      table.insert(choices, display)
-      bufnr_map[display] = bufnr
+      for bufnr, display in pairs(console_buffers) do
+        table.insert(choices, display)
+        bufnr_map[display] = bufnr
+      end
+
+      vim.ui.select(choices, {
+        prompt = "Select Aibo console to send to:",
+        format_item = function(item)
+          return item
+        end,
+      }, function(choice)
+        if choice then
+          console_bufnr = bufnr_map[choice]
+        end
+      end)
     end
 
-    vim.ui.select(choices, {
-      prompt = "Select Aibo console to send to:",
-      format_item = function(item)
-        return item
-      end,
-    }, function(choice)
-      if choice then
-        console_bufnr = bufnr_map[choice]
-      end
-    end)
-
-    -- If user cancelled selection
+    -- If user cancelled selection or no console in headless mode
     if not console_bufnr then
       return
     end
@@ -168,11 +175,7 @@ function M.send(opts)
 
   -- Warn if both input and submit are specified
   if input and submit then
-    vim.notify(
-      "Both -input and -submit specified. -submit takes precedence.",
-      vim.log.levels.WARN,
-      { title = "Aibo" }
-    )
+    vim.notify("Both -input and -submit specified. -submit takes precedence.", vim.log.levels.WARN, { title = "Aibo" })
   end
 
   -- Function to position cursor at the end of prompt buffer content

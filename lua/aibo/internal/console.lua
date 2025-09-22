@@ -253,62 +253,238 @@ function M.toggle(cmd, args, opener, stay)
     vim.api.nvim_win_close(visible_in_tabpage[1].win, false)
     return true
   elseif #visible_in_tabpage > 1 then
-    -- Multiple visible consoles in tabpage, let user choose which to hide
-    local choices = {}
-    local bufnr_map = {}
+    -- Multiple visible consoles in tabpage
+    if #vim.api.nvim_list_uis() == 0 then
+      -- Headless mode - just hide the first one
+      vim.api.nvim_win_close(visible_in_tabpage[1].win, false)
+    else
+      -- Interactive mode - let user choose which to hide
+      local choices = {}
+      local bufnr_map = {}
 
-    for _, item in ipairs(visible_in_tabpage) do
-      local bufnr = item.bufnr
-      local display = string.format("Buffer %d (Window %d)", bufnr, item.win)
-      table.insert(choices, display)
-      bufnr_map[display] = item.win
-    end
-
-    vim.ui.select(choices, {
-      prompt = "Select console to hide:",
-      format_item = function(item) return item end,
-    }, function(choice)
-      if choice and bufnr_map[choice] then
-        vim.api.nvim_win_close(bufnr_map[choice], false)
+      for _, item in ipairs(visible_in_tabpage) do
+        local bufnr = item.bufnr
+        local display = string.format("Buffer %d (Window %d)", bufnr, item.win)
+        table.insert(choices, display)
+        bufnr_map[display] = item.win
       end
-    end)
+
+      vim.ui.select(choices, {
+        prompt = "Select console to hide:",
+        format_item = function(item)
+          return item
+        end,
+      }, function(choice)
+        if choice and bufnr_map[choice] then
+          vim.api.nvim_win_close(bufnr_map[choice], false)
+        end
+      end)
+    end
     return true
   end
 
   -- No visible consoles in current tabpage, need to show one
-  local console_bufnr = nil
+  local console_bufnr
 
   if #matching_buffers == 1 then
     -- Only one matching console, use it
     console_bufnr = matching_buffers[1]
   else
-    -- Multiple matching consoles, let user choose
-    local choices = {}
-    local bufnr_map = {}
+    -- Multiple matching consoles
+    if #vim.api.nvim_list_uis() == 0 then
+      -- Headless mode - just use the first one
+      console_bufnr = matching_buffers[1]
+    else
+      -- Interactive mode - let user choose
+      local choices = {}
+      local bufnr_map = {}
 
-    for _, bufnr in ipairs(matching_buffers) do
-      local display = string.format("Buffer %d", bufnr)
-      -- Add status if visible in another tabpage
-      local win = find_buffer_window(bufnr)
-      if win then
-        display = display .. " (visible in another tab)"
+      for _, bufnr in ipairs(matching_buffers) do
+        local display = string.format("Buffer %d", bufnr)
+        -- Add status if visible in another tabpage
+        local win = find_buffer_window(bufnr)
+        if win then
+          display = display .. " (visible in another tab)"
+        end
+        table.insert(choices, display)
+        bufnr_map[display] = bufnr
       end
-      table.insert(choices, display)
-      bufnr_map[display] = bufnr
+
+      -- Use synchronous selection
+      local selected = nil
+      vim.ui.select(choices, {
+        prompt = "Select console to show:",
+        format_item = function(item)
+          return item
+        end,
+      }, function(choice)
+        if choice then
+          selected = bufnr_map[choice]
+        end
+      end)
+
+      console_bufnr = selected
+    end
+  end
+
+  if console_bufnr then
+    -- Show the selected console
+    local open_cmd = opener or "split"
+    vim.cmd(open_cmd .. " | buffer " .. console_bufnr)
+
+    -- Enter insert mode when console becomes visible (unless stay option is set)
+    if not stay then
+      vim.cmd("startinsert")
     end
 
-    -- Use synchronous selection
-    local selected = nil
-    vim.ui.select(choices, {
-      prompt = "Select console to show:",
-      format_item = function(item) return item end,
-    }, function(choice)
-      if choice then
-        selected = bufnr_map[choice]
-      end
-    end)
+    -- Restore focus to original window if stay option is set
+    if stay and orig_win and vim.api.nvim_win_is_valid(orig_win) then
+      vim.api.nvim_set_current_win(orig_win)
+    end
+  end
 
-    console_bufnr = selected
+  return true
+end
+
+---Jump to aibo console - focus if visible, open/show if not
+---@param cmd string Command to execute
+---@param args string[] Arguments for command
+---@param opener? string Optional window opener command (e.g., "20vsplit", "tabedit")
+---@param stay? boolean Whether to stay in the original window after opening
+---@return boolean True if jumped to existing console, false if created new
+function M.jump(cmd, args, opener, stay)
+  -- Save the current window if we need to stay
+  local orig_win = nil
+  if stay then
+    orig_win = vim.api.nvim_get_current_win()
+  end
+
+  -- Look for existing consoles with matching cmd and args
+  local matching_buffers = find_console_buffers(cmd, args)
+
+  if #matching_buffers == 0 then
+    -- No matching console exists, create a new one
+    M.open(cmd, args, opener, stay)
+    return false
+  end
+
+  -- Check for visible consoles in current tabpage
+  local visible_in_tabpage = {}
+  for _, bufnr in ipairs(matching_buffers) do
+    local win_id = find_buffer_window_in_tabpage(bufnr)
+    if win_id then
+      table.insert(visible_in_tabpage, { bufnr = bufnr, win = win_id })
+    end
+  end
+
+  -- If exactly one visible console in current tabpage, focus it
+  if #visible_in_tabpage == 1 then
+    -- Focus the visible console
+    vim.api.nvim_set_current_win(visible_in_tabpage[1].win)
+
+    -- Enter insert mode (unless stay option is set)
+    if not stay then
+      vim.cmd("startinsert")
+    end
+
+    -- Restore focus to original window if stay option is set
+    if stay and orig_win and vim.api.nvim_win_is_valid(orig_win) then
+      vim.api.nvim_set_current_win(orig_win)
+    end
+    return true
+  elseif #visible_in_tabpage > 1 then
+    -- Multiple visible consoles in tabpage
+    if #vim.api.nvim_list_uis() == 0 then
+      -- Headless mode - just focus the first one
+      vim.api.nvim_set_current_win(visible_in_tabpage[1].win)
+
+      -- Enter insert mode (unless stay option is set)
+      if not stay then
+        vim.cmd("startinsert")
+      end
+
+      -- Restore focus to original window if stay option is set
+      if stay and orig_win and vim.api.nvim_win_is_valid(orig_win) then
+        vim.api.nvim_set_current_win(orig_win)
+      end
+    else
+      -- Interactive mode - let user choose which to focus
+      local choices = {}
+      local bufnr_map = {}
+
+      for _, item in ipairs(visible_in_tabpage) do
+        local bufnr = item.bufnr
+        local display = string.format("Buffer %d (Window %d)", bufnr, item.win)
+        table.insert(choices, display)
+        bufnr_map[display] = item.win
+      end
+
+      vim.ui.select(choices, {
+        prompt = "Select console to focus:",
+        format_item = function(item)
+          return item
+        end,
+      }, function(choice)
+        if choice and bufnr_map[choice] then
+          vim.api.nvim_set_current_win(bufnr_map[choice])
+
+          -- Enter insert mode (unless stay option is set)
+          if not stay then
+            vim.cmd("startinsert")
+          end
+
+          -- Restore focus to original window if stay option is set
+          if stay and orig_win and vim.api.nvim_win_is_valid(orig_win) then
+            vim.api.nvim_set_current_win(orig_win)
+          end
+        end
+      end)
+    end
+    return true
+  end
+
+  -- No visible consoles in current tabpage, need to show one
+  local console_bufnr
+
+  if #matching_buffers == 1 then
+    -- Only one matching console, use it
+    console_bufnr = matching_buffers[1]
+  else
+    -- Multiple matching consoles
+    if #vim.api.nvim_list_uis() == 0 then
+      -- Headless mode - just use the first one
+      console_bufnr = matching_buffers[1]
+    else
+      -- Interactive mode - let user choose
+      local choices = {}
+      local bufnr_map = {}
+
+      for _, bufnr in ipairs(matching_buffers) do
+        local display = string.format("Buffer %d", bufnr)
+        -- Add status if visible in another tabpage
+        local win = find_buffer_window(bufnr)
+        if win then
+          display = display .. " (visible in another tab)"
+        end
+        table.insert(choices, display)
+        bufnr_map[display] = bufnr
+      end
+
+      -- Use synchronous selection
+      local selected = nil
+      vim.ui.select(choices, {
+        prompt = "Select console to show:",
+        format_item = function(item)
+          return item
+        end,
+      }, function(choice)
+        if choice then
+          selected = bufnr_map[choice]
+        end
+      end)
+
+      console_bufnr = selected
+    end
   end
 
   if console_bufnr then
