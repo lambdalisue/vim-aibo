@@ -76,12 +76,17 @@ Start an AI session:
 :Aibo ollama run qwen3:latest --verbose
 ```
 
+> **Note:** All Aibo commands support quoted strings for options with spaces.
+> - Double quotes (`"`) interpret escape sequences: `-prefix="Line 1\nLine 2"`
+> - Single quotes (`'`) treat everything literally: `-prefix='Literal\n'`
+> - Example: `-opener="botright split"` or `-prefix='Question: '`
+
 ### Window Control Options
 
 ```vim
 " Open with custom window command
 :Aibo -opener=vsplit claude
-:Aibo -opener=botright\ split claude
+:Aibo -opener="botright split" claude
 
 " Stay in current window after opening
 :Aibo -stay claude
@@ -139,9 +144,16 @@ You can send buffer content directly to an AI console using the `:AiboSend` comm
 
 " Send specific line range
 :10,20AiboSend
+
+" Add prefix and suffix to content
+:AiboSend -prefix="Question: " -suffix=" Please explain."
+:'<,'>AiboSend -prefix="```python\n" -suffix="\n```"
+
+" Combine multiple options
+:AiboSend -prefix="Review this code:\n" -submit
 ```
 
-This is particularly useful for sending code snippets, error messages, or other content to the AI without manual copy-paste.
+This is particularly useful for sending code snippets, error messages, or other content to the AI without manual copy-paste. The prefix and suffix options help format your prompts consistently.
 
 ## Configuration
 

@@ -105,7 +105,7 @@ local function send_to_prompt(content, prompt_bufnr, replace)
 end
 
 ---Send buffer content to aibo console
----@param opts table Options with start_line, end_line, input, submit, replace
+---@param opts table Options with start_line, end_line, input, submit, replace, prefix, suffix
 function M.send(opts)
   opts = opts or {}
   local start_line = opts.line1 or 1
@@ -113,10 +113,20 @@ function M.send(opts)
   local input = opts.input or false
   local submit = opts.submit or false
   local replace = opts.replace or false
+  local prefix = opts.prefix or nil
+  local suffix = opts.suffix or nil
 
   -- Get the content to send
   local lines = vim.api.nvim_buf_get_lines(0, start_line - 1, end_line, false)
   local content = table.concat(lines, "\n")
+
+  -- Add prefix and suffix if provided
+  if prefix then
+    content = prefix .. content
+  end
+  if suffix then
+    content = content .. suffix
+  end
 
   -- Find all console buffers in current tabpage
   local console_buffers = find_console_buffers()
