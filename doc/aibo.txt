@@ -439,6 +439,10 @@ COMMANDS					*aibo-commands*
 		-prefix={text}	Add text before the content
 		-suffix={text}	Add text after the content
 
+	Note: -input and -submit can be combined. When used together, the
+	      content will be submitted and the prompt will immediately
+	      reopen for additional input.
+
 	Note: Options with values support flexible quoting syntax:
 	      - Double quotes (") interpret escape sequences (\n, \t)
 	      - Single quotes (') treat everything literally
@@ -452,6 +456,7 @@ COMMANDS					*aibo-commands*
 		:AiboSend -input            " Send and open prompt
 		:AiboSend -submit           " Send and submit
 		:AiboSend -replace -submit  " Replace and submit
+		:AiboSend -input -submit    " Submit and reopen for input
 		:AiboSend -prefix="Question:\n" -suffix="\nPlease explain."
 		:'<,'>AiboSend -prefix="```python\n" -suffix="\n```"
 		:AiboSend -prefix='Literal\n' -suffix='\nText'
