@@ -22,21 +22,23 @@ FAQ					|aibo-faq|
 =============================================================================
 INTRODUCTION					*aibo-introduction*
 
-*aibo.vim* (*aibo*) is a Neovim plugin that provides seamless integration
-with AI assistants through terminal interfaces. The name "aibo" comes from
-the Japanese word for "companion," reflecting the plugin's role as your AI
-companion in Neovim. This plugin is written in Lua for optimal performance
-and maintainability.
+*aibo.vim* (*aibo*) is a Neovim plugin designed as your AI companion, providing
+seamless integration with AI assistants through terminal interfaces. The name
+"aibo" comes from the Japanese word for "companion," reflecting the plugin's
+role as your AI companion in Neovim. While optimized for AI tools, it also
+works with any interactive CLI application.
 
 The plugin creates a split-window interface with:
-- A terminal console where AI agents run
+- A terminal console where AI agents or other tools run
 - A dedicated prompt buffer for user input
 - Smart key mappings for efficient interaction
 
 Key features:
 - Cross-platform support for Neovim
-- Flexible AI agent integration
-- Customizable key mappings through ftplugins
+- Specialized support for AI assistants (Claude, Codex, Ollama)
+- Agent-specific key mappings and completions
+- Works with Gemini and other AI CLI tools
+- Also works with any interactive CLI tool (REPLs, database clients, etc.)
 - Clean separation between console and prompt
 - Automatic buffer management
 
@@ -44,10 +46,35 @@ Key features:
 REQUIREMENTS					*aibo-requirements*
 
 - Neovim 0.10.0+ (required for full Lua implementation)
-- AI agent executable (e.g., claude, chatgpt, copilot CLI tools)
+- An AI assistant CLI tool (claude, codex, ollama, etc.) or any other
+  interactive CLI tool
 
 =============================================================================
 USAGE						*aibo-usage*
+
+Start an interactive session with the |:Aibo| command:
+>
+	:Aibo claude
+	:Aibo python -i
+	:Aibo psql mydatabase
+<
+This opens a terminal console running the specified interactive tool and
+creates a prompt buffer below it for your input.
+
+Type your message in the prompt buffer and press |<CR>| in normal mode to
+submit. You can also use |<F5>| or |<C-Enter>| to submit from insert mode.
+The message will be sent to the CLI tool and the prompt buffer will be
+cleared for your next input.
+
+Tip: When focused on the console window, entering insert mode automatically
+opens the prompt window for input. This provides a seamless workflow - just
+press 'i' in the console to start typing your next message.
+
+To close the session, delete or wipeout the console buffer using
+|:bdelete!| or |:bwipeout!| (the ! is required to force deletion). Simply
+closing the console window will not terminate the process. Deleting the buffer
+will terminate the process and automatically close the associated prompt
+buffer.
 
 						*aibo-argument-syntax*
 Argument Syntax~
@@ -75,23 +102,6 @@ Key differences between quote types:
 - Single quotes ('): Everything is literal, \n stays as \n
 - Both allow spaces without escaping them individually
 
-Start an AI session with the |:Aibo| command:
->
-	:Aibo claude
-<
-This opens a terminal console running the specified AI agent and creates a
-prompt buffer below it for your input.
-
-Type your message in the prompt buffer and press |<CR>| in normal mode to
-submit. You can also use |<F5>| or |<C-Enter>| to submit from insert mode.
-The message will be sent to the AI agent and the prompt buffer will be
-cleared for your next input.
-
-To close the session, delete or wipeout the console buffer using
-|:bdelete!| or |:bwipeout!| (the ! is required to force deletion). Simply
-closing the console window will not terminate the AI agent process. Deleting
-the buffer will terminate the process and automatically close the associated
-prompt buffer.
 
 =============================================================================
 CONFIGURATION					*aibo-configuration*
@@ -286,36 +296,60 @@ COMMANDS					*aibo-commands*
 
 						*:Aibo*
 :Aibo [{options}] {cmd} [{args}...]
-	Start an AI session with the specified command and optional arguments.
-	Opens a terminal console running the command and creates a prompt
-	buffer for user input.
+	Start an interactive session with the specified command and optional
+	arguments. Opens a terminal console running the command and creates
+	a prompt buffer for user input. Works with ANY interactive CLI tool.
 
-	Options:~
-		-opener={cmd}	Use custom window command for opening
-				Example: -opener=vsplit, -opener="botright split"
-		-stay		Keep focus on current window after opening
-		-toggle		Toggle visibility of existing console or open new
-		-jump		Jump to existing console or open new one
+	-opener={cmd}		Use a custom window command:
+				- split, vsplit, tabedit, edit
+				- topleft\ split, botright\ vsplit
+				- leftabove\ split, rightbelow\ vsplit
+
+	-stay			Stay in the current window after opening
+				the AI console. Useful when you want to
+				continue editing while the AI loads.
+
+	-toggle			Intelligently toggle console visibility:
+				- If console exists and is visible: hide it
+				- If console exists but hidden: show it
+				- If console doesn't exist: create it
+
+	-jump			Jump to existing console or create new:
+				- If console exists: focus it
+				- If console doesn't exist: create it
+				Always focuses the console window.
 
 	Note: -toggle and -jump are mutually exclusive.
 	      Options with values support quoted strings for including spaces.
 
 	Examples:
 >
+		" AI assistants with specialized support
 		:Aibo claude
 		:Aibo claude --continue
 		:Aibo claude --model sonnet
-		:Aibo claude --permission-mode plan
-		:Aibo -opener=vsplit claude
-		:Aibo -stay codex --model claude-3.5-sonnet
-		:Aibo -toggle claude
-		:Aibo -jump ollama run llama3
+		:Aibo codex --model claude-3.5-sonnet
+		:Aibo ollama run llama3
 		:Aibo ollama run qwen3:latest --verbose
+		:Aibo gemini
+
+		" Also works with any interactive CLI tool
+		:Aibo python -i             " Python REPL
+		:Aibo node --interactive    " Node.js REPL
+		:Aibo psql mydatabase       " PostgreSQL client
+		:Aibo sqlite3 data.db       " SQLite client
+		:Aibo my-custom-tool        " Your custom tool
+
+		" Using window control options
+		:Aibo -opener=vsplit python -i
+		:Aibo -stay psql mydatabase
+		:Aibo -toggle claude
+		:Aibo -jump node --interactive
 <
 						*aibo-completion*
 	Intelligent Command Completion~
 
-	The plugin provides comprehensive tab completion for all AI tools:
+	The plugin provides comprehensive tab completion for some AI tools:
 
 	- Tool names: Press <Tab> after ":Aibo " to see available tools
 	- Subcommands: Complete subcommands (e.g., "run" for ollama)
@@ -391,6 +425,7 @@ COMMANDS					*aibo-commands*
 	                      true, false, high, medium, low
 	--verbose             Show response timings
 
+
 						*:AiboSend*
 :AiboSend [{options}]
 :{range}AiboSend [{options}]
@@ -404,8 +439,10 @@ COMMANDS					*aibo-commands*
 		-prefix={text}	Add text before the content
 		-suffix={text}	Add text after the content
 
-	Note: Options with values support quoted strings for including spaces:
-	      -prefix="Question: " or -prefix=Question:\  (with escaped spaces)
+	Note: Options with values support flexible quoting syntax:
+	      - Double quotes (") interpret escape sequences (\n, \t)
+	      - Single quotes (') treat everything literally
+	      - Escaped spaces for traditional Vim style
 
 	Examples:
 >
@@ -415,47 +452,14 @@ COMMANDS					*aibo-commands*
 		:AiboSend -input            " Send and open prompt
 		:AiboSend -submit           " Send and submit
 		:AiboSend -replace -submit  " Replace and submit
-		:AiboSend -prefix="Question: " -suffix=" Please explain."
+		:AiboSend -prefix="Question:\n" -suffix="\nPlease explain."
 		:'<,'>AiboSend -prefix="```python\n" -suffix="\n```"
+		:AiboSend -prefix='Literal\n' -suffix='\nText'
+		:AiboSend -prefix=Question:\  -suffix=\ Please\ explain.
 <
 	If multiple Aibo consoles are open in the current tabpage, you'll
 	be prompted to select which one to send to.
-						*aibo-window-control*
-Window Control Options~
 
-	The Aibo command supports several options for controlling window
-	behavior when opening AI consoles:
-
-	-opener={cmd}		Use a custom window command:
-				- split, vsplit, tabedit, edit
-				- topleft\ split, botright\ vsplit
-				- leftabove\ split, rightbelow\ vsplit
-
-	-stay			Stay in the current window after opening
-				the AI console. Useful when you want to
-				continue editing while the AI loads.
-
-	-toggle			Intelligently toggle console visibility:
-				- If console exists and is visible: hide it
-				- If console exists but hidden: show it
-				- If console doesn't exist: create it
-
-	-jump			Jump to existing console or create new:
-				- If console exists: focus it
-				- If console doesn't exist: create it
-				Always focuses the console window.
-
-	Examples:
->
-		" Open Claude in vertical split, stay in current window
-		:Aibo -opener=vsplit -stay claude
-
-		" Toggle Claude console visibility
-		:Aibo -toggle claude
-
-		" Jump to or create Ollama console
-		:Aibo -jump ollama run llama3
-<
 -----------------------------------------------------------------------------
 FUNCTIONS					*aibo-functions*
 
@@ -583,7 +587,7 @@ Prompt buffer <Plug> mappings~
 
 	<Plug>(aibo-prompt-submit)		Submit prompt
 	<Plug>(aibo-prompt-submit-close)	Submit and close
-	<Plug>(aibo-prompt-esc)		Send ESC to agent
+	<Plug>(aibo-prompt-esc)			Send ESC to agent
 	<Plug>(aibo-prompt-interrupt)		Interrupt agent
 	<Plug>(aibo-prompt-clear)		Clear screen
 	<Plug>(aibo-prompt-next)		Next history
@@ -694,8 +698,15 @@ A: The plugin uses modern Lua APIs and terminal features introduced in
    Neovim 0.10.0 for optimal performance and reliability.
 
 Q: Can I use aibo with any AI tool?
-A: Yes! Aibo works with any command-line AI tool that accepts text input
-   via stdin and provides output via stdout.
+A: Yes! Aibo is designed for AI assistants and provides specialized support
+   for Claude, Codex, and Ollama with agent-specific key mappings and smart
+   completions. It also works with Gemini and any other command-line AI tool
+   that accepts text input via stdin and provides output via stdout.
+
+Q: Can I use aibo with non-AI interactive tools?
+A: Absolutely! While aibo is optimized for AI assistants, it works with any
+   interactive CLI tool including REPLs (Python, Node, Ruby), database
+   clients (PostgreSQL, MySQL, SQLite), and custom interactive applications.
 
 Q: How do I customize key mappings?
 A: You have several options:
