@@ -306,13 +306,13 @@ function M.toggle(cmd, args, opener, stay)
   return true
 end
 
----Jump to aibo console - focus if visible, open/show if not
+---Reuse aibo console - focus if visible, open/show if not
 ---@param cmd string Command to execute
 ---@param args string[] Arguments for command
 ---@param opener? string Optional window opener command (e.g., "20vsplit", "tabedit")
 ---@param stay? boolean Whether to stay in the original window after opening
----@return boolean True if jumped to existing console, false if created new
-function M.jump(cmd, args, opener, stay)
+---@return boolean True if reused existing console, false if created new
+function M.reuse(cmd, args, opener, stay)
   -- Save the current window if we need to stay
   local orig_win = nil
   if stay then

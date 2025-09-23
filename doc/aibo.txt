@@ -314,12 +314,12 @@ COMMANDS					*aibo-commands*
 				- If console exists but hidden: show it
 				- If console doesn't exist: create it
 
-	-jump			Jump to existing console or create new:
+	-reuse			Reuse existing console or create new:
 				- If console exists: focus it
 				- If console doesn't exist: create it
 				Always focuses the console window.
 
-	Note: -toggle and -jump are mutually exclusive.
+	Note: -toggle and -reuse are mutually exclusive.
 	      Options with values support quoted strings for including spaces.
 
 	Examples:
@@ -344,7 +344,7 @@ COMMANDS					*aibo-commands*
 		:Aibo -opener=vsplit python -i
 		:Aibo -stay psql mydatabase
 		:Aibo -toggle claude
-		:Aibo -jump node --interactive
+		:Aibo -reuse node --interactive
 <
 						*aibo-completion*
 	Intelligent Command Completion~
