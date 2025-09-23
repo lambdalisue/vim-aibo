@@ -53,7 +53,7 @@ _G._aibo_complete = function(arglead, cmdline, cursorpos)
   -- Skip options when looking for the tool
   local tool_index = 2
   for i = 2, #parts do
-    if parts[i] and (parts[i]:match("^-opener=") or parts[i] == "-stay" or parts[i] == "-toggle" or parts[i] == "-jump") then
+    if parts[i] and (parts[i]:match("^-opener=") or parts[i] == "-stay" or parts[i] == "-toggle" or parts[i] == "-reuse") then
       tool_index = i + 1
     else
       break
@@ -73,7 +73,7 @@ _G._aibo_complete = function(arglead, cmdline, cursorpos)
       local has_opener = false
       local has_stay = false
       local has_toggle = false
-      local has_jump = false
+      local has_reuse = false
       for _, part in ipairs(parts) do
         if part:match("^-opener=") then
           has_opener = true
@@ -81,8 +81,8 @@ _G._aibo_complete = function(arglead, cmdline, cursorpos)
           has_stay = true
         elseif part == "-toggle" then
           has_toggle = true
-        elseif part == "-jump" then
-          has_jump = true
+        elseif part == "-reuse" then
+          has_reuse = true
         end
       end
       if not has_opener then
@@ -94,8 +94,8 @@ _G._aibo_complete = function(arglead, cmdline, cursorpos)
       if not has_toggle then
         table.insert(options, "-toggle")
       end
-      if not has_jump then
-        table.insert(options, "-jump")
+      if not has_reuse then
+        table.insert(options, "-reuse")
       end
       return options
     end
@@ -119,12 +119,12 @@ _G._aibo_complete = function(arglead, cmdline, cursorpos)
   tool_cmdline = tool_cmdline:gsub("^%-opener=[^%s]+%s+", "")
   tool_cmdline = tool_cmdline:gsub("^%-stay%s+", "")
   tool_cmdline = tool_cmdline:gsub("^%-toggle%s+", "")
-  tool_cmdline = tool_cmdline:gsub("^%-jump%s+", "")
+  tool_cmdline = tool_cmdline:gsub("^%-reuse%s+", "")
   -- Continue stripping if options are present in any order
   tool_cmdline = tool_cmdline:gsub("^%-opener=[^%s]+%s+", "")
   tool_cmdline = tool_cmdline:gsub("^%-stay%s+", "")
   tool_cmdline = tool_cmdline:gsub("^%-toggle%s+", "")
-  tool_cmdline = tool_cmdline:gsub("^%-jump%s+", "")
+  tool_cmdline = tool_cmdline:gsub("^%-reuse%s+", "")
 
   local tool_cursorpos = cursorpos - #("Aibo ")
   if tool_cursorpos < 0 then
@@ -165,7 +165,7 @@ end
 vim.api.nvim_create_user_command("Aibo", function(cmd_opts)
   local args = cmd_opts.fargs
   if #args == 0 then
-    vim.api.nvim_err_writeln("Usage: :Aibo [-opener=<opener>] [-stay] [-toggle|-jump] <cmd> [args...]")
+    vim.api.nvim_err_writeln("Usage: :Aibo [-opener=<opener>] [-stay] [-toggle|-reuse] <cmd> [args...]")
     return
   end
 
@@ -177,22 +177,22 @@ vim.api.nvim_create_user_command("Aibo", function(cmd_opts)
   local opener = options.opener
   local stay = options.stay or false
   local toggle = options.toggle or false
-  local jump = options.jump or false
+  local reuse = options.reuse or false
 
   if opener == "" then
-    vim.api.nvim_err_writeln("Usage: :Aibo [-opener=<opener>] [-stay] [-toggle|-jump] <cmd> [args...]")
+    vim.api.nvim_err_writeln("Usage: :Aibo [-opener=<opener>] [-stay] [-toggle|-reuse] <cmd> [args...]")
     vim.api.nvim_err_writeln("Example: :Aibo -opener=vsplit -stay ollama run llama3.2")
     return
   end
 
   if #remaining == 0 then
-    vim.api.nvim_err_writeln("Usage: :Aibo [-opener=<opener>] [-stay] [-toggle|-jump] <cmd> [args...]")
+    vim.api.nvim_err_writeln("Usage: :Aibo [-opener=<opener>] [-stay] [-toggle|-reuse] <cmd> [args...]")
     return
   end
 
   -- Validate mutually exclusive options
-  if toggle and jump then
-    vim.api.nvim_err_writeln("Error: -toggle and -jump cannot be used together")
+  if toggle and reuse then
+    vim.api.nvim_err_writeln("Error: -toggle and -reuse cannot be used together")
     return
   end
 
@@ -202,8 +202,8 @@ vim.api.nvim_create_user_command("Aibo", function(cmd_opts)
   -- Use appropriate behavior based on options
   if toggle then
     require("aibo.internal.console").toggle(cmd, args, opener, stay)
-  elseif jump then
-    require("aibo.internal.console").jump(cmd, args, opener, stay)
+  elseif reuse then
+    require("aibo.internal.console").reuse(cmd, args, opener, stay)
   else
     require("aibo.internal.console").open(cmd, args, opener, stay)
   end
