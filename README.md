@@ -177,6 +177,9 @@ You can send buffer content directly to an interactive CLI console using the `:A
 :AiboSend -submit   " Send and submit immediately
 :AiboSend -replace  " Replace prompt content instead of appending
 
+" Combine input and submit options
+:AiboSend -input -submit  " Submit and immediately reopen for more input
+
 " Send specific line range
 :10,20AiboSend
 
