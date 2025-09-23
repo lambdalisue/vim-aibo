@@ -88,12 +88,18 @@ end
 local function ensure_insert(bufnr)
   local lines = vim.api.nvim_buf_get_lines(bufnr, 0, -1, false)
   local is_empty = table.concat(lines, "\n") == ""
+  local expected_win = vim.api.nvim_get_current_win()
+  local expected_buf = vim.api.nvim_get_current_buf()
 
   vim.defer_fn(function()
-    if is_empty then
-      vim.cmd("startinsert")
-    else
-      vim.cmd("startinsert!")
+    -- Only trigger startinsert if we're still in the expected prompt window
+    -- Check both window and buffer to ensure we're in the right prompt
+    if vim.api.nvim_get_current_win() == expected_win and vim.api.nvim_get_current_buf() == expected_buf then
+      if is_empty then
+        vim.cmd("startinsert")
+      else
+        vim.cmd("startinsert!")
+      end
     end
   end, 0)
 end
