@@ -49,6 +49,32 @@ REQUIREMENTS					*aibo-requirements*
 =============================================================================
 USAGE						*aibo-usage*
 
+						*aibo-argument-syntax*
+Argument Syntax~
+
+All Aibo commands support flexible argument syntax for options with values.
+You can use quoted strings (single or double quotes) or escaped spaces:
+
+Double quotes (interprets escape sequences like \n, \t):
+>
+	:AiboSend -prefix="Question:\n" -suffix="\nExplain."
+	:AiboSend -prefix="```python\n" -suffix="\n```"
+<
+Single quotes (treats everything literally, no escape sequences):
+>
+	:AiboSend -prefix='Literal\n' -suffix='\nText'
+	:Aibo -opener='botright split' claude
+<
+Escaped spaces (traditional Vim style):
+>
+	:Aibo -opener=botright\ split claude
+	:AiboSend -prefix=Question:\  -suffix=\ Please\ explain.
+<
+Key differences between quote types:
+- Double quotes ("): Interprets \n as newline, \t as tab, etc.
+- Single quotes ('): Everything is literal, \n stays as \n
+- Both allow spaces without escaping them individually
+
 Start an AI session with the |:Aibo| command:
 >
 	:Aibo claude
@@ -266,12 +292,13 @@ COMMANDS					*aibo-commands*
 
 	Options:~
 		-opener={cmd}	Use custom window command for opening
-				Example: -opener=vsplit, -opener=botright\ split
+				Example: -opener=vsplit, -opener="botright split"
 		-stay		Keep focus on current window after opening
 		-toggle		Toggle visibility of existing console or open new
 		-jump		Jump to existing console or open new one
 
 	Note: -toggle and -jump are mutually exclusive.
+	      Options with values support quoted strings for including spaces.
 
 	Examples:
 >
@@ -374,6 +401,11 @@ COMMANDS					*aibo-commands*
 		-input		Open prompt window and enter insert mode
 		-submit		Submit content immediately after sending
 		-replace	Replace prompt content instead of appending
+		-prefix={text}	Add text before the content
+		-suffix={text}	Add text after the content
+
+	Note: Options with values support quoted strings for including spaces:
+	      -prefix="Question: " or -prefix=Question:\  (with escaped spaces)
 
 	Examples:
 >
@@ -383,6 +415,8 @@ COMMANDS					*aibo-commands*
 		:AiboSend -input            " Send and open prompt
 		:AiboSend -submit           " Send and submit
 		:AiboSend -replace -submit  " Replace and submit
+		:AiboSend -prefix="Question: " -suffix=" Please explain."
+		:'<,'>AiboSend -prefix="```python\n" -suffix="\n```"
 <
 	If multiple Aibo consoles are open in the current tabpage, you'll
 	be prompted to select which one to send to.

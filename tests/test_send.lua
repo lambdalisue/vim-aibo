@@ -54,6 +54,9 @@ test_set["AiboSend command completion"] = function()
   local completions = vim.fn.getcompletion("AiboSend ", "cmdline")
   T.expect.equality(vim.tbl_contains(completions, "-input"), true)
   T.expect.equality(vim.tbl_contains(completions, "-submit"), true)
+  T.expect.equality(vim.tbl_contains(completions, "-replace"), true)
+  T.expect.equality(vim.tbl_contains(completions, "-prefix="), true)
+  T.expect.equality(vim.tbl_contains(completions, "-suffix="), true)
 end
 
 -- Test AiboSend without console buffer
@@ -260,6 +263,46 @@ test_set["AiboSend with both options shows warning"] = function()
   -- Check that warning was shown
   T.expect.equality(warning_shown, true)
   T.expect.equality(warning_msg, "Both -input and -submit specified. -submit takes precedence.")
+
+  -- Clean up
+  vim.api.nvim_win_close(console_win, true)
+end
+
+-- Test AiboSend with prefix and suffix
+test_set["AiboSend with prefix and suffix"] = function()
+  -- Create a mock console buffer
+  local console_buf = vim.api.nvim_create_buf(false, true)
+  vim.api.nvim_buf_set_name(console_buf, "aibo://prefix-suffix")
+  vim.bo[console_buf].filetype = "aibo-console"
+  vim.b[console_buf].aibo = {
+    cmd = "test",
+    args = {},
+  }
+
+  -- Open console in a window
+  vim.cmd("split")
+  vim.api.nvim_set_current_buf(console_buf)
+  local console_win = vim.api.nvim_get_current_win()
+  vim.cmd("wincmd p") -- Go back to previous window
+
+  -- Create a test buffer with content
+  local test_buf = vim.api.nvim_create_buf(false, true)
+  vim.api.nvim_set_current_buf(test_buf)
+  vim.api.nvim_buf_set_lines(test_buf, 0, -1, false, { "code" })
+
+  -- Run AiboSend with prefix and suffix (using quoted strings)
+  vim.cmd([[AiboSend -prefix="Question: " -suffix=" Please explain."]])
+
+  -- Check that prompt buffer was created with prefix and suffix
+  local prompt_bufname = string.format("aiboprompt://%d", console_win)
+  local prompt_buf = vim.fn.bufnr(prompt_bufname)
+  T.expect.equality(prompt_buf ~= -1, true)
+
+  if prompt_buf ~= -1 then
+    local prompt_lines = vim.api.nvim_buf_get_lines(prompt_buf, 0, -1, false)
+    local content = table.concat(prompt_lines, "\n")
+    T.expect.equality(content, "Question: code Please explain.")
+  end
 
   -- Clean up
   vim.api.nvim_win_close(console_win, true)

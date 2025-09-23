@@ -45,6 +45,7 @@ local test_files = {
   "test_aibo",
   "test_plugin",
   "test_send",
+  "test_argparse",
   "test_integration_send",
   "test_integration_claude",
   "test_integration_ollama",

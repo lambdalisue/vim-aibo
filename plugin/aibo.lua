@@ -169,37 +169,23 @@ vim.api.nvim_create_user_command("Aibo", function(cmd_opts)
     return
   end
 
-  -- Parse options
-  local opener = nil
-  local stay = false
-  local toggle = false
-  local jump = false
+  -- Parse options using the new argparse module
+  local argparse = require("aibo.internal.argparse")
+  local options, remaining = argparse.parse_fargs(args)
 
-  -- Process all options at the beginning of args
-  while #args > 0 do
-    if args[1] and args[1]:match("^-opener=") then
-      opener = args[1]:match("^-opener=(.+)")
-      if not opener or opener == "" then
-        vim.api.nvim_err_writeln("Usage: :Aibo [-opener=<opener>] [-stay] [-toggle|-jump] <cmd> [args...]")
-        vim.api.nvim_err_writeln("Example: :Aibo -opener=vsplit -stay ollama run llama3.2")
-        return
-      end
-      table.remove(args, 1) -- remove "-opener=..."
-    elseif args[1] == "-stay" then
-      stay = true
-      table.remove(args, 1) -- remove "-stay"
-    elseif args[1] == "-toggle" then
-      toggle = true
-      table.remove(args, 1) -- remove "-toggle"
-    elseif args[1] == "-jump" then
-      jump = true
-      table.remove(args, 1) -- remove "-jump"
-    else
-      break -- not an option, must be the command
-    end
+  -- Extract specific options
+  local opener = options.opener
+  local stay = options.stay or false
+  local toggle = options.toggle or false
+  local jump = options.jump or false
+
+  if opener == "" then
+    vim.api.nvim_err_writeln("Usage: :Aibo [-opener=<opener>] [-stay] [-toggle|-jump] <cmd> [args...]")
+    vim.api.nvim_err_writeln("Example: :Aibo -opener=vsplit -stay ollama run llama3.2")
+    return
   end
 
-  if #args == 0 then
+  if #remaining == 0 then
     vim.api.nvim_err_writeln("Usage: :Aibo [-opener=<opener>] [-stay] [-toggle|-jump] <cmd> [args...]")
     return
   end
@@ -210,7 +196,8 @@ vim.api.nvim_create_user_command("Aibo", function(cmd_opts)
     return
   end
 
-  local cmd = table.remove(args, 1)
+  local cmd = table.remove(remaining, 1)
+  args = remaining  -- Update args to the remaining non-option arguments
 
   -- Validate the command
   local known_cmds = { "claude", "codex", "ollama" }
@@ -236,21 +223,9 @@ end, {
 
 -- Create AiboSend command
 vim.api.nvim_create_user_command("AiboSend", function(cmd_opts)
-  -- Parse options
-  local input = false
-  local submit = false
-  local replace = false
-  local args = cmd_opts.fargs or {}
-
-  for _, arg in ipairs(args) do
-    if arg == "-input" then
-      input = true
-    elseif arg == "-submit" then
-      submit = true
-    elseif arg == "-replace" then
-      replace = true
-    end
-  end
+  -- Parse options using the new argparse module
+  local argparse = require("aibo.internal.argparse")
+  local options, remaining = argparse.parse_fargs(cmd_opts.fargs or {})
 
   -- Check if a range was explicitly provided
   -- When no range is given, line1 == line2 == current line
@@ -269,9 +244,11 @@ vim.api.nvim_create_user_command("AiboSend", function(cmd_opts)
   require("aibo.internal.send").send({
     line1 = line1,
     line2 = line2,
-    input = input,
-    submit = submit,
-    replace = replace,
+    input = options.input or false,
+    submit = options.submit or false,
+    replace = options.replace or false,
+    prefix = options.prefix,
+    suffix = options.suffix,
   })
 end, {
   range = true,
@@ -279,7 +256,35 @@ end, {
   desc = "Send buffer content to Aibo console prompt",
   complete = function(arglead, cmdline, cursorpos)
     if arglead == "" or arglead:match("^%-") then
-      return { "-input", "-submit", "-replace" }
+      local options = { "-input", "-submit", "-replace", "-prefix=", "-suffix=" }
+      -- Filter out options already present in cmdline
+      local used_options = {}
+      for opt in cmdline:gmatch("%-[%w]+") do
+        used_options[opt] = true
+      end
+      -- Also check for -prefix= and -suffix= with values
+      if cmdline:match("-prefix=") then
+        used_options["-prefix"] = true
+      end
+      if cmdline:match("-suffix=") then
+        used_options["-suffix"] = true
+      end
+
+      local available = {}
+      for _, opt in ipairs(options) do
+        local base_opt = opt:match("^(%-[%w]+)") or opt
+        if not used_options[base_opt] then
+          table.insert(available, opt)
+        end
+      end
+
+      -- Filter by arglead if it's not empty
+      if arglead ~= "" then
+        return vim.tbl_filter(function(val)
+          return val:find("^" .. vim.pesc(arglead))
+        end, available)
+      end
+      return available
     end
     return {}
   end,
