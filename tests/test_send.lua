@@ -221,7 +221,7 @@ test_set["AiboSend -input option"] = function()
   vim.api.nvim_win_close(test_win, true)
 end
 
--- Test AiboSend with both -input and -submit shows warning
+-- Test AiboSend with both -input and -submit works together
 test_set["AiboSend with both options shows warning"] = function()
   -- Create a mock console buffer
   local console_buf = vim.api.nvim_create_buf(false, true)
@@ -243,14 +243,12 @@ test_set["AiboSend with both options shows warning"] = function()
   vim.api.nvim_set_current_buf(test_buf)
   vim.api.nvim_buf_set_lines(test_buf, 0, -1, false, { "test" })
 
-  -- Mock vim.notify to capture warning
+  -- Mock vim.notify to capture any warnings
   local warning_shown = false
-  local warning_msg = nil
   local original_notify = vim.notify
   vim.notify = function(msg, level, opts)
     if opts and opts.title == "Aibo" and level == vim.log.levels.WARN then
       warning_shown = true
-      warning_msg = msg
     end
   end
 
@@ -260,9 +258,8 @@ test_set["AiboSend with both options shows warning"] = function()
   -- Restore original notify
   vim.notify = original_notify
 
-  -- Check that warning was shown
-  T.expect.equality(warning_shown, true)
-  T.expect.equality(warning_msg, "Both -input and -submit specified. -submit takes precedence.")
+  -- Check that no warning was shown (both options now work together)
+  T.expect.equality(warning_shown, false)
 
   -- Clean up
   vim.api.nvim_win_close(console_win, true)

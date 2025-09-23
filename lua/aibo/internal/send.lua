@@ -162,11 +162,6 @@ function M.send(opts)
   -- Send the content
   send_to_prompt(content, prompt_bufnr, replace)
 
-  -- Warn if both input and submit are specified
-  if input and submit then
-    vim.notify("Both -input and -submit specified. -submit takes precedence.", vim.log.levels.WARN, { title = "Aibo" })
-  end
-
   -- Function to position cursor at the end of prompt buffer content
   local function position_cursor_at_end()
     for _, win in ipairs(vim.api.nvim_list_wins()) do
@@ -179,11 +174,8 @@ function M.send(opts)
     end
   end
 
-  -- If submit option is enabled, save current window, submit content, and return
+  -- Handle different option combinations
   if submit and console_winid then
-    -- Save current window to return to after submission
-    local orig_win = vim.api.nvim_get_current_win()
-
     -- Focus the console window
     vim.api.nvim_set_current_win(console_winid)
 
@@ -198,10 +190,15 @@ function M.send(opts)
       if bufname:match("^aiboprompt://") then
         -- Use :wq to submit the prompt content (this triggers BufWriteCmd)
         vim.cmd("wq")
-        -- Focus back to the original window
-        vim.schedule(function()
-          utils.restore_window_focus(orig_win)
-        end)
+
+        -- If input option is also specified, reopen the prompt after submission
+        if input then
+          vim.schedule(function()
+            -- Focus the console window again and enter insert mode to reopen prompt
+            vim.api.nvim_set_current_win(console_winid)
+            vim.cmd("startinsert")
+          end)
+        end
       end
     end)
   -- If input option is enabled, focus the console window and trigger insert mode
