@@ -199,14 +199,6 @@ vim.api.nvim_create_user_command("Aibo", function(cmd_opts)
   local cmd = table.remove(remaining, 1)
   args = remaining  -- Update args to the remaining non-option arguments
 
-  -- Validate the command
-  local known_cmds = { "claude", "codex", "ollama" }
-  if not vim.tbl_contains(known_cmds, cmd) then
-    vim.api.nvim_err_writeln(string.format("Error: Unknown command '%s'", cmd))
-    vim.api.nvim_err_writeln("Available commands: " .. table.concat(known_cmds, ", "))
-    return
-  end
-
   -- Use appropriate behavior based on options
   if toggle then
     require("aibo.internal.console").toggle(cmd, args, opener, stay)

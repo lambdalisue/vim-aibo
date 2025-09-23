@@ -15,18 +15,26 @@ https://github.com/user-attachments/assets/18dcdc91-fb8c-4243-af15-df7f0c2fbd02
 
 ## Concept
 
-Aibo (from Japanese "companion") provides seamless integration with AI assistants through terminal interfaces in Neovim.
+Aibo (from Japanese "companion") is designed as your AI companion in Neovim, providing seamless integration with AI assistants while also supporting any interactive CLI tool.
 
 - Pure Lua implementation for Neovim 0.10.0+
-- Works with any CLI-based AI tool
+- **Optimized for AI assistants** with built-in support:
+  - Claude (with mode switching, verbose toggle, todo management)
+  - Codex (with transcript view, navigation controls)
+  - Ollama (with model completion, thinking mode)
+  - Works with Gemini and other AI CLI tools
+- **Also works with any interactive CLI tool**:
+  - Programming REPLs (python, node, irb, ghci)
+  - Database clients (psql, mysql, sqlite3)
+  - Custom interactive tools
 - Split-window interface with console and prompt buffers
-- Customizable key mappings through ftplugins
-- Agent-specific configurations via setup()
+- Tool-specific configurations and key mappings
+- Intelligent command completion for supported AI tools
 
 ## Requirements
 
 - Neovim 0.10.0 or later
-- AI agent CLI tool (claude, chatgpt, ollama, etc.)
+- An AI assistant CLI tool (claude, codex, ollama, etc.) or any other interactive CLI tool
 
 ## Installation
 
@@ -62,9 +70,24 @@ Run `:checkhealth aibo` to verify your installation and diagnose any issues.
 
 ## Usage
 
-Start an AI session:
+### Basic Command Syntax
 
 ```vim
+:Aibo [options] <command> [arguments...]
+```
+
+Where:
+
+- `[options]` - Aibo-specific options (e.g., `-opener`, `-stay`, `-toggle`)
+- `<command>` - Any interactive CLI tool command
+- `[arguments...]` - Arguments passed directly to the CLI tool
+
+This opens a terminal console running the interactive CLI tool with a prompt buffer below.
+
+### Examples
+
+```vim
+" AI assistants with specialized support and smart completions
 :Aibo claude
 :Aibo claude --continue
 :Aibo claude --model sonnet
@@ -74,12 +97,29 @@ Start an AI session:
 :Aibo codex resume --last
 :Aibo ollama run llama3
 :Aibo ollama run qwen3:latest --verbose
+:Aibo gemini
+
+" Also works with any interactive CLI tool
+:Aibo python -i                 " Python REPL
+:Aibo node --interactive        " Node.js REPL
+:Aibo psql mydatabase          " PostgreSQL client
+:Aibo sqlite3 data.db          " SQLite client
+:Aibo my-custom-cli-tool       " Your custom tool
 ```
 
-> **Note:** All Aibo commands support quoted strings for options with spaces.
+> [!NOTE]
+> All Aibo commands support quoted strings for options with spaces.
+>
 > - Double quotes (`"`) interpret escape sequences: `-prefix="Line 1\nLine 2"`
 > - Single quotes (`'`) treat everything literally: `-prefix='Literal\n'`
 > - Example: `-opener="botright split"` or `-prefix='Question: '`
+
+Type in the prompt buffer and press `<CR>` in normal mode to submit. The prompt clears automatically for the next message. You can also use `<C-Enter>` or `<F5>` to submit even while in insert mode, which is particularly useful for continuous typing.
+
+> [!TIP]
+> When focused on the console window, entering insert mode automatically opens the prompt window for input. This provides a seamless workflow - just press `i` in the console to start typing your next message.
+
+To close the session, use `:bdelete!` or `:bwipeout!` on the console buffer.
 
 ### Window Control Options
 
@@ -100,9 +140,9 @@ Start an AI session:
 
 ### Intelligent Command Completion
 
-The plugin provides comprehensive tab completion for all supported AI tools:
+The plugin provides comprehensive tab completion for all supported interactive CLI tools:
 
-- **Tool names**: Press `<Tab>` after `:Aibo ` to see available tools (claude, codex, ollama)
+- **Tool names**: Press `<Tab>` after `:Aibo ` to see available tools (claude, codex, ollama, or any custom tool)
 - **Subcommands**: For ollama, complete `run` subcommand
 - **Arguments**: Complete available flags and options for each tool
 - **Values**: Complete predefined values for arguments (models, modes, etc.)
@@ -110,6 +150,7 @@ The plugin provides comprehensive tab completion for all supported AI tools:
 - **Files/Directories**: Intelligent completion for file and directory arguments
 
 Examples:
+
 ```vim
 :Aibo <Tab>                     " Shows: claude, codex, ollama
 :Aibo claude --<Tab>            " Shows all Claude arguments
@@ -120,17 +161,11 @@ Examples:
 :Aibo codex --sandbox <Tab>     " Shows: none, read-only, restricted, full
 ```
 
-This opens a terminal console running the AI agent with a prompt buffer below.
+### Sending Content to Interactive CLI
 
-Type in the prompt buffer and press `<CR>` in normal mode to submit. The prompt clears automatically for the next message. You can also use `<C-Enter>` or `<F5>` to submit even while in insert mode, which is particularly useful for continuous typing.
+You can send buffer content directly to an interactive CLI console using the `:AiboSend` command:
 
-To close the session, use `:bdelete!` or `:bwipeout!` on the console buffer.
-
-### Sending Content to AI
-
-You can send buffer content directly to an AI console using the `:AiboSend` command:
-
-```vim
+````vim
 " Send whole buffer to prompt
 :AiboSend
 
@@ -151,9 +186,9 @@ You can send buffer content directly to an AI console using the `:AiboSend` comm
 
 " Combine multiple options
 :AiboSend -prefix="Review this code:\n" -submit
-```
+````
 
-This is particularly useful for sending code snippets, error messages, or other content to the AI without manual copy-paste. The prefix and suffix options help format your prompts consistently.
+This is particularly useful for sending code snippets, error messages, or other content to the interactive CLI without manual copy-paste. The prefix and suffix options help format your input consistently.
 
 ## Configuration
 
@@ -287,49 +322,49 @@ require('aibo').setup({
 
 ### Console Buffer
 
-| Key | Action |
-|-----|--------|
-| `<CR>` | Submit empty line |
-| `<Esc>` | Send ESC to terminal |
-| `<C-c>` | Send interrupt signal |
-| `<C-l>` | Clear terminal |
-| `<C-n>` | Navigate to next in history |
-| `<C-p>` | Navigate to previous in history |
-| `<Down>` | Send down arrow |
-| `<Up>` | Send up arrow |
+| Key      | Action                          |
+| -------- | ------------------------------- |
+| `<CR>`   | Submit empty line               |
+| `<Esc>`  | Send ESC to terminal            |
+| `<C-c>`  | Send interrupt signal           |
+| `<C-l>`  | Clear terminal                  |
+| `<C-n>`  | Navigate to next in history     |
+| `<C-p>`  | Navigate to previous in history |
+| `<Down>` | Send down arrow                 |
+| `<Up>`   | Send up arrow                   |
 
 ### Prompt Buffer
 
-| Key | Action |
-|-----|--------|
-| `<CR>` | Submit content (normal mode) |
-| `<C-Enter>`* | Submit and close |
-| `<F5>` | Submit and close |
-| `:w` | Submit content |
-| `:wq` | Submit and close |
+| Key           | Action                       |
+| ------------- | ---------------------------- |
+| `<CR>`        | Submit content (normal mode) |
+| `<C-Enter>`\* | Submit and close             |
+| `<F5>`        | Submit and close             |
+| `:w`          | Submit content               |
+| `:wq`         | Submit and close             |
 
 Plus all console buffer mappings.
 
 ### Agent-Specific (Claude)
 
-| Key | Action |
-|-----|--------|
-| `<S-Tab>`* / `<F2>` | Switch mode |
-| `<C-o>` | Toggle verbose |
-| `<C-t>` | Show todo |
-| `<C-_>` | Undo |
-| `<C-v>` | Paste |
+| Key                  | Action         |
+| -------------------- | -------------- |
+| `<S-Tab>`\* / `<F2>` | Switch mode    |
+| `<C-o>`              | Toggle verbose |
+| `<C-t>`              | Show todo      |
+| `<C-_>`              | Undo           |
+| `<C-v>`              | Paste          |
 
 ### Agent-Specific (Codex)
 
-| Key | Action |
-|-----|--------|
-| `<C-t>` | Show transcript |
-| `<Home>` | Home |
-| `<End>` | End |
-| `<PageUp>` | Page up |
-| `<PageDown>` | Page down |
-| `q` | Quit |
+| Key          | Action          |
+| ------------ | --------------- |
+| `<C-t>`      | Show transcript |
+| `<Home>`     | Home            |
+| `<End>`      | End             |
+| `<PageUp>`   | Page up         |
+| `<PageDown>` | Page down       |
+| `q`          | Quit            |
 
 > [!IMPORTANT]
 > Some key combinations (`<C-Enter>`, `<S-Tab>`) require modern terminal emulators like Kitty, WezTerm, or Ghostty. Use alternatives like `<F5>` or `:w` if these don't work.
@@ -350,52 +385,52 @@ vim.keymap.set('n', '<C-k>', '<Plug>(aibo-prompt-submit-close)', { buffer = bufn
 
 #### Prompt Buffer
 
-| <Plug> Mapping | Description |
-|----------------|-------------|
-| `<Plug>(aibo-prompt-submit)` | Submit prompt |
-| `<Plug>(aibo-prompt-submit-close)` | Submit and close |
-| `<Plug>(aibo-prompt-esc)` | Send ESC to agent |
-| `<Plug>(aibo-prompt-interrupt)` | Interrupt agent |
-| `<Plug>(aibo-prompt-clear)` | Clear screen |
-| `<Plug>(aibo-prompt-next)` | Next history |
-| `<Plug>(aibo-prompt-prev)` | Previous history |
-| `<Plug>(aibo-prompt-down)` | Move down |
-| `<Plug>(aibo-prompt-up)` | Move up |
+| <Plug> Mapping                     | Description       |
+| ---------------------------------- | ----------------- |
+| `<Plug>(aibo-prompt-submit)`       | Submit prompt     |
+| `<Plug>(aibo-prompt-submit-close)` | Submit and close  |
+| `<Plug>(aibo-prompt-esc)`          | Send ESC to agent |
+| `<Plug>(aibo-prompt-interrupt)`    | Interrupt agent   |
+| `<Plug>(aibo-prompt-clear)`        | Clear screen      |
+| `<Plug>(aibo-prompt-next)`         | Next history      |
+| `<Plug>(aibo-prompt-prev)`         | Previous history  |
+| `<Plug>(aibo-prompt-down)`         | Move down         |
+| `<Plug>(aibo-prompt-up)`           | Move up           |
 
 #### Console Buffer
 
-| <Plug> Mapping | Description |
-|----------------|-------------|
-| `<Plug>(aibo-console-submit)` | Submit empty message |
-| `<Plug>(aibo-console-close)` | Close console |
-| `<Plug>(aibo-console-esc)` | Send ESC to agent |
-| `<Plug>(aibo-console-interrupt)` | Interrupt agent |
-| `<Plug>(aibo-console-clear)` | Clear screen |
-| `<Plug>(aibo-console-next)` | Next history |
-| `<Plug>(aibo-console-prev)` | Previous history |
-| `<Plug>(aibo-console-down)` | Move down |
-| `<Plug>(aibo-console-up)` | Move up |
+| <Plug> Mapping                   | Description          |
+| -------------------------------- | -------------------- |
+| `<Plug>(aibo-console-submit)`    | Submit empty message |
+| `<Plug>(aibo-console-close)`     | Close console        |
+| `<Plug>(aibo-console-esc)`       | Send ESC to agent    |
+| `<Plug>(aibo-console-interrupt)` | Interrupt agent      |
+| `<Plug>(aibo-console-clear)`     | Clear screen         |
+| `<Plug>(aibo-console-next)`      | Next history         |
+| `<Plug>(aibo-console-prev)`      | Previous history     |
+| `<Plug>(aibo-console-down)`      | Move down            |
+| `<Plug>(aibo-console-up)`        | Move up              |
 
 #### Claude Agent
 
-| <Plug> Mapping | Description |
-|----------------|-------------|
-| `<Plug>(aibo-claude-mode)` | Toggle mode |
+| <Plug> Mapping                | Description    |
+| ----------------------------- | -------------- |
+| `<Plug>(aibo-claude-mode)`    | Toggle mode    |
 | `<Plug>(aibo-claude-verbose)` | Toggle verbose |
-| `<Plug>(aibo-claude-todo)` | Show todo |
-| `<Plug>(aibo-claude-undo)` | Undo |
-| `<Plug>(aibo-claude-paste)` | Paste |
+| `<Plug>(aibo-claude-todo)`    | Show todo      |
+| `<Plug>(aibo-claude-undo)`    | Undo           |
+| `<Plug>(aibo-claude-paste)`   | Paste          |
 
 #### Codex Agent
 
-| <Plug> Mapping | Description |
-|----------------|-------------|
+| <Plug> Mapping                  | Description     |
+| ------------------------------- | --------------- |
 | `<Plug>(aibo-codex-transcript)` | Show transcript |
-| `<Plug>(aibo-codex-home)` | Home |
-| `<Plug>(aibo-codex-end)` | End |
-| `<Plug>(aibo-codex-page-up)` | Page up |
-| `<Plug>(aibo-codex-page-down)` | Page down |
-| `<Plug>(aibo-codex-quit)` | Quit |
+| `<Plug>(aibo-codex-home)`       | Home            |
+| `<Plug>(aibo-codex-end)`        | End             |
+| `<Plug>(aibo-codex-page-up)`    | Page up         |
+| `<Plug>(aibo-codex-page-down)`  | Page down       |
+| `<Plug>(aibo-codex-quit)`       | Quit            |
 
 ### Agent-Specific Setup
 
@@ -471,6 +506,7 @@ The project uses [mini.test](https://github.com/echasnovski/mini.nvim/blob/main/
 ### Running Tests
 
 Using `just`:
+
 ```bash
 just test           # Run all tests
 just test-file aibo # Run specific test file
@@ -479,6 +515,7 @@ just check          # Run lint, format, and tests
 ```
 
 Direct execution:
+
 ```bash
 nvim --headless -c "luafile tests/test_runner.lua" -c "qa!"
 ```
@@ -529,6 +566,7 @@ MIT License
 ## Contributing
 
 Contributions welcome. Please:
+
 1. Write tests for new features
 2. Ensure all tests pass with `just test`
 3. Run `just check` before submitting
