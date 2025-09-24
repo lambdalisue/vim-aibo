@@ -66,6 +66,13 @@ submit. You can also use |<F5>| or |<C-Enter>| to submit from insert mode.
 The message will be sent to the CLI tool and the prompt buffer will be
 cleared for your next input.
 
+						*aibo-esc-mapping*
+WARNING: Key mapping difference~
+To prevent unintended interrupts from the Vimmer's habit of hitting <Esc>
+repeatedly, <Esc> is NOT mapped in Aibo buffers. Instead:
+  - Use <C-c> to send <Esc> to the AI agent (works in both normal and insert mode)
+  - Use g<C-c> to send the interrupt signal (original <C-c> behavior, normal mode only)
+
 Tip: When focused on the console window, entering insert mode automatically
 opens the prompt window for input. This provides a seamless workflow - just
 press 'i' in the console to start typing your next message.
@@ -554,15 +561,15 @@ KEY MAPPINGS					*aibo-key-mappings*
 Default key mappings are defined in ftplugin files. These can be customized
 through configuration (see |aibo-customization|).
 
-Console buffer mappings (normal mode):
-	<CR>		Submit empty line
-	<Esc>		Send ESC to terminal
-	<C-c>		Send interrupt signal
-	<C-l>		Clear terminal
-	<C-n>		Navigate to next in history
-	<C-p>		Navigate to previous in history
-	<Down>		Send down arrow
-	<Up>		Send up arrow
+Console buffer mappings:
+	<CR>		Submit empty line (normal mode)
+	<C-c>		Send ESC to terminal (normal/insert mode)
+	g<C-c>		Send interrupt signal (normal mode)
+	<C-l>		Clear terminal (normal mode)
+	<C-n>		Navigate to next in history (normal mode)
+	<C-p>		Navigate to previous in history (normal mode)
+	<Down>		Send down arrow (normal mode)
+	<Up>		Send up arrow (normal mode)
 
 Prompt buffer mappings:
 	<CR>		Submit content (normal mode)
