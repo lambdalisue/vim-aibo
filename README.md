@@ -142,6 +142,19 @@ To close the session, use `:bdelete!` or `:bwipeout!` on the console buffer.
 :Aibo -reuse claude
 ```
 
+> [!TIP]
+> You can use `<C-r>=` to dynamically calculate window sizes based on your terminal dimensions. This allows you to create proportional splits instead of fixed sizes:
+> ```vim
+> " Create a vertical split with 2/3 of the window width
+> :Aibo -opener="<C-r>=&columns * 2 / 3<CR>vsplit" claude
+>
+> " Create a horizontal split with 1/2 of the window height
+> :Aibo -opener="<C-r>=&lines / 2<CR>split" codex
+>
+> " Create a bottom split with 1/3 of the window height
+> :Aibo -opener="botright <C-r>=&lines / 3<CR>split" ollama run llama3
+> ```
+
 ### Intelligent Command Completion
 
 The plugin provides comprehensive tab completion for all supported interactive CLI tools:

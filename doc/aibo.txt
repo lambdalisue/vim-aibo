@@ -305,6 +305,13 @@ COMMANDS					*aibo-commands*
 				- topleft\ split, botright\ vsplit
 				- leftabove\ split, rightbelow\ vsplit
 
+				Tip: You can use Vim script expressions
+				with <C-r>= to calculate window sizes
+				dynamically based on terminal dimensions.
+				For example, to create a vertical split
+				with 2/3 of the window width:
+				:Aibo -opener="<C-r>=&columns * 2 / 3<CR>vsplit" claude
+
 	-stay			Stay in the current window after opening
 				the AI console. Useful when you want to
 				continue editing while the AI loads.
@@ -345,6 +352,11 @@ COMMANDS					*aibo-commands*
 		:Aibo -stay psql mydatabase
 		:Aibo -toggle claude
 		:Aibo -reuse node --interactive
+
+		" Dynamic window sizing with Vim script expressions
+		:Aibo -opener="<C-r>=&columns * 2 / 3<CR>vsplit" claude
+		:Aibo -opener="<C-r>=&lines / 2<CR>split" codex
+		:Aibo -opener="botright <C-r>=&lines / 3<CR>split" ollama run llama3
 <
 						*aibo-completion*
 	Intelligent Command Completion~
