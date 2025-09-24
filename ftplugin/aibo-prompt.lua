@@ -25,7 +25,7 @@ end, { buffer = bufnr, desc = "Send ESC to agent" })
 
 vim.keymap.set({ "n", "i" }, "<Plug>(aibo-prompt-interrupt)", function()
   aibo.send(vim.api.nvim_replace_termcodes("<C-c>", true, false, true), bufnr)
-end, { buffer = bufnr, desc = "Send interrupt signal (original C-c)" })
+end, { buffer = bufnr, desc = "Send interrupt signal (original <C-c>)" })
 
 vim.keymap.set({ "n", "i" }, "<Plug>(aibo-prompt-clear)", function()
   aibo.send(vim.api.nvim_replace_termcodes("<C-l>", true, false, true), bufnr)
