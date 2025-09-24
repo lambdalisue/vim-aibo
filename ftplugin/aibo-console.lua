@@ -29,7 +29,7 @@ end, { buffer = bufnr, desc = "Send ESC to agent" })
 
 vim.keymap.set("n", "<Plug>(aibo-console-interrupt)", function()
   aibo.send(vim.api.nvim_replace_termcodes("<C-c>", true, false, true), bufnr)
-end, { buffer = bufnr, desc = "Interrupt agent" })
+end, { buffer = bufnr, desc = "Send interrupt signal (original <C-c>)" })
 
 vim.keymap.set("n", "<Plug>(aibo-console-clear)", function()
   aibo.send(vim.api.nvim_replace_termcodes("<C-l>", true, false, true), bufnr)
@@ -55,8 +55,11 @@ end, { buffer = bufnr, desc = "Move up" })
 local cfg = aibo.get_buffer_config("console")
 if not (cfg and cfg.no_default_mappings) then
   vim.keymap.set("n", "<CR>", "<Plug>(aibo-console-submit)", { buffer = bufnr })
-  vim.keymap.set("n", "<Esc>", "<Plug>(aibo-console-esc)", { buffer = bufnr })
-  vim.keymap.set("n", "<C-c>", "<Plug>(aibo-console-interrupt)", { buffer = bufnr })
+  -- Don't map <Esc> to prevent unintended interrupts from Vimmer's habit of hitting Esc repeatedly
+  -- Map <C-c> to send <Esc> instead
+  vim.keymap.set({ "n", "i" }, "<C-c>", "<Plug>(aibo-console-esc)", { buffer = bufnr })
+  -- g<C-c> sends the original <C-c> (interrupt signal)
+  vim.keymap.set("n", "g<C-c>", "<Plug>(aibo-console-interrupt)", { buffer = bufnr })
   vim.keymap.set("n", "<C-l>", "<Plug>(aibo-console-clear)", { buffer = bufnr })
   vim.keymap.set("n", "<C-n>", "<Plug>(aibo-console-next)", { buffer = bufnr })
   vim.keymap.set("n", "<C-p>", "<Plug>(aibo-console-prev)", { buffer = bufnr })

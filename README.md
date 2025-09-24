@@ -118,6 +118,11 @@ This opens a terminal console running the interactive CLI tool with a prompt buf
 > - Single quotes (`'`) treat everything literally: `-prefix='Literal\n'`
 > - Example: `-opener="botright split"` or `-prefix='Question: '`
 
+> [!WARNING]
+> **Key mapping difference:** To prevent unintended interrupts from the Vimmer's habit of hitting `<Esc>` repeatedly, `<Esc>` is NOT mapped in Aibo buffers. Instead:
+> - Use `<C-c>` to send `<Esc>` to the AI agent (works in both normal and insert mode)
+> - Use `g<C-c>` to send the interrupt signal (original `<C-c>` behavior, normal mode only)
+
 Type in the prompt buffer and press `<CR>` in normal mode to submit. The prompt clears automatically for the next message. You can also use `<C-Enter>` or `<F5>` to submit even while in insert mode, which is particularly useful for continuous typing.
 
 > [!TIP]
@@ -342,16 +347,16 @@ require('aibo').setup({
 
 ### Console Buffer
 
-| Key      | Action                          |
-| -------- | ------------------------------- |
-| `<CR>`   | Submit empty line               |
-| `<Esc>`  | Send ESC to terminal            |
-| `<C-c>`  | Send interrupt signal           |
-| `<C-l>`  | Clear terminal                  |
-| `<C-n>`  | Navigate to next in history     |
-| `<C-p>`  | Navigate to previous in history |
-| `<Down>` | Send down arrow                 |
-| `<Up>`   | Send up arrow                   |
+| Key       | Action                          |
+| --------- | ------------------------------- |
+| `<CR>`    | Submit empty line               |
+| `<C-c>`   | Send ESC to terminal            |
+| `g<C-c>`  | Send interrupt signal           |
+| `<C-l>`   | Clear terminal                  |
+| `<C-n>`   | Navigate to next in history     |
+| `<C-p>`   | Navigate to previous in history |
+| `<Down>`  | Send down arrow                 |
+| `<Up>`    | Send up arrow                   |
 
 ### Prompt Buffer
 
