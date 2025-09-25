@@ -43,17 +43,24 @@ mini_test.setup()
 -- Provide T globally for tests
 _G.T = mini_test
 
--- List of test files
+-- List of test files organized by category
 local test_files = {
-  "test_aibo",
-  "test_plugin",
-  "test_send",
-  "test_argparse",
-  "test_console", -- New test file for console opener fixes
-  "test_integration_send",
-  "test_integration_claude",
-  "test_integration_ollama",
-  "test_integration_codex",
+  -- Unit tests
+  "unit/test_aibo_core",
+  "unit/test_argparse",
+  "unit/test_console",
+
+  -- Command tests
+  "commands/test_aibo_command",
+  "commands/test_aibo_send_command",
+
+  -- Integration tests
+  "integrations/test_claude",
+  "integrations/test_codex",
+  "integrations/test_ollama",
+
+  -- Plugin tests
+  "plugin/test_plugin_setup",
 }
 
 -- Results tracking

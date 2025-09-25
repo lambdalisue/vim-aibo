@@ -146,4 +146,47 @@ vim.api.nvim_create_autocmd("QuitPre", {
   callback = QuitPre,
 })
 
+---Setup prompt <Plug> mappings
+---@param bufnr number Buffer number to set mappings for
+function M.setup_plug_mappings(bufnr)
+  local aibo = require("aibo")
+
+  -- Define <Plug> mappings for prompt functionality
+  vim.keymap.set({ "n", "i" }, "<Plug>(aibo-prompt-submit)", function()
+    vim.cmd("write")
+  end, { buffer = bufnr, desc = "Submit prompt" })
+
+  vim.keymap.set({ "n", "i" }, "<Plug>(aibo-prompt-submit-close)", function()
+    vim.cmd("wq")
+  end, { buffer = bufnr, desc = "Submit prompt and close" })
+
+  vim.keymap.set({ "n", "i" }, "<Plug>(aibo-prompt-esc)", function()
+    aibo.send(vim.api.nvim_replace_termcodes("<Esc>", true, false, true), bufnr)
+  end, { buffer = bufnr, desc = "Send ESC to agent" })
+
+  vim.keymap.set({ "n", "i" }, "<Plug>(aibo-prompt-interrupt)", function()
+    aibo.send(vim.api.nvim_replace_termcodes("<C-c>", true, false, true), bufnr)
+  end, { buffer = bufnr, desc = "Send interrupt signal (original <C-c>)" })
+
+  vim.keymap.set({ "n", "i" }, "<Plug>(aibo-prompt-clear)", function()
+    aibo.send(vim.api.nvim_replace_termcodes("<C-l>", true, false, true), bufnr)
+  end, { buffer = bufnr, desc = "Clear screen" })
+
+  vim.keymap.set({ "n", "i" }, "<Plug>(aibo-prompt-next)", function()
+    aibo.send(vim.api.nvim_replace_termcodes("<C-n>", true, false, true), bufnr)
+  end, { buffer = bufnr, desc = "Next history" })
+
+  vim.keymap.set({ "n", "i" }, "<Plug>(aibo-prompt-prev)", function()
+    aibo.send(vim.api.nvim_replace_termcodes("<C-p>", true, false, true), bufnr)
+  end, { buffer = bufnr, desc = "Previous history" })
+
+  vim.keymap.set({ "n", "i" }, "<Plug>(aibo-prompt-down)", function()
+    aibo.send(vim.api.nvim_replace_termcodes("<Down>", true, false, true), bufnr)
+  end, { buffer = bufnr, desc = "Move down" })
+
+  vim.keymap.set({ "n", "i" }, "<Plug>(aibo-prompt-up)", function()
+    aibo.send(vim.api.nvim_replace_termcodes("<Up>", true, false, true), bufnr)
+  end, { buffer = bufnr, desc = "Move up" })
+end
+
 return M

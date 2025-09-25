@@ -6,47 +6,10 @@ vim.b.loaded_aibo_agent_claude_ftplugin = true
 local bufnr = vim.api.nvim_get_current_buf()
 local aibo = require("aibo")
 
-local CLAUDE_CODES = {
-  mode = "\027[Z",
-  verbose = "\015",
-  todo = "\020",
-  undo = "\031",
-  paste = "\022",
-}
+-- Setup <Plug> mappings from Claude integration module
+require("aibo.integration.claude").setup_plug_mappings(bufnr)
 
-vim.keymap.set({ "n", "i" }, "<Plug>(aibo-claude-mode)", function()
-  aibo.send(CLAUDE_CODES.mode, bufnr)
-end, { buffer = bufnr, desc = "Toggle mode (Shift+Tab)" })
-
-vim.keymap.set({ "n", "i" }, "<Plug>(aibo-claude-verbose)", function()
-  aibo.send(CLAUDE_CODES.verbose, bufnr)
-end, { buffer = bufnr, desc = "Verbose (Ctrl+O)" })
-
-vim.keymap.set({ "n", "i" }, "<Plug>(aibo-claude-todo)", function()
-  aibo.send(CLAUDE_CODES.todo, bufnr)
-end, { buffer = bufnr, desc = "Todo (Ctrl+T)" })
-
-vim.keymap.set({ "n", "i" }, "<Plug>(aibo-claude-undo)", function()
-  aibo.send(CLAUDE_CODES.undo, bufnr)
-end, { buffer = bufnr, desc = "Undo (Ctrl+Y)" })
-
-vim.keymap.set({ "n", "i" }, "<Plug>(aibo-claude-paste)", function()
-  aibo.send(CLAUDE_CODES.paste, bufnr)
-end, { buffer = bufnr, desc = "Paste (Ctrl+V)" })
-
-vim.keymap.set({ "n", "i" }, "<Plug>(aibo-claude-shortcuts)", function()
-  aibo.send("?", bufnr)
-end, { buffer = bufnr, desc = "Shortcuts (?)" })
-
-vim.keymap.set({ "n", "i" }, "<Plug>(aibo-claude-bash-mode)", function()
-  aibo.send("!", bufnr)
-end, { buffer = bufnr, desc = "Bash mode (!)" })
-
-vim.keymap.set({ "n", "i" }, "<Plug>(aibo-claude-memorize)", function()
-  aibo.send("#", bufnr)
-end, { buffer = bufnr, desc = "Memorize (#)" })
-
--- Default mappings (unless disabled in config)
+-- Default key mappings (unless disabled in config)
 local cfg = aibo.get_agent_config("claude")
 if not (cfg and cfg.no_default_mappings) then
   vim.keymap.set({ "n", "i" }, "<S-Tab>", "<Plug>(aibo-claude-mode)", { buffer = bufnr })

@@ -13,7 +13,6 @@ function M.setup()
 
   -- Reset global variables
   vim.g.loaded_aibo = nil
-  _G._aibo_complete = nil
 
   -- Clear autocommands
   pcall(vim.api.nvim_clear_autocmds, { group = "aibo_plugin" })

@@ -1,4 +1,4 @@
--- Tests for Ollama integration module
+-- Tests for Ollama integration (lua/aibo/integration/ollama.lua)
 
 local helpers = require("tests.helpers")
 local T = require("mini.test")

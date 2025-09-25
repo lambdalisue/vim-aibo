@@ -1,4 +1,4 @@
--- Tests for AiboSend functionality
+-- Tests for :AiboSend command (lua/aibo/command/aibo_send.lua)
 
 local helpers = require("tests.helpers")
 local T = require("mini.test")
@@ -403,6 +403,219 @@ test_set["AiboSend appends to existing prompt content"] = function()
     T.expect.equality(#prompt_lines, 2)
     T.expect.equality(prompt_lines[1], "first send")
     T.expect.equality(prompt_lines[2], "second send")
+  end
+
+  -- Clean up
+  vim.api.nvim_win_close(console_win, true)
+end
+
+-- Test AiboSend internal completion function
+test_set["AiboSend internal completion function"] = function()
+  local aibo_send = require("aibo.command.aibo_send")
+  local complete_fn = aibo_send._internal.complete
+
+  -- Test completing options from empty arglead
+  local completions = complete_fn("", "AiboSend ", 10)
+  T.expect.equality(vim.tbl_contains(completions, "-input"), true)
+  T.expect.equality(vim.tbl_contains(completions, "-submit"), true)
+  T.expect.equality(vim.tbl_contains(completions, "-replace"), true)
+  T.expect.equality(vim.tbl_contains(completions, "-prefix="), true)
+  T.expect.equality(vim.tbl_contains(completions, "-suffix="), true)
+
+  -- Test completing partial options
+  completions = complete_fn("-in", "AiboSend -in", 13)
+  T.expect.equality(vim.tbl_contains(completions, "-input"), true)
+  T.expect.equality(vim.tbl_contains(completions, "-submit"), false)
+
+  -- Test completing with -pre prefix
+  completions = complete_fn("-pre", "AiboSend -pre", 14)
+  T.expect.equality(vim.tbl_contains(completions, "-prefix="), true)
+  T.expect.equality(vim.tbl_contains(completions, "-input"), false)
+
+  -- Test completing with -su prefix
+  completions = complete_fn("-su", "AiboSend -su", 13)
+  T.expect.equality(vim.tbl_contains(completions, "-submit"), true)
+  T.expect.equality(vim.tbl_contains(completions, "-suffix="), true)
+  T.expect.equality(vim.tbl_contains(completions, "-input"), false)
+
+  -- Test non-option arguments return empty
+  completions = complete_fn("hello", "AiboSend hello", 15)
+  T.expect.equality(#completions, 0)
+
+  -- Test completing with no dash prefix but empty arglead still shows options
+  completions = complete_fn("", "AiboSend -input ", 17)
+  T.expect.equality(vim.tbl_contains(completions, "-submit"), true)
+  T.expect.equality(vim.tbl_contains(completions, "-replace"), true)
+end
+
+-- Test AiboSend with -replace option
+test_set["AiboSend -replace replaces prompt content"] = function()
+  -- Create a mock console buffer
+  local console_buf = vim.api.nvim_create_buf(false, true)
+  vim.api.nvim_buf_set_name(console_buf, "aibo://replace-test")
+  vim.bo[console_buf].filetype = "aibo-console"
+  vim.b[console_buf].aibo = {
+    cmd = "test",
+    args = {},
+  }
+
+  -- Open console in a window (use normal split, not floating window)
+  vim.cmd("split")
+  vim.api.nvim_set_current_buf(console_buf)
+  local console_win = vim.api.nvim_get_current_win()
+  vim.cmd("wincmd p") -- Go back to previous window
+
+  -- Create a test buffer with content
+  local test_buf = vim.api.nvim_create_buf(false, true)
+  vim.api.nvim_set_current_buf(test_buf)
+  vim.api.nvim_buf_set_lines(test_buf, 0, -1, false, { "initial", "content" })
+
+  -- First send without -replace
+  vim.cmd("AiboSend")
+
+  -- Get prompt buffer
+  local prompt_bufname = string.format("aiboprompt://%d", console_win)
+  local prompt_buf = vim.fn.bufnr(prompt_bufname)
+
+  -- Check initial content
+  if prompt_buf ~= -1 then
+    local prompt_lines = vim.api.nvim_buf_get_lines(prompt_buf, 0, -1, false)
+    T.expect.equality(#prompt_lines, 2)
+    T.expect.equality(prompt_lines[1], "initial")
+    T.expect.equality(prompt_lines[2], "content")
+  end
+
+  -- Now replace with new content
+  vim.api.nvim_buf_set_lines(test_buf, 0, -1, false, { "replaced", "text" })
+  vim.cmd("AiboSend -replace")
+
+  -- Check replaced content
+  if prompt_buf ~= -1 then
+    local prompt_lines = vim.api.nvim_buf_get_lines(prompt_buf, 0, -1, false)
+    T.expect.equality(#prompt_lines, 2)
+    T.expect.equality(prompt_lines[1], "replaced")
+    T.expect.equality(prompt_lines[2], "text")
+  end
+
+  -- Clean up
+  vim.api.nvim_win_close(console_win, true)
+end
+
+-- Test AiboSend append vs replace behavior
+test_set["AiboSend append vs replace behavior"] = function()
+  -- Create a mock console buffer
+  local console_buf = vim.api.nvim_create_buf(false, true)
+  vim.api.nvim_buf_set_name(console_buf, "aibo://append-replace")
+  vim.bo[console_buf].filetype = "aibo-console"
+  vim.b[console_buf].aibo = {
+    cmd = "test",
+    args = {},
+  }
+
+  -- Open console in a window (use normal split, not floating window)
+  vim.cmd("split")
+  vim.api.nvim_set_current_buf(console_buf)
+  local console_win = vim.api.nvim_get_current_win()
+  vim.cmd("wincmd p") -- Go back to previous window
+
+  -- Create a test buffer
+  local test_buf = vim.api.nvim_create_buf(false, true)
+  vim.api.nvim_set_current_buf(test_buf)
+
+  -- Send "line1"
+  vim.api.nvim_buf_set_lines(test_buf, 0, -1, false, { "line1" })
+  vim.cmd("AiboSend")
+
+  -- Get prompt buffer
+  local prompt_bufname = string.format("aiboprompt://%d", console_win)
+  local prompt_buf = vim.fn.bufnr(prompt_bufname)
+
+  -- Append "line2"
+  vim.api.nvim_buf_set_lines(test_buf, 0, -1, false, { "line2" })
+  vim.cmd("AiboSend")
+
+  -- Check appended content
+  if prompt_buf ~= -1 then
+    local prompt_lines = vim.api.nvim_buf_get_lines(prompt_buf, 0, -1, false)
+    T.expect.equality(#prompt_lines, 2)
+    T.expect.equality(prompt_lines[1], "line1")
+    T.expect.equality(prompt_lines[2], "line2")
+  end
+
+  -- Replace with "line3"
+  vim.api.nvim_buf_set_lines(test_buf, 0, -1, false, { "line3" })
+  vim.cmd("AiboSend -replace")
+
+  -- Check replaced content
+  if prompt_buf ~= -1 then
+    local prompt_lines = vim.api.nvim_buf_get_lines(prompt_buf, 0, -1, false)
+    T.expect.equality(#prompt_lines, 1)
+    T.expect.equality(prompt_lines[1], "line3")
+  end
+
+  -- Append "line4" after replace
+  vim.api.nvim_buf_set_lines(test_buf, 0, -1, false, { "line4" })
+  vim.cmd("AiboSend")
+
+  -- Check final content
+  if prompt_buf ~= -1 then
+    local prompt_lines = vim.api.nvim_buf_get_lines(prompt_buf, 0, -1, false)
+    T.expect.equality(#prompt_lines, 2)
+    T.expect.equality(prompt_lines[1], "line3")
+    T.expect.equality(prompt_lines[2], "line4")
+  end
+
+  -- Clean up
+  vim.api.nvim_win_close(console_win, true)
+end
+
+-- Test AiboSend -replace with range
+test_set["AiboSend -replace with range"] = function()
+  -- Create a mock console buffer
+  local console_buf = vim.api.nvim_create_buf(false, true)
+  vim.api.nvim_buf_set_name(console_buf, "aibo://range-replace")
+  vim.bo[console_buf].filetype = "aibo-console"
+  vim.b[console_buf].aibo = {
+    cmd = "test",
+    args = {},
+  }
+
+  -- Open console in a window (use normal split, not floating window)
+  vim.cmd("split")
+  vim.api.nvim_set_current_buf(console_buf)
+  local console_win = vim.api.nvim_get_current_win()
+  vim.cmd("wincmd p") -- Go back to previous window
+
+  -- Create a test buffer with multiple lines
+  local test_buf = vim.api.nvim_create_buf(false, true)
+  vim.api.nvim_set_current_buf(test_buf)
+  vim.api.nvim_buf_set_lines(test_buf, 0, -1, false, { "line1", "line2", "line3", "line4", "line5" })
+
+  -- Send lines 1-3 initially
+  vim.cmd("1,3AiboSend")
+
+  -- Get prompt buffer
+  local prompt_bufname = string.format("aiboprompt://%d", console_win)
+  local prompt_buf = vim.fn.bufnr(prompt_bufname)
+
+  -- Check initial content
+  if prompt_buf ~= -1 then
+    local prompt_lines = vim.api.nvim_buf_get_lines(prompt_buf, 0, -1, false)
+    T.expect.equality(#prompt_lines, 3)
+    T.expect.equality(prompt_lines[1], "line1")
+    T.expect.equality(prompt_lines[2], "line2")
+    T.expect.equality(prompt_lines[3], "line3")
+  end
+
+  -- Replace with lines 4-5
+  vim.cmd("4,5AiboSend -replace")
+
+  -- Check replaced content
+  if prompt_buf ~= -1 then
+    local prompt_lines = vim.api.nvim_buf_get_lines(prompt_buf, 0, -1, false)
+    T.expect.equality(#prompt_lines, 2)
+    T.expect.equality(prompt_lines[1], "line4")
+    T.expect.equality(prompt_lines[2], "line5")
   end
 
   -- Clean up

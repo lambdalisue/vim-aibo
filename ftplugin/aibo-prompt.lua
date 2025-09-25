@@ -11,43 +11,10 @@ vim.wo.number = false
 vim.wo.relativenumber = false
 vim.wo.signcolumn = "no"
 
-vim.keymap.set({ "n", "i" }, "<Plug>(aibo-prompt-submit)", function()
-  vim.cmd("write")
-end, { buffer = bufnr, desc = "Submit prompt" })
+-- Setup <Plug> mappings from prompt module
+require("aibo.internal.prompt").setup_plug_mappings(bufnr)
 
-vim.keymap.set({ "n", "i" }, "<Plug>(aibo-prompt-submit-close)", function()
-  vim.cmd("wq")
-end, { buffer = bufnr, desc = "Submit prompt and close" })
-
-vim.keymap.set({ "n", "i" }, "<Plug>(aibo-prompt-esc)", function()
-  aibo.send(vim.api.nvim_replace_termcodes("<Esc>", true, false, true), bufnr)
-end, { buffer = bufnr, desc = "Send ESC to agent" })
-
-vim.keymap.set({ "n", "i" }, "<Plug>(aibo-prompt-interrupt)", function()
-  aibo.send(vim.api.nvim_replace_termcodes("<C-c>", true, false, true), bufnr)
-end, { buffer = bufnr, desc = "Send interrupt signal (original <C-c>)" })
-
-vim.keymap.set({ "n", "i" }, "<Plug>(aibo-prompt-clear)", function()
-  aibo.send(vim.api.nvim_replace_termcodes("<C-l>", true, false, true), bufnr)
-end, { buffer = bufnr, desc = "Clear screen" })
-
-vim.keymap.set({ "n", "i" }, "<Plug>(aibo-prompt-next)", function()
-  aibo.send(vim.api.nvim_replace_termcodes("<C-n>", true, false, true), bufnr)
-end, { buffer = bufnr, desc = "Next history" })
-
-vim.keymap.set({ "n", "i" }, "<Plug>(aibo-prompt-prev)", function()
-  aibo.send(vim.api.nvim_replace_termcodes("<C-p>", true, false, true), bufnr)
-end, { buffer = bufnr, desc = "Previous history" })
-
-vim.keymap.set({ "n", "i" }, "<Plug>(aibo-prompt-down)", function()
-  aibo.send(vim.api.nvim_replace_termcodes("<Down>", true, false, true), bufnr)
-end, { buffer = bufnr, desc = "Move down" })
-
-vim.keymap.set({ "n", "i" }, "<Plug>(aibo-prompt-up)", function()
-  aibo.send(vim.api.nvim_replace_termcodes("<Up>", true, false, true), bufnr)
-end, { buffer = bufnr, desc = "Move up" })
-
--- Default mappings (unless disabled in config)
+-- Default key mappings (unless disabled in config)
 local cfg = aibo.get_buffer_config("prompt")
 if not (cfg and cfg.no_default_mappings) then
   vim.keymap.set("n", "<CR>", "<Plug>(aibo-prompt-submit)", { buffer = bufnr, nowait = true })

@@ -134,9 +134,9 @@ end
 ---Get completion candidates for Ollama command arguments
 ---@param arglead string Current argument being typed
 ---@param cmdline string Full command line
----@param cursorpos integer Cursor position
+---@param _cursorpos integer Cursor position
 ---@return string[] Completion candidates
-function M.get_command_completions(arglead, cmdline, cursorpos)
+function M.get_command_completions(arglead, cmdline, _cursorpos)
   local completions = {}
 
   -- Check for trailing space to understand if we're starting a new argument
@@ -153,7 +153,7 @@ function M.get_command_completions(arglead, cmdline, cursorpos)
       table.insert(completions, "run")
     end
 
-  -- Position 2: After "ollama [run|partial]"
+    -- Position 2: After "ollama [run|partial]"
   elseif part_count == 2 then
     local second_arg = parts[2]
 
@@ -168,7 +168,7 @@ function M.get_command_completions(arglead, cmdline, cursorpos)
       add_flag_completions(completions, "")
     end
 
-  -- Position 3+: After "ollama run ..."
+    -- Position 3+: After "ollama run ..."
   elseif part_count >= 3 and parts[2] == "run" then
     if arglead ~= "" then
       -- Completing a partial argument - could be model or flag

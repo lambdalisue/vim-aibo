@@ -1,4 +1,4 @@
--- Tests for Claude integration module
+-- Tests for Claude integration (lua/aibo/integration/claude.lua)
 
 local helpers = require("tests.helpers")
 local T = require("mini.test")
