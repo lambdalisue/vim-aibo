@@ -169,9 +169,16 @@ vim.api.nvim_create_user_command("Aibo", function(cmd_opts)
     return
   end
 
-  -- Parse options using the new argparse module
+  -- Parse options using the argparse module
   local argparse = require("aibo.internal.argparse")
-  local options, remaining = argparse.parse_fargs(args)
+  -- Define known Aibo command options
+  local known_options = {
+    opener = true,  -- -opener=value
+    stay = true,    -- -stay
+    toggle = true,  -- -toggle
+    reuse = true,   -- -reuse
+  }
+  local options, remaining = argparse.parse(args, { known_options = known_options })
 
   -- Extract specific options
   local opener = options.opener
@@ -215,9 +222,17 @@ end, {
 
 -- Create AiboSend command
 vim.api.nvim_create_user_command("AiboSend", function(cmd_opts)
-  -- Parse options using the new argparse module
+  -- Parse options using the argparse module
   local argparse = require("aibo.internal.argparse")
-  local options, remaining = argparse.parse_fargs(cmd_opts.fargs or {})
+  -- Define known AiboSend command options
+  local known_options = {
+    input = true,    -- -input flag
+    submit = true,   -- -submit flag
+    replace = true,  -- -replace flag
+    prefix = true,   -- -prefix=value
+    suffix = true,   -- -suffix=value
+  }
+  local options, remaining = argparse.parse(cmd_opts.fargs or {}, { known_options = known_options })
 
   -- Check if a range was explicitly provided
   -- When no range is given, line1 == line2 == current line

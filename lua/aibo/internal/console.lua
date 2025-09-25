@@ -134,6 +134,37 @@ local function WinClosed(winid)
   end
 end
 
+--- Helper to open a buffer in a window with an optional opener command
+---@param bufnr integer The buffer number to open
+---@param opener? string Optional window opener command (e.g., "20vsplit", "tabedit")
+local function open_buffer_in_window(bufnr, opener)
+  if opener then
+    vim.cmd(opener .. " | buffer " .. bufnr)
+  else
+    -- Default: just switch to the buffer in current window
+    vim.cmd("buffer " .. bufnr)
+  end
+end
+
+--- Helper to start a terminal job in a buffer
+---@param bufnr integer The buffer to start the terminal in
+---@param cmd string The command to execute
+---@param args string[] Command arguments
+---@return integer job_id The job ID, or 0 on failure
+local function start_terminal_job(bufnr, cmd, args)
+  -- Build the command array for jobstart
+  local cmd_array = { cmd }
+  vim.list_extend(cmd_array, args)
+
+  -- Start the terminal job with proper argument handling
+  -- The buffer needs to be focused for jobstart to attach the terminal
+  return vim.api.nvim_buf_call(bufnr, function()
+    return vim.fn.jobstart(cmd_array, {
+      term = true,
+    })
+  end)
+end
+
 ---Open aibo console with command
 ---@param cmd string Command to execute
 ---@param args string[] Arguments for command
@@ -147,13 +178,23 @@ function M.open(cmd, args, opener, stay)
     orig_win = vim.api.nvim_get_current_win()
   end
 
-  local open_cmd = opener or ""
-  if open_cmd ~= "" then
-    open_cmd = open_cmd .. " | "
-  end
-  vim.cmd(open_cmd .. "silent terminal " .. cmd .. " " .. table.concat(args, " "))
+  -- Create a new buffer for the terminal
+  local bufnr = vim.api.nvim_create_buf(false, true)
 
-  local bufnr = vim.api.nvim_get_current_buf()
+  -- Apply the opener command to show the buffer in a window
+  open_buffer_in_window(bufnr, opener)
+
+  -- Start the terminal job
+  local job_id = start_terminal_job(bufnr, cmd, args)
+
+  if job_id <= 0 then
+    vim.api.nvim_err_writeln("Failed to start terminal: " .. cmd)
+    vim.api.nvim_buf_delete(bufnr, { force = true })
+    return
+  end
+
+  -- Store the job ID in the buffer for later reference
+  vim.b[bufnr].terminal_job_id = job_id
   local winid = vim.api.nvim_get_current_win()
   local controller = require("aibo.internal.controller").new(bufnr)
 
@@ -289,8 +330,7 @@ function M.toggle(cmd, args, opener, stay)
 
   if console_bufnr then
     -- Show the selected console
-    local open_cmd = opener or "split"
-    vim.cmd(open_cmd .. " | buffer " .. console_bufnr)
+    open_buffer_in_window(console_bufnr, opener or "split")
 
     -- Enter insert mode when console becomes visible (unless stay option is set)
     if not stay then
@@ -391,8 +431,7 @@ function M.reuse(cmd, args, opener, stay)
 
   if console_bufnr then
     -- Show the selected console
-    local open_cmd = opener or "split"
-    vim.cmd(open_cmd .. " | buffer " .. console_bufnr)
+    open_buffer_in_window(console_bufnr, opener or "split")
 
     -- Enter insert mode when console becomes visible (unless stay option is set)
     if not stay then

@@ -15,103 +15,38 @@ local test_set = T.new_set({
   },
 })
 
--- Test parse_cmdline function
-test_set["parse_cmdline handles simple arguments"] = function()
+-- Tests removed: parse_cmdline function has been removed from production code
+-- These tests were only testing string splitting which Neovim already handles via fargs
+
+-- Test parse function without known_options (parses all options)
+test_set["parse handles flags"] = function()
   local argparse = require("aibo.internal.argparse")
 
-  local result = argparse.parse_cmdline("arg1 arg2 arg3")
-  T.expect.equality(#result, 3)
-  T.expect.equality(result[1], "arg1")
-  T.expect.equality(result[2], "arg2")
-  T.expect.equality(result[3], "arg3")
-end
-
-test_set["parse_cmdline handles double quoted strings"] = function()
-  local argparse = require("aibo.internal.argparse")
-
-  local result = argparse.parse_cmdline('arg1 "arg with spaces" arg3')
-  T.expect.equality(#result, 3)
-  T.expect.equality(result[1], "arg1")
-  T.expect.equality(result[2], "arg with spaces")
-  T.expect.equality(result[3], "arg3")
-end
-
-test_set["parse_cmdline handles single quoted strings"] = function()
-  local argparse = require("aibo.internal.argparse")
-
-  local result = argparse.parse_cmdline("arg1 'arg with spaces' arg3")
-  T.expect.equality(#result, 3)
-  T.expect.equality(result[1], "arg1")
-  T.expect.equality(result[2], "arg with spaces")
-  T.expect.equality(result[3], "arg3")
-end
-
-test_set["parse_cmdline handles escaped quotes"] = function()
-  local argparse = require("aibo.internal.argparse")
-
-  local result = argparse.parse_cmdline('arg1 "arg with \\"quotes\\"" arg3')
-  T.expect.equality(#result, 3)
-  T.expect.equality(result[1], "arg1")
-  T.expect.equality(result[2], 'arg with "quotes"')
-  T.expect.equality(result[3], "arg3")
-end
-
-test_set["parse_cmdline handles escape sequences in double quotes"] = function()
-  local argparse = require("aibo.internal.argparse")
-
-  local result = argparse.parse_cmdline('"line1\\nline2" "tab\\there" "quote\\"test"')
-  T.expect.equality(#result, 3)
-  T.expect.equality(result[1], "line1\nline2")
-  T.expect.equality(result[2], "tab\there")
-  T.expect.equality(result[3], 'quote"test')
-end
-
-test_set["parse_cmdline treats escape sequences as literal in single quotes"] = function()
-  local argparse = require("aibo.internal.argparse")
-
-  local result = argparse.parse_cmdline("'line1\\nline2' 'tab\\there' 'quote\\'test'")
-  T.expect.equality(#result, 3)
-  T.expect.equality(result[1], "line1\\nline2")
-  T.expect.equality(result[2], "tab\\there")
-  T.expect.equality(result[3], "quote'test")
-end
-
-test_set["parse_cmdline handles mixed quotes"] = function()
-  local argparse = require("aibo.internal.argparse")
-
-  local result = argparse.parse_cmdline("\"double\" 'single' \"another \\\"double\\\"\" 'another \\'single\\''")
-  T.expect.equality(#result, 4)
-  T.expect.equality(result[1], "double")
-  T.expect.equality(result[2], "single")
-  T.expect.equality(result[3], 'another "double"')
-  T.expect.equality(result[4], "another 'single'")
-end
-
--- Test parse_options function
-test_set["parse_options handles flags"] = function()
-  local argparse = require("aibo.internal.argparse")
-
-  local options, remaining = argparse.parse_options({ "-flag1", "-flag2", "arg1" })
+  local known_options = { flag1 = true, flag2 = true }
+  local options, remaining = argparse.parse({ "-flag1", "-flag2", "arg1" }, { known_options = known_options })
   T.expect.equality(options.flag1, true)
   T.expect.equality(options.flag2, true)
   T.expect.equality(#remaining, 1)
   T.expect.equality(remaining[1], "arg1")
 end
 
-test_set["parse_options handles key-value pairs"] = function()
+test_set["parse handles key-value pairs"] = function()
   local argparse = require("aibo.internal.argparse")
 
-  local options, remaining = argparse.parse_options({ "-key=value", "arg1" })
+  local known_options = { key = true }
+  local options, remaining = argparse.parse({ "-key=value", "arg1" }, { known_options = known_options })
   T.expect.equality(options.key, "value")
   T.expect.equality(#remaining, 1)
   T.expect.equality(remaining[1], "arg1")
 end
 
-test_set["parse_options handles double quoted values"] = function()
+test_set["parse handles double quoted values"] = function()
   local argparse = require("aibo.internal.argparse")
 
-  local args = argparse.parse_cmdline('-prefix="Question: " -suffix=" Please explain." cmd')
-  local options, remaining = argparse.parse_options(args)
+  -- Simulate what Neovim's fargs would provide
+  local args = { '-prefix="Question:', '"', '-suffix="', "Please", 'explain."', "cmd" }
+  local known_options = { prefix = true, suffix = true }
+  local options, remaining = argparse.parse(args, { known_options = known_options })
 
   T.expect.equality(options.prefix, "Question: ")
   T.expect.equality(options.suffix, " Please explain.")
@@ -119,11 +54,13 @@ test_set["parse_options handles double quoted values"] = function()
   T.expect.equality(remaining[1], "cmd")
 end
 
-test_set["parse_options handles single quoted values"] = function()
+test_set["parse handles single quoted values"] = function()
   local argparse = require("aibo.internal.argparse")
 
-  local args = argparse.parse_cmdline("-prefix='Question: ' -suffix=' Please explain.' cmd")
-  local options, remaining = argparse.parse_options(args)
+  -- Simulate what Neovim's fargs would provide
+  local args = { "-prefix='Question:", "'", "-suffix='", "Please", "explain.'", "cmd" }
+  local known_options = { prefix = true, suffix = true }
+  local options, remaining = argparse.parse(args, { known_options = known_options })
 
   T.expect.equality(options.prefix, "Question: ")
   T.expect.equality(options.suffix, " Please explain.")
@@ -131,90 +68,216 @@ test_set["parse_options handles single quoted values"] = function()
   T.expect.equality(remaining[1], "cmd")
 end
 
-test_set["parse_options with escape sequences"] = function()
+test_set["parse handles values with newlines"] = function()
   local argparse = require("aibo.internal.argparse")
 
-  -- Double quotes interpret escape sequences
-  local args1 = argparse.parse_cmdline('-prefix="```python\\n" -suffix="\\n```" cmd')
-  local options1, remaining1 = argparse.parse_options(args1)
+  -- Test with actual newline characters (as Neovim would provide after processing escape sequences)
+  local args1 = { "-prefix=```python\n", "-suffix=\n```", "cmd" }
+  local known_options = { prefix = true, suffix = true }
+  local options1, remaining1 = argparse.parse(args1, { known_options = known_options })
   T.expect.equality(options1.prefix, "```python\n")
   T.expect.equality(options1.suffix, "\n```")
 
-  -- Single quotes treat them literally
-  local args2 = argparse.parse_cmdline("-prefix='```python\\n' -suffix='\\n```' cmd")
-  local options2, remaining2 = argparse.parse_options(args2)
+  -- Test with literal backslash-n (not interpreted as newline)
+  local args2 = { "-prefix=```python\\n", "-suffix=\\n```", "cmd" }
+  local options2, remaining2 = argparse.parse(args2, { known_options = known_options })
   T.expect.equality(options2.prefix, "```python\\n")
   T.expect.equality(options2.suffix, "\\n```")
 end
 
--- Test parse_fargs function
-test_set["parse_fargs handles simple fargs"] = function()
+-- Test parse function with known_options
+test_set["parse with known_options handles simple args"] = function()
   local argparse = require("aibo.internal.argparse")
 
-  local options, remaining = argparse.parse_fargs({ "-flag", "-key=value", "cmd", "arg" })
-  T.expect.equality(options.flag, true)
-  T.expect.equality(options.key, "value")
+  local known_options = {
+    stay = true,
+    opener = true,
+  }
+  -- Options must come before positional arguments
+  local options, remaining = argparse.parse(
+    { "-stay", "-opener=vsplit", "cmd", "arg" },
+    { known_options = known_options }
+  )
+  T.expect.equality(options.stay, true)
+  T.expect.equality(options.opener, "vsplit")
   T.expect.equality(#remaining, 2)
   T.expect.equality(remaining[1], "cmd")
   T.expect.equality(remaining[2], "arg")
 end
 
-test_set["parse_fargs handles quoted fargs"] = function()
+test_set["parse with known_options handles quoted args"] = function()
   local argparse = require("aibo.internal.argparse")
 
-  -- Simulate what Vim might pass when quotes are used
-  local fargs = { '-prefix="Question:', '"', '-suffix="', "Please", 'explain."', "cmd" }
-  local options, remaining = argparse.parse_fargs(fargs)
+  -- Simulate what Vim might pass when quotes are used with opener option
+  local known_options = {
+    opener = true,
+    stay = true,
+  }
+  -- Options come before the command
+  local fargs = { '-opener="botright', 'split"', "-stay", "cmd" }
+  local options, remaining = argparse.parse(fargs, { known_options = known_options })
 
-  T.expect.equality(options.prefix, "Question: ")
-  T.expect.equality(options.suffix, " Please explain.")
+  T.expect.equality(options.opener, "botright split")
+  T.expect.equality(options.stay, true)
   T.expect.equality(#remaining, 1)
   T.expect.equality(remaining[1], "cmd")
 end
 
--- Test options_to_args function
-test_set["options_to_args converts back to args"] = function()
+-- New tests for the quote handling fixes
+test_set["parse handles broken single-quoted values"] = function()
   local argparse = require("aibo.internal.argparse")
 
-  local options = {
-    flag = true,
-    key = "value",
-    multiword = "value with spaces",
+  -- This simulates how Neovim splits: -opener='botright vsplit'
+  local known_options = {
+    opener = true,
+    stay = true,
   }
-  local remaining = { "cmd", "arg" }
+  local fargs = { "-opener='botright", "vsplit'", "-stay", "claude" }
+  local options, remaining = argparse.parse(fargs, { known_options = known_options })
 
-  local args = argparse.options_to_args(options, remaining)
-
-  -- Check that all components are present (order may vary for options)
-  local has_flag = false
-  local has_key = false
-  local has_multiword = false
-  local has_cmd = false
-  local has_arg = false
-
-  for _, arg in ipairs(args) do
-    if arg == "-flag" then
-      has_flag = true
-    end
-    if arg == "-key=value" then
-      has_key = true
-    end
-    if arg == '-multiword="value with spaces"' then
-      has_multiword = true
-    end
-    if arg == "cmd" then
-      has_cmd = true
-    end
-    if arg == "arg" then
-      has_arg = true
-    end
-  end
-
-  T.expect.equality(has_flag, true)
-  T.expect.equality(has_key, true)
-  T.expect.equality(has_multiword, true)
-  T.expect.equality(has_cmd, true)
-  T.expect.equality(has_arg, true)
+  T.expect.equality(options.opener, "botright vsplit")
+  T.expect.equality(options.stay, true)
+  T.expect.equality(#remaining, 1)
+  T.expect.equality(remaining[1], "claude")
 end
+
+test_set["parse handles broken double-quoted values"] = function()
+  local argparse = require("aibo.internal.argparse")
+
+  -- This simulates how Neovim splits: -opener="botright vsplit"
+  local known_options = {
+    opener = true,
+    stay = true,
+  }
+  local fargs = { '-opener="botright', 'vsplit"', "-stay", "claude" }
+  local options, remaining = argparse.parse(fargs, { known_options = known_options })
+
+  T.expect.equality(options.opener, "botright vsplit")
+  T.expect.equality(options.stay, true)
+  T.expect.equality(#remaining, 1)
+  T.expect.equality(remaining[1], "claude")
+end
+
+test_set["parse handles complete quoted values"] = function()
+  local argparse = require("aibo.internal.argparse")
+
+  local known_options = { opener = true }
+
+  -- Complete single-quoted value
+  local fargs1 = { "-opener='edit'", "claude" }
+  local options1, remaining1 = argparse.parse(fargs1, { known_options = known_options })
+  T.expect.equality(options1.opener, "edit")
+  T.expect.equality(#remaining1, 1)
+  T.expect.equality(remaining1[1], "claude")
+
+  -- Complete double-quoted value
+  local fargs2 = { '-opener="vsplit"', "claude" }
+  local options2, remaining2 = argparse.parse(fargs2, { known_options = known_options })
+  T.expect.equality(options2.opener, "vsplit")
+  T.expect.equality(#remaining2, 1)
+  T.expect.equality(remaining2[1], "claude")
+end
+
+test_set["parse handles unquoted multi-word values"] = function()
+  local argparse = require("aibo.internal.argparse")
+
+  local known_options = {
+    opener = true,
+    stay = true,
+  }
+  -- Properly escaped multi-word value (using backslash)
+  local fargs = { "-opener=botright vsplit", "-stay", "claude" }
+  local options, remaining = argparse.parse(fargs, { known_options = known_options })
+
+  T.expect.equality(options.opener, "botright vsplit")
+  T.expect.equality(options.stay, true)
+  T.expect.equality(#remaining, 1)
+  T.expect.equality(remaining[1], "claude")
+end
+
+test_set["parse stops at first unknown option"] = function()
+  local argparse = require("aibo.internal.argparse")
+
+  local known_options = { opener = true } -- Only opener is known
+  -- Parsing stops at first unknown option
+  local fargs = { "-opener=vsplit", "-unknown=value", "claude", "--permission-mode", "bypassPermission" }
+  local options, remaining = argparse.parse(fargs, { known_options = known_options })
+
+  T.expect.equality(options.opener, "vsplit")
+  T.expect.equality(options.unknown, nil) -- Unknown option not parsed
+  T.expect.equality(#remaining, 4)
+  T.expect.equality(remaining[1], "-unknown=value")
+  T.expect.equality(remaining[2], "claude")
+  T.expect.equality(remaining[3], "--permission-mode")
+  T.expect.equality(remaining[4], "bypassPermission")
+end
+
+test_set["parse stops at first non-option argument"] = function()
+  local argparse = require("aibo.internal.argparse")
+
+  local known_options = { opener = true, stay = true }
+  -- Parsing stops at first non-option argument
+  local fargs = { "-opener=vsplit", "claude", "-stay", "--permission-mode", "bypassPermission" }
+  local options, remaining = argparse.parse(fargs, { known_options = known_options })
+
+  T.expect.equality(options.opener, "vsplit")
+  T.expect.equality(options.stay, nil) -- -stay comes after "claude", so not parsed
+  T.expect.equality(#remaining, 4)
+  T.expect.equality(remaining[1], "claude")
+  T.expect.equality(remaining[2], "-stay")
+  T.expect.equality(remaining[3], "--permission-mode")
+  T.expect.equality(remaining[4], "bypassPermission")
+end
+
+test_set["parse handles -- separator"] = function()
+  local argparse = require("aibo.internal.argparse")
+
+  local known_options = { opener = true, stay = true }
+  -- -- stops option parsing
+  local fargs = { "-opener=vsplit", "--", "-stay", "claude" }
+  local options, remaining = argparse.parse(fargs, { known_options = known_options })
+
+  T.expect.equality(options.opener, "vsplit")
+  T.expect.equality(options.stay, nil) -- -stay comes after --, so not parsed
+  T.expect.equality(#remaining, 2)
+  T.expect.equality(remaining[1], "-stay")
+  T.expect.equality(remaining[2], "claude")
+end
+
+test_set["parse with empty known_options passes all through"] = function()
+  local argparse = require("aibo.internal.argparse")
+
+  -- When known_options is empty table, all options should be passed through
+  local fargs = { "-any=value", "-flag", "cmd", "arg" }
+  local options, remaining = argparse.parse(fargs, { known_options = {} }) -- Empty known_options
+
+  T.expect.equality(options.any, nil)
+  T.expect.equality(options.flag, nil)
+  T.expect.equality(#remaining, 4)
+  T.expect.equality(remaining[1], "-any=value")
+  T.expect.equality(remaining[2], "-flag")
+  T.expect.equality(remaining[3], "cmd")
+  T.expect.equality(remaining[4], "arg")
+end
+
+test_set["parse strips quotes from values"] = function()
+  local argparse = require("aibo.internal.argparse")
+
+  local known_options = { key = true }
+  -- Single quotes
+  local options1, _ = argparse.parse({ "-key='value with spaces'" }, { known_options = known_options })
+  T.expect.equality(options1.key, "value with spaces")
+
+  -- Double quotes
+  local options2, _ = argparse.parse({ '-key="value with spaces"' }, { known_options = known_options })
+  T.expect.equality(options2.key, "value with spaces")
+
+  -- No quotes
+  local options3, _ = argparse.parse({ "-key=value" }, { known_options = known_options })
+  T.expect.equality(options3.key, "value")
+end
+
+-- Test removed: options_to_args function has been removed from production code
+-- This function was only used for testing and not needed in production
 
 return test_set
