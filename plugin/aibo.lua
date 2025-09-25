@@ -15,8 +15,10 @@ vim.api.nvim_create_autocmd("BufReadCmd", {
   pattern = "aiboprompt://*",
   nested = true,
   callback = function()
-    local bufnr = vim.fn.expand("<abuf>")
-    require("aibo.internal.prompt").init(tonumber(bufnr))
+    local bufnr = tonumber(vim.fn.expand("<abuf>"))
+    if bufnr then
+      require("aibo.internal.prompt").init(bufnr)
+    end
   end,
 })
 

@@ -4,9 +4,12 @@
 default:
 	@just --list
 
-# Run luacheck for linting
+# Run luacheck and lua-language-server diagnostics
 lint:
+	@echo "Running luacheck..."
 	@luacheck lua/ --globals vim
+	@echo "Running lua-language-server diagnostics..."
+	@lua-language-server --check=$(pwd) --checklevel=Warning || true
 
 # Format code with stylua
 fmt:
