@@ -6,55 +6,50 @@ local M = {}
 ---@field has_value boolean Whether the argument takes a value
 ---@field values? string[] Possible values for the argument
 
--- Define meaningful Codex arguments for interactive sessions
+-- Define OpenAI Codex CLI arguments for interactive sessions
+-- https://github.com/openai/codex
 local CODEX_ARGUMENTS = {
+  -- Interactive subcommands
+  {
+    arg = "resume",
+    description = "Resume a previous session",
+    has_value = false,
+    is_subcommand = true,
+  },
+  -- Main flags
   {
     arg = "--model",
-    description = "Model the agent should use",
+    description = "Select model to use",
     has_value = true,
-    values = { "o3", "claude-3.5-sonnet", "gpt-4-turbo", "gemini-pro" },
   },
   {
     arg = "-m",
-    description = "Model the agent should use (short)",
-    has_value = true,
-    values = { "o3", "claude-3.5-sonnet", "gpt-4-turbo", "gemini-pro" },
-  },
-  {
-    arg = "--config",
-    description = "Override configuration value",
+    description = "Select model to use (short)",
     has_value = true,
   },
   {
-    arg = "-c",
-    description = "Override configuration value (short)",
+    arg = "--ask-for-approval",
+    description = "Request approval before executing commands",
+    has_value = false,
+  },
+  {
+    arg = "-a",
+    description = "Request approval (short)",
+    has_value = false,
+  },
+  {
+    arg = "--cd",
+    description = "Specify working directory",
     has_value = true,
   },
   {
-    arg = "--profile",
-    description = "Configuration profile from config.toml",
+    arg = "-C",
+    description = "Specify working directory (short)",
     has_value = true,
   },
   {
-    arg = "-p",
-    description = "Configuration profile (short)",
-    has_value = true,
-  },
-  {
-    arg = "--sandbox",
-    description = "Select sandbox policy for shell commands",
-    has_value = true,
-    values = { "none", "read-only", "restricted", "full" },
-  },
-  {
-    arg = "-s",
-    description = "Select sandbox policy (short)",
-    has_value = true,
-    values = { "none", "read-only", "restricted", "full" },
-  },
-  {
-    arg = "--oss",
-    description = "Use local open source model provider (Ollama)",
+    arg = "--full-auto",
+    description = "Automatic execution mode without confirmations",
     has_value = false,
   },
   {
@@ -67,17 +62,12 @@ local CODEX_ARGUMENTS = {
     description = "Attach image(s) (short)",
     has_value = true,
   },
+  -- Resume-specific options
   {
-    arg = "resume",
-    description = "Resume a previous session",
+    arg = "--last",
+    description = "Resume the most recent session (use with resume)",
     has_value = false,
-    is_subcommand = true,
-  },
-  {
-    arg = "resume --last",
-    description = "Resume the most recent session",
-    has_value = false,
-    is_subcommand = true,
+    is_resume_option = true,
   },
 }
 
@@ -105,14 +95,9 @@ end
 ---@param completions string[] The completions list to append to
 ---@param prefix string The prefix to match (empty string matches all)
 local function add_subcommand_completions(completions, prefix)
-  -- Handle "resume" subcommand
+  -- Handle interactive subcommands only: resume
   if prefix == "" or string.find("resume", "^" .. vim.pesc(prefix)) then
     table.insert(completions, "resume")
-  end
-
-  -- Handle "resume --last" as a special case
-  if prefix == "" or string.find("resume --last", "^" .. vim.pesc(prefix)) then
-    table.insert(completions, "resume --last")
   end
 end
 
@@ -132,42 +117,49 @@ end
 ---Get value completions for a specific argument
 ---@param arg string The argument that needs a value
 ---@param prefix string The prefix to match
+---@param _context table Additional context (e.g., current subcommand)
 ---@return string[]|nil Completions if found, nil otherwise
-local function get_value_completions(arg, prefix)
+local function get_value_completions(arg, prefix, _context)
   for _, arg_info in ipairs(CODEX_ARGUMENTS) do
     if not arg_info.is_subcommand and arg_matches(arg, arg_info) and arg_info.has_value then
-      if arg_info.values then
-        -- Complete from predefined values
-        local completions = {}
-        for _, value in ipairs(arg_info.values) do
-          if prefix == "" or value:find("^" .. vim.pesc(prefix)) then
-            table.insert(completions, value)
-          end
-        end
-        return completions
-      elseif arg_info.arg == "--image" or arg_info.arg == "-i" then
+      if arg_info.arg == "--image" or arg_info.arg == "-i" then
         -- Complete image files
         return vim.fn.getcompletion(prefix, "file")
+      elseif arg_info.arg == "--cd" or arg_info.arg == "-C" then
+        -- Complete directories
+        return vim.fn.getcompletion(prefix, "dir")
       else
         -- No specific completion available
         return {}
       end
     end
   end
+
   return nil
 end
 
 ---Get completion candidates for Codex command arguments
 ---@param arglead string Current argument being typed
 ---@param cmdline string Full command line
----@param cursorpos integer Cursor position
+---@param _cursorpos integer Cursor position
 ---@return string[] Completion candidates
-function M.get_command_completions(arglead, cmdline, cursorpos)
+function M.get_command_completions(arglead, cmdline, _cursorpos)
   local completions = {}
 
   -- Parse the command line
   local parts = parse_command(cmdline)
   local part_count = #parts
+
+  -- Determine context (current subcommand if any)
+  local context = {}
+  local has_subcommand = false
+  for part in ipairs(parts) do
+    if part == "resume" then
+      context.subcommand = part
+      has_subcommand = true
+      break
+    end
+  end
 
   -- Check if we're completing a value for the previous argument
   if part_count >= 2 then
@@ -180,16 +172,26 @@ function M.get_command_completions(arglead, cmdline, cursorpos)
       prev_arg = parts[part_count] or ""
     end
 
-    local value_completions = get_value_completions(prev_arg, arglead)
+    local value_completions = get_value_completions(prev_arg, arglead, context)
     if value_completions then
       return value_completions
     end
   end
 
-  -- Add subcommand completions
-  add_subcommand_completions(completions, arglead)
+  -- Handle resume subcommand special options
+  if context.subcommand == "resume" then
+    if arglead == "" or string.find("--last", "^" .. vim.pesc(arglead)) then
+      table.insert(completions, "--last")
+    end
+    -- Could also complete session IDs here if we had access to them
+  end
 
-  -- Add argument completions
+  -- If no subcommand yet, offer subcommands first
+  if not has_subcommand then
+    add_subcommand_completions(completions, arglead)
+  end
+
+  -- Add argument completions (flags)
   add_argument_completions(completions, arglead)
 
   return completions
@@ -205,25 +207,110 @@ end
 ---@return string[]
 function M.get_help()
   local help = {}
-  table.insert(help, "Codex arguments for interactive sessions:")
+  table.insert(help, "OpenAI Codex CLI - Interactive AI coding assistant")
   table.insert(help, "")
+  table.insert(help, "Interactive Commands:")
+  table.insert(help, "  resume                    Resume a previous session")
+  table.insert(help, "  resume --last             Resume the most recent session")
+  table.insert(help, "  resume <SESSION_ID>       Resume specific session")
+  table.insert(help, "")
+  table.insert(help, "Options:")
 
   for _, arg_info in ipairs(CODEX_ARGUMENTS) do
-    if not arg_info.is_subcommand then
+    if not arg_info.is_subcommand and not arg_info.is_resume_option then
       local line = string.format("  %-25s %s", arg_info.arg, arg_info.description)
-      if arg_info.values then
-        line = line .. " [" .. table.concat(arg_info.values, ", ") .. "]"
-      end
       table.insert(help, line)
     end
   end
 
   table.insert(help, "")
-  table.insert(help, "Subcommands:")
-  table.insert(help, "  resume                    Resume a previous session")
-  table.insert(help, "  resume --last             Resume the most recent session")
+  table.insert(help, "Interactive usage examples:")
+  table.insert(help, "  codex                     Start interactive session")
+  table.insert(help, '  codex "fix the bug"       Start with initial prompt')
+  table.insert(help, "  codex resume --last       Resume last session")
+  table.insert(help, "  codex -i image.png        Attach image to prompt")
+  table.insert(help, "  codex --model gpt-4       Use specific model")
 
   return help
+end
+
+---Run health check for Codex integration
+---@param report table Health check reporter functions
+function M.check_health(report)
+  report.start("OpenAI Codex Integration")
+
+  -- Check if codex command is available
+  if M.is_available() then
+    report.ok("codex CLI found in PATH")
+    -- Note: Skipping version check as it may hang in some environments
+
+    -- Check for OpenAI API key (primary authentication method)
+    local openai_key = vim.env.OPENAI_API_KEY
+    if openai_key and openai_key ~= "" then
+      report.ok("OPENAI_API_KEY found in environment")
+    else
+      report.info("OPENAI_API_KEY not found (can sign in with ChatGPT account instead)")
+    end
+
+    -- Check for codex config file
+    local config_file = vim.fn.expand("~/.codex/config.toml")
+    if vim.fn.filereadable(config_file) == 1 then
+      report.ok(string.format("Codex config file found: %s", config_file))
+    else
+      config_file = vim.fn.expand("~/.config/codex/config.toml")
+      if vim.fn.filereadable(config_file) == 1 then
+        report.ok(string.format("Codex config file found: %s", config_file))
+      else
+        report.info("Codex config file not found (will use defaults)")
+      end
+    end
+
+    -- Check for Node.js (required for npm installation)
+    if vim.fn.executable("node") == 1 then
+      report.info("Node.js found - can install/update via: npm install -g @openai/codex")
+    end
+  else
+    report.warn("codex CLI not found in PATH")
+    report.info("Install OpenAI Codex CLI:")
+    report.info("  npm: npm install -g @openai/codex")
+    report.info("  brew: brew install codex")
+    report.info("  GitHub: https://github.com/openai/codex")
+  end
+end
+
+---Setup Codex <Plug> mappings
+---@param bufnr number Buffer number to set mappings for
+function M.setup_plug_mappings(bufnr)
+  local aibo = require("aibo")
+
+  local CODEX_CODES = {
+    transcript = "\020",
+  }
+
+  -- Define <Plug> mappings for Codex functionality
+  vim.keymap.set({ "n", "i" }, "<Plug>(aibo-codex-transcript)", function()
+    aibo.send(CODEX_CODES.transcript, bufnr)
+  end, { buffer = bufnr, desc = "Transcript (Ctrl+T)" })
+
+  vim.keymap.set({ "n", "i" }, "<Plug>(aibo-codex-home)", function()
+    aibo.send(vim.api.nvim_replace_termcodes("<Home>", true, false, true), bufnr)
+  end, { buffer = bufnr, desc = "Home" })
+
+  vim.keymap.set({ "n", "i" }, "<Plug>(aibo-codex-end)", function()
+    aibo.send(vim.api.nvim_replace_termcodes("<End>", true, false, true), bufnr)
+  end, { buffer = bufnr, desc = "End" })
+
+  vim.keymap.set({ "n", "i" }, "<Plug>(aibo-codex-page-up)", function()
+    aibo.send(vim.api.nvim_replace_termcodes("<PageUp>", true, false, true), bufnr)
+  end, { buffer = bufnr, desc = "Page up" })
+
+  vim.keymap.set({ "n", "i" }, "<Plug>(aibo-codex-page-down)", function()
+    aibo.send(vim.api.nvim_replace_termcodes("<PageDown>", true, false, true), bufnr)
+  end, { buffer = bufnr, desc = "Page down" })
+
+  vim.keymap.set({ "n", "i" }, "<Plug>(aibo-codex-quit)", function()
+    aibo.send("q", bufnr)
+  end, { buffer = bufnr, desc = "Quit" })
 end
 
 return M

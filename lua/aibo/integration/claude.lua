@@ -105,13 +105,13 @@ local function parse_command(cmdline)
   return parts
 end
 
----Check if an argument matches (handling both long and short forms)
+---Check if an argument matches
 ---@param arg string The argument to check
 ---@param arg_info table The argument info containing the arg field
 ---@return boolean True if the argument matches
 local function arg_matches(arg, arg_info)
-  -- Check exact match or short form match
-  return arg == arg_info.arg or arg == arg_info.arg:gsub("%-%-", "-")
+  -- Check exact match only
+  return arg == arg_info.arg
 end
 
 ---Add argument completions to the list
@@ -123,6 +123,18 @@ local function add_argument_completions(completions, prefix)
       table.insert(completions, arg_info.arg)
     end
   end
+end
+
+---Check if an argument requires a value
+---@param arg string The argument to check
+---@return boolean True if the argument requires a value
+local function arg_requires_value(arg)
+  for _, arg_info in ipairs(CLAUDE_ARGUMENTS) do
+    if arg_matches(arg, arg_info) then
+      return arg_info.has_value
+    end
+  end
+  return false -- Unknown arguments don't require values
 end
 
 ---Add value completions for a specific argument
@@ -159,9 +171,9 @@ end
 ---Get completion candidates for Claude command arguments
 ---@param arglead string Current argument being typed
 ---@param cmdline string Full command line
----@param cursorpos integer Cursor position
+---@param _cursorpos integer Cursor position
 ---@return string[] Completion candidates
-function M.get_command_completions(arglead, cmdline, cursorpos)
+function M.get_command_completions(arglead, cmdline, _cursorpos)
   local completions = {}
 
   -- Parse the command line
@@ -181,11 +193,29 @@ function M.get_command_completions(arglead, cmdline, cursorpos)
 
     -- Check if previous argument might need a value
     if prev_arg:match("^%-") then
-      local value_completions = get_value_completions(prev_arg, arglead)
-      if value_completions then
-        return value_completions
+      -- Check if this is a known argument
+      local is_known_arg = false
+      for _, arg_info in ipairs(CLAUDE_ARGUMENTS) do
+        if arg_matches(prev_arg, arg_info) then
+          is_known_arg = true
+          break
+        end
+      end
+
+      if is_known_arg then
+        -- Only try to get value completions if the flag actually requires a value
+        if arg_requires_value(prev_arg) then
+          local value_completions = get_value_completions(prev_arg, arglead)
+          if value_completions then
+            return value_completions
+          else
+            -- Known flag that requires value but no completions available
+            return {}
+          end
+        end
+        -- If known flag doesn't require a value (boolean flag), fall through to complete other arguments
       else
-        -- Unknown flag - don't complete anything
+        -- Unknown flag - don't provide completions
         return {}
       end
     end
@@ -219,6 +249,84 @@ function M.get_help()
   end
 
   return help
+end
+
+---Run health check for Claude integration
+---@param report table Health check reporter functions
+function M.check_health(report)
+  report.start("Claude Integration")
+
+  -- Check if claude command is available
+  if M.is_available() then
+    report.ok("claude CLI found in PATH")
+    -- Note: Skipping version check as it may hang in some environments
+
+    -- Check for API key in environment
+    local api_key = vim.env.ANTHROPIC_API_KEY
+    if api_key and api_key ~= "" then
+      report.ok("ANTHROPIC_API_KEY environment variable is set")
+    else
+      report.info("ANTHROPIC_API_KEY not found in environment (may be configured in claude CLI)")
+    end
+
+    -- Check for claude config directory
+    local config_dir = vim.fn.expand("~/.claude")
+    if vim.fn.isdirectory(config_dir) == 1 then
+      report.info(string.format("Claude config directory found: %s", config_dir))
+    else
+      report.info("Claude config directory not found (will be created on first use)")
+    end
+  else
+    report.warn("claude CLI not found in PATH")
+    report.info("Install claude CLI: https://github.com/anthropics/claude")
+  end
+end
+
+---Setup Claude <Plug> mappings
+---@param bufnr number Buffer number to set mappings for
+function M.setup_plug_mappings(bufnr)
+  local aibo = require("aibo")
+
+  local CLAUDE_CODES = {
+    mode = "\027[Z",
+    verbose = "\015",
+    todo = "\020",
+    undo = "\031",
+    paste = "\022",
+  }
+
+  -- Define <Plug> mappings for Claude functionality
+  vim.keymap.set({ "n", "i" }, "<Plug>(aibo-claude-mode)", function()
+    aibo.send(CLAUDE_CODES.mode, bufnr)
+  end, { buffer = bufnr, desc = "Toggle mode (Shift+Tab)" })
+
+  vim.keymap.set({ "n", "i" }, "<Plug>(aibo-claude-verbose)", function()
+    aibo.send(CLAUDE_CODES.verbose, bufnr)
+  end, { buffer = bufnr, desc = "Verbose (Ctrl+O)" })
+
+  vim.keymap.set({ "n", "i" }, "<Plug>(aibo-claude-todo)", function()
+    aibo.send(CLAUDE_CODES.todo, bufnr)
+  end, { buffer = bufnr, desc = "Todo (Ctrl+T)" })
+
+  vim.keymap.set({ "n", "i" }, "<Plug>(aibo-claude-undo)", function()
+    aibo.send(CLAUDE_CODES.undo, bufnr)
+  end, { buffer = bufnr, desc = "Undo (Ctrl+Y)" })
+
+  vim.keymap.set({ "n", "i" }, "<Plug>(aibo-claude-paste)", function()
+    aibo.send(CLAUDE_CODES.paste, bufnr)
+  end, { buffer = bufnr, desc = "Paste (Ctrl+V)" })
+
+  vim.keymap.set({ "n", "i" }, "<Plug>(aibo-claude-shortcuts)", function()
+    aibo.send("?", bufnr)
+  end, { buffer = bufnr, desc = "Shortcuts (?)" })
+
+  vim.keymap.set({ "n", "i" }, "<Plug>(aibo-claude-bash-mode)", function()
+    aibo.send("!", bufnr)
+  end, { buffer = bufnr, desc = "Bash mode (!)" })
+
+  vim.keymap.set({ "n", "i" }, "<Plug>(aibo-claude-memorize)", function()
+    aibo.send("#", bufnr)
+  end, { buffer = bufnr, desc = "Memorize (#)" })
 end
 
 return M
