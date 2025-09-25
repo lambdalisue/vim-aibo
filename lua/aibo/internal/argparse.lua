@@ -137,7 +137,7 @@ function M.parse(args, opts)
       -- Option-like argument
       local key, eq_pos = extract_option_key(arg)
 
-      if not key or not known_options[key] then
+      if not key or known_options[key] == nil then
         -- Unknown option - stop parsing
         stop_parsing = true
         table.insert(remaining, arg)
@@ -158,6 +158,79 @@ function M.parse(args, opts)
   end
 
   return options, remaining
+end
+
+--- Get available option completions based on known options and what's already used
+--- @param arglead string Current argument being completed
+--- @param cmdline string Full command line
+--- @param known_options table Known options configuration
+--- @return string[] Available completions
+function M.get_option_completions(arglead, cmdline, known_options)
+  if arglead ~= "" and not arglead:match("^%-") then
+    return {}
+  end
+
+  -- Build list of available options
+  local available = {}
+  for option_name, has_value in pairs(known_options) do
+    if has_value then
+      table.insert(available, "-" .. option_name .. "=")
+    else
+      table.insert(available, "-" .. option_name)
+    end
+  end
+
+  -- Find which options have already been used
+  local used_options = {}
+  -- Check for options with values (key=value)
+  for opt in cmdline:gmatch("%-([%w]+)=") do
+    used_options[opt] = true
+  end
+  -- Check for standalone flags
+  for opt in cmdline:gmatch("%-([%w]+)%s") do
+    used_options[opt] = true
+  end
+  -- Check for flags at end of line
+  for opt in cmdline:gmatch("%-([%w]+)$") do
+    used_options[opt] = true
+  end
+
+  -- Filter out used options
+  available = vim.tbl_filter(function(opt)
+    local option_name = opt:match("^%-([%w]+)")
+    return not used_options[option_name]
+  end, available)
+
+  -- Filter by arglead if not empty
+  if arglead ~= "" then
+    return vim.tbl_filter(function(val)
+      return val:find("^" .. vim.pesc(arglead))
+    end, available)
+  end
+
+  return available
+end
+
+--- Parse command line and determine position for completion
+--- @param cmdline string Full command line
+--- @param known_options table Known options configuration
+--- @return table Parsed state with options, remaining args, and completion context
+function M.parse_for_completion(cmdline, known_options)
+  local parts = vim.split(cmdline, "%s+")
+  if #parts == 0 then
+    return { options = {}, remaining = {}, at_options = true }
+  end
+
+  -- Remove command name
+  table.remove(parts, 1)
+
+  local options, remaining = M.parse(parts, { known_options = known_options })
+
+  return {
+    options = options,
+    remaining = remaining,
+    at_options = #remaining == 0 or (#parts > 0 and parts[#parts]:match("^%-")),
+  }
 end
 
 return M

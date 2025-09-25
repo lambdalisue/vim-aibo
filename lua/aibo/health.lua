@@ -14,15 +14,12 @@ local function command_exists(cmd)
   return vim.fn.executable(cmd) == 1
 end
 
----Get version of a command
----@param cmd string Command name
----@param args string[] Arguments to get version
+---Get version of a command (disabled due to potential hanging)
+---@param _cmd string Command name
+---@param _args string[] Arguments to get version
 ---@return string|nil Version string or nil if failed
-local function get_command_version(cmd, args)
-  local result = vim.fn.system(vim.list_extend({ cmd }, args))
-  if vim.v.shell_error == 0 then
-    return vim.trim(result)
-  end
+local function get_command_version(_cmd, _args)
+  -- Disabled: system calls for version can hang in some environments
   return nil
 end
 
@@ -94,6 +91,27 @@ function M.check()
   if not found_any then
     warn("No AI agent CLI tools found. Install at least one AI agent CLI to use this plugin.")
     info("Supported agents: claude, codex, ollama")
+  end
+
+  -- Run integration-specific health checks
+  local report = {
+    start = start,
+    ok = ok,
+    warn = warn,
+    error = error,
+    info = info,
+  }
+
+  -- Check Claude integration
+  local ok_claude, claude = pcall(require, "aibo.integration.claude")
+  if ok_claude and claude.check_health then
+    claude.check_health(report)
+  end
+
+  -- Check Codex integration
+  local ok_codex, codex = pcall(require, "aibo.integration.codex")
+  if ok_codex and codex.check_health then
+    codex.check_health(report)
   end
 
   -- Check terminal features
@@ -175,6 +193,38 @@ function M.check()
     end
   else
     warn("Could not determine plugin root directory")
+  end
+
+  -- Check core modules
+  start("Core Modules")
+
+  local core_modules = {
+    { name = "aibo", desc = "Main module" },
+    { name = "aibo.internal.console", desc = "Console management" },
+    { name = "aibo.internal.prompt", desc = "Prompt management" },
+    { name = "aibo.internal.controller", desc = "Terminal controller" },
+    { name = "aibo.internal.send", desc = "Send functionality" },
+    { name = "aibo.internal.argparse", desc = "Argument parsing" },
+    { name = "aibo.internal.utils", desc = "Utility functions" },
+    { name = "aibo.command.aibo", desc = ":Aibo command" },
+    { name = "aibo.command.aibo_send", desc = ":AiboSend command" },
+  }
+
+  local module_errors = 0
+  for _, module in ipairs(core_modules) do
+    local ok_mod, _ = pcall(require, module.name)
+    if ok_mod then
+      info(string.format("✓ %s", module.desc))
+    else
+      module_errors = module_errors + 1
+      error(string.format("✗ %s (%s) failed to load", module.desc, module.name))
+    end
+  end
+
+  if module_errors == 0 then
+    ok("All core modules loaded successfully")
+  else
+    error(string.format("%d core modules failed to load", module_errors))
   end
 end
 

@@ -47,6 +47,13 @@ function M.get_config()
   return vim.deepcopy(config)
 end
 
+---Get configuration for a specific buffer type
+---@param buftype "prompt"|"console" Buffer type
+---@return AiboBufferConfig Buffer type configuration
+function M.get_buffer_config(buftype)
+  return vim.deepcopy(config[buftype] or {})
+end
+
 ---Get configuration for a specific agent
 ---@param agent string Agent name (e.g., "claude", "codex")
 ---@return AiboBufferConfig Configuration for the agent (cloned)
@@ -56,13 +63,6 @@ function M.get_agent_config(agent)
     return vim.deepcopy(config.agents[agent])
   end
   return {}
-end
-
----Get configuration for a specific buffer type
----@param buftype "prompt"|"console" Buffer type
----@return AiboBufferConfig Buffer type configuration
-function M.get_buffer_config(buftype)
-  return vim.deepcopy(config[buftype] or {})
 end
 
 ---@class AiboInstance
