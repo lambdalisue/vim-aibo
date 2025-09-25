@@ -5,7 +5,7 @@ local M = {}
 ---@return integer Console buffer number
 local function find_console_bufnr(bufnr)
   local bufname = vim.api.nvim_buf_get_name(bufnr)
-  local winid = bufname:match("^aiboprompt://(%d+)$")
+  local winid = string.match(bufname, "^aiboprompt://(%d+)$")
 
   if not winid then
     vim.notify(('Invalid aibo-prompt buffer "%s"'):format(bufname), vim.log.levels.ERROR, { title = "Aibo" })

@@ -63,7 +63,7 @@ local function find_buffer_window_in_tabpage(bufnr)
 end
 
 ---Follow terminal output to bottom
----@param winid integer Window ID
+---@param bufnr integer Buffer number
 ---@return nil
 local function follow(bufnr)
   local winid = vim.fn.bufwinid(bufnr)
@@ -125,7 +125,7 @@ end
 ---@param winid integer|string Window ID
 ---@return nil
 local function WinClosed(winid)
-  local bufname = format_prompt_bufname(winid)
+  local bufname = format_prompt_bufname(tonumber(winid) or 0)
   local bufnr = vim.fn.bufnr(bufname)
   if bufnr ~= -1 then
     vim.defer_fn(function()
@@ -220,7 +220,10 @@ function M.open(cmd, args, opener, stay)
     buffer = bufnr,
     nested = true,
     callback = function()
-      WinClosed(tonumber(vim.fn.expand("<afile>")))
+      local win_id = tonumber(vim.fn.expand("<afile>"))
+      if win_id then
+        WinClosed(win_id)
+      end
     end,
   })
 

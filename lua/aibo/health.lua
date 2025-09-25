@@ -19,7 +19,7 @@ end
 ---@param args string[] Arguments to get version
 ---@return string|nil Version string or nil if failed
 local function get_command_version(cmd, args)
-  local result = vim.fn.system({ cmd, unpack(args) })
+  local result = vim.fn.system(vim.list_extend({ cmd }, args))
   if vim.v.shell_error == 0 then
     return vim.trim(result)
   end
