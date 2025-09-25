@@ -48,9 +48,9 @@ function M.setup()
     local argparse = require("aibo.internal.argparse")
     -- Define known AiboSend command options
     local known_options = {
-      input = true, -- -input flag
-      submit = true, -- -submit flag
-      replace = true, -- -replace flag
+      input = false, -- -input flag
+      submit = false, -- -submit flag
+      replace = false, -- -replace flag
       prefix = true, -- -prefix=value
       suffix = true, -- -suffix=value
     }

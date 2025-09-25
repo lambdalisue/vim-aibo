@@ -212,7 +212,7 @@ function M.setup()
     })
   end, {
     nargs = "+",
-    desc = "Open an inteactive Aibo console",
+    desc = "Open an interactive Aibo console",
     complete = complete,
   })
 end
