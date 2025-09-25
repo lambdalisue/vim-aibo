@@ -3,9 +3,13 @@
     "version": "LuaJIT"
   },
   "diagnostics": {
-    "globals": ["vim"]
+    "globals": [
+      "vim"
+    ]
   },
   "workspace": {
-    "ignoreDir": ["tests/"]
+    "ignoreDir": [
+      "tests/"
+    ]
   }
 }

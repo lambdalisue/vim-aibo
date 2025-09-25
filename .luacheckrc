@@ -6,20 +6,18 @@ codes = true
 
 -- Neovim globals
 read_globals = {
-    "vim",
+  "vim",
 }
 
 -- Plugin-specific globals
 globals = {
-    -- Add any plugin-specific globals here if needed
+  -- Add any plugin-specific globals here if needed
 }
 
 -- Ignore some warnings
 ignore = {
-    "122", -- Setting read-only field (false positive for vim.bo, vim.wo, vim.b in Neovim)
-    "212", -- Unused argument
-    "213", -- Unused loop variable
-    "631", -- Line too long
+  "122",   -- Setting read-only field (false positive for vim.bo, vim.wo, vim.b in Neovim)
+  "631",   -- Line too long
 }
 
 -- Set max line length
@@ -27,10 +25,11 @@ max_line_length = 120
 
 -- Configure specific files
 files = {
-    ["lua/**/*.lua"] = {
-        std = "+busted",
-    },
-    ["ftplugin/**/*.lua"] = {
-        std = "+busted",
-    },
+  ["lua/**/*.lua"] = {
+    std = "+busted",
+  },
+  ["ftplugin/**/*.lua"] = {
+    std = "+busted",
+  },
 }
+
