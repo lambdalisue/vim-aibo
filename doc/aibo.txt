@@ -566,40 +566,40 @@ Default key mappings are defined in ftplugin files. These can be customized
 through configuration (see |aibo-customization|).
 
 Console buffer mappings:
-	<CR>		Submit empty line (normal mode)
-	<C-c>		Send ESC to terminal (normal/insert mode)
-	g<C-c>		Send interrupt signal (normal mode)
-	<C-l>		Clear terminal (normal mode)
-	<C-n>		Navigate to next in history (normal mode)
-	<C-p>		Navigate to previous in history (normal mode)
-	<Down>		Send down arrow (normal mode)
-	<Up>		Send up arrow (normal mode)
+	<CR>		Submit empty line (n)
+	<C-c>		Send ESC to terminal (n/i)
+	g<C-c>		Send interrupt signal (n)
+	<C-l>		Clear terminal (n)
+	<C-n>		Navigate to next in history (n)
+	<C-p>		Navigate to previous in history (n)
+	<Down>		Send down arrow (n)
+	<Up>		Send up arrow (n)
 
 Prompt buffer mappings:
-	<CR>		Submit content (normal mode)
-	<C-Enter>	Submit and close (normal/insert mode)
-	<F5>		Submit and close (normal/insert mode)
+	<CR>		Submit content (n)
+	<C-Enter>	Submit and close (n/i)
+	<F5>		Submit and close (n/i)
 	:w		Submit content (command)
 	:wq		Submit and close (command)
 
 Claude agent mappings:
-	<S-Tab>		Switch mode (normal/insert mode)
-	<F2>		Switch mode alternative (normal/insert mode)
-	<C-o>		Toggle verbose (normal/insert mode)
-	<C-t>		Show todo (normal/insert mode)
-	<C-_>		Undo (normal/insert mode, also <C-->)
-	<C-v>		Paste (normal/insert mode)
-	?		Show shortcuts (normal mode only)
-	!		Enter bash mode (normal mode only)
-	#		Memorize context (normal mode only)
+	<S-Tab>		Switch mode (n/i)
+	<F2>		Switch mode alternative (n/i)
+	<C-o>		Toggle verbose (n/i)
+	<C-t>		Show todo (n/i)
+	<C-_>		Undo (n/i, also <C-->)
+	<C-v>		Paste (n/i)
+	?		Show shortcuts (n)
+	!		Enter bash mode (n)
+	#		Memorize context (n)
 
 Codex agent mappings:
-	<C-t>		Show transcript (normal/insert mode)
-	<Home>		Move to beginning (normal/insert mode)
-	<End>		Move to end (normal/insert mode)
-	<PageUp>	Page up (normal/insert mode)
-	<PageDown>	Page down (normal/insert mode)
-	q		Quit (normal mode only)
+	<C-t>		Show transcript (n/i)
+	<Home>		Move to beginning (n/i)
+	<End>		Move to end (n/i)
+	<PageUp>	Page up (n/i)
+	<PageDown>	Page down (n/i)
+	q		Quit (n)
 
 Note: Some key combinations require modern terminal emulators. Use
 alternatives like <F5> if certain combinations don't work.
