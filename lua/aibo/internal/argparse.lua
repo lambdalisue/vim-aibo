@@ -1,183 +1,163 @@
 local M = {}
 
---- Parse a command-line string into arguments, handling quoted strings
---- This function mimics shell-like argument parsing where:
---- - Arguments can be separated by spaces
---- - Single-quoted strings: treated as literal (no escape sequences)
---- - Double-quoted strings: escape sequences are interpreted
---- - Quotes can be escaped with backslash
----@param cmdline string The command line to parse
----@return string[] The parsed arguments
-function M.parse_cmdline(cmdline)
-  local args = {}
-  local current_arg = ""
-  local in_single_quotes = false
-  local in_double_quotes = false
-  local escaped = false
-
-  for i = 1, #cmdline do
-    local char = cmdline:sub(i, i)
-
-    if escaped then
-      if in_double_quotes then
-        -- In double quotes, interpret escape sequences
-        if char == "n" then
-          current_arg = current_arg .. "\n"
-        elseif char == "t" then
-          current_arg = current_arg .. "\t"
-        elseif char == "r" then
-          current_arg = current_arg .. "\r"
-        elseif char == "\\" then
-          current_arg = current_arg .. "\\"
-        elseif char == '"' then
-          current_arg = current_arg .. '"'
-        else
-          -- Unknown escape sequence, keep the backslash
-          current_arg = current_arg .. "\\" .. char
-        end
-      elseif in_single_quotes then
-        -- In single quotes, only \' is special
-        if char == "'" then
-          current_arg = current_arg .. "'"
-        else
-          -- Everything else is literal, including the backslash
-          current_arg = current_arg .. "\\" .. char
-        end
-      else
-        -- Outside quotes, treat as literal escaped character
-        current_arg = current_arg .. char
-      end
-      escaped = false
-    elseif char == "\\" then
-      -- Backslash starts escape sequence
-      escaped = true
-    elseif char == "'" and not in_double_quotes and not escaped then
-      -- Toggle single quote state
-      in_single_quotes = not in_single_quotes
-    elseif char == '"' and not in_single_quotes and not escaped then
-      -- Toggle double quote state
-      in_double_quotes = not in_double_quotes
-    elseif char == " " and not in_single_quotes and not in_double_quotes then
-      -- Space outside quotes means end of argument
-      if current_arg ~= "" then
-        table.insert(args, current_arg)
-        current_arg = ""
-      end
-    else
-      -- Regular character
-      current_arg = current_arg .. char
-    end
+--- Strip surrounding quotes from a value
+---@param value string The value to strip quotes from
+---@return string The value without surrounding quotes
+local function strip_quotes(value)
+  if (value:sub(1, 1) == "'" and value:sub(-1) == "'") or (value:sub(1, 1) == '"' and value:sub(-1) == '"') then
+    return value:sub(2, -2)
   end
-
-  -- Handle any remaining escaped state
-  if escaped then
-    current_arg = current_arg .. "\\"
-  end
-
-  -- Add the last argument if any
-  if current_arg ~= "" then
-    table.insert(args, current_arg)
-  end
-
-  return args
+  return value
 end
 
---- Parse option arguments like -key=value, supporting quoted values
---- This handles:
---- - Simple flags: -flag
---- - Key-value pairs: -key=value
---- - Quoted values: -key="value with spaces"
----@param args string[] Array of arguments (from fargs or parse_cmdline)
----@return table options Table of parsed options
----@return string[] remaining Array of non-option arguments
-function M.parse_options(args)
+--- Check if a value is a broken quoted string (quote opened but not closed)
+---@param value string The value to check
+---@return boolean is_broken
+---@return string|nil quote_type
+local function is_broken_quote(value)
+  -- Empty quote
+  if value == '"' or value == "'" then
+    return true, value
+  end
+  -- Starts with quote but doesn't end with same quote
+  if value:sub(1, 1) == '"' and value:sub(-1) ~= '"' then
+    return true, '"'
+  end
+  if value:sub(1, 1) == "'" and value:sub(-1) ~= "'" then
+    return true, "'"
+  end
+  return false, nil
+end
+
+--- Continue collecting a broken quoted value across arguments
+---@param collected string The value collected so far
+---@param quote_type string The type of quote (' or ")
+---@param next_arg string The next argument to add
+---@return boolean is_complete
+---@return string value
+local function continue_broken_quote(collected, quote_type, next_arg)
+  local combined = collected .. " " .. next_arg
+  -- Check if this argument ends with the closing quote
+  if next_arg:sub(-1) == quote_type then
+    -- Remove opening and closing quotes and return completed value
+    return true, combined:sub(2, -2)
+  end
+  -- Still collecting
+  return false, combined
+end
+
+--- Extract key from an option argument
+---@param arg string The argument (e.g., "-key=value" or "--key=value")
+---@return string|nil key
+---@return number|nil eq_pos
+local function extract_option_key(arg)
+  if arg:sub(1, 1) ~= "-" then
+    return nil, nil
+  end
+
+  local eq_pos = arg:find("=")
+  local key
+  if eq_pos then
+    key = arg:sub(2, eq_pos - 1)
+  else
+    key = arg:sub(2)
+  end
+
+  -- Handle double dash
+  if key:sub(1, 1) == "-" then
+    key = key:sub(2)
+  end
+
+  return key, eq_pos
+end
+
+--- Process a known option and extract its value
+---@param arg string The full argument
+---@param key string The option key
+---@param eq_pos number|nil Position of = in arg
+---@return string|boolean|nil value
+---@return table|nil partial_state
+local function process_option_value(arg, key, eq_pos)
+  if not eq_pos then
+    -- Flag option
+    return true, nil
+  end
+
+  -- Key-value option
+  local value = arg:sub(eq_pos + 1)
+  local is_broken, quote_type = is_broken_quote(value)
+
+  if is_broken then
+    -- Start collecting broken quoted value
+    return nil, {
+      key = key,
+      collected = value,
+      quote_type = quote_type,
+    }
+  end
+
+  -- Complete value - strip quotes if present
+  return strip_quotes(value), nil
+end
+
+--- Parse arguments from vim command fargs or other sources
+--- Options must come before positional arguments
+--- Parsing stops at: first non-option, unknown option, or --
+---@param args string[] The arguments to parse
+---@param opts {known_options: table<string, boolean>} Parsing options
+---@return table options Parsed options
+---@return string[] remaining Non-option arguments
+function M.parse(args, opts)
+  assert(opts and opts.known_options, "parse requires opts.known_options to be specified")
+  local known_options = opts.known_options
+
   local options = {}
   local remaining = {}
+  local partial_state = nil -- For handling broken quoted options
+  local stop_parsing = false -- Stop parsing options after first non-option or --
 
   for _, arg in ipairs(args) do
-    if arg:sub(1, 1) == "-" then
-      -- This is an option
-      local eq_pos = arg:find("=")
-      if eq_pos then
-        -- Key-value option
-        local key = arg:sub(2, eq_pos - 1)
-        local value = arg:sub(eq_pos + 1)
-        options[key] = value
+    if stop_parsing then
+      -- Everything after stop_parsing goes to remaining
+      table.insert(remaining, arg)
+    elseif partial_state then
+      -- Continue collecting broken quoted value
+      local is_complete, value = continue_broken_quote(partial_state.collected, partial_state.quote_type, arg)
+
+      if is_complete then
+        options[partial_state.key] = value
+        partial_state = nil
       else
-        -- Flag option
-        local key = arg:sub(2)
-        options[key] = true
+        partial_state.collected = value
+      end
+    elseif arg == "--" then
+      -- Special separator: stop parsing options
+      stop_parsing = true
+    elseif arg:sub(1, 1) == "-" then
+      -- Option-like argument
+      local key, eq_pos = extract_option_key(arg)
+
+      if not key or not known_options[key] then
+        -- Unknown option - stop parsing
+        stop_parsing = true
+        table.insert(remaining, arg)
+      else
+        -- Known option - process it
+        local value, partial = process_option_value(arg, key, eq_pos)
+        if partial then
+          partial_state = partial
+        elseif value then
+          options[key] = value
+        end
       end
     else
-      -- Not an option
+      -- Non-option argument - stop parsing
+      stop_parsing = true
       table.insert(remaining, arg)
     end
   end
 
   return options, remaining
-end
-
---- Convert options table back to command-line arguments
---- Useful for reconstructing command lines with proper quoting
----@param options table Options table
----@param remaining string[]? Non-option arguments
----@return string[] Array of arguments
-function M.options_to_args(options, remaining)
-  local args = {}
-
-  -- Add options
-  for key, value in pairs(options) do
-    if value == true then
-      -- Flag option
-      table.insert(args, "-" .. key)
-    else
-      -- Key-value option - quote if contains spaces
-      local val_str = tostring(value)
-      if val_str:find(" ") then
-        table.insert(args, string.format('-%s="%s"', key, val_str))
-      else
-        table.insert(args, string.format("-%s=%s", key, val_str))
-      end
-    end
-  end
-
-  -- Add remaining arguments
-  if remaining then
-    for _, arg in ipairs(remaining) do
-      table.insert(args, arg)
-    end
-  end
-
-  return args
-end
-
---- Parse fargs handling both vim's native parsing and quoted strings
---- When vim.cmd is used with quotes, Vim may handle them differently
---- This function normalizes the behavior
----@param fargs string[] The fargs from command
----@return table options Parsed options
----@return string[] remaining Non-option arguments
-function M.parse_fargs(fargs)
-  -- First, reconstruct the command line from fargs
-  -- This is needed because Vim might split quoted arguments incorrectly
-  local needs_reparsing = false
-  for _, arg in ipairs(fargs) do
-    -- Check if any argument contains a quote or looks like a partial quoted string
-    if arg:find('"') or (arg:match("^%-[^=]+=") and not arg:match("=$")) then
-      needs_reparsing = true
-      break
-    end
-  end
-
-  if needs_reparsing then
-    -- Reconstruct and reparse
-    local cmdline = table.concat(fargs, " ")
-    local reparsed = M.parse_cmdline(cmdline)
-    return M.parse_options(reparsed)
-  else
-    -- Use fargs as-is
-    return M.parse_options(fargs)
-  end
 end
 
 return M
