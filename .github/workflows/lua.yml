@@ -23,8 +23,23 @@ jobs:
       - name: Install Luacheck
         run: luarocks install luacheck
 
-      - name: Run Luacheck
-        run: luacheck lua/ --globals vim
+      - name: Install lua-language-server
+        run: |
+          # Get the latest release version
+          LATEST_VERSION=$(curl -s https://api.github.com/repos/LuaLS/lua-language-server/releases/latest | grep '"tag_name":' | sed -E 's/.*"([^"]+)".*/\1/')
+          wget "https://github.com/LuaLS/lua-language-server/releases/latest/download/lua-language-server-${LATEST_VERSION}-linux-x64.tar.gz"
+          tar -xzf "lua-language-server-${LATEST_VERSION}-linux-x64.tar.gz"
+          sudo cp bin/lua-language-server /usr/local/bin/
+          sudo chmod +x /usr/local/bin/lua-language-server
+          lua-language-server --version
+
+      - name: Install Just command runner
+        uses: taiki-e/install-action@v2
+        with:
+          tool: just
+
+      - name: Run comprehensive linting
+        run: just lint
 
   format:
     runs-on: ubuntu-latest
