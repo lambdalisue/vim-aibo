@@ -15,7 +15,7 @@ package.path = project_root .. "/lua/?.lua;" .. project_root .. "/lua/?/init.lua
 -- Load the plugin to register commands and setup
 vim.cmd("runtime plugin/aibo.lua")
 
--- Bootstrap mini.nvim if not installed
+-- Bootstrap mini.nvim if not installed (needed by test files)
 local mini_path = vim.fn.stdpath("data") .. "/site/pack/deps/start/mini.nvim"
 if not vim.loop.fs_stat(mini_path) then
   print("Installing mini.nvim...")
@@ -29,7 +29,7 @@ if not vim.loop.fs_stat(mini_path) then
 end
 vim.cmd("packadd mini.nvim")
 
--- Load mini.test
+-- Load mini.test (needed by test files for T.expect)
 local ok, mini_test = pcall(require, "mini.test")
 if not ok then
   print("Failed to load mini.test: " .. tostring(mini_test))
@@ -37,8 +37,11 @@ if not ok then
   return
 end
 
--- Initialize mini.test
+-- Initialize mini.test but DON'T use mini_test.run() to avoid recursion
 mini_test.setup()
+
+-- Provide T globally for tests
+_G.T = mini_test
 
 -- List of test files
 local test_files = {
@@ -46,6 +49,7 @@ local test_files = {
   "test_plugin",
   "test_send",
   "test_argparse",
+  "test_console", -- New test file for console opener fixes
   "test_integration_send",
   "test_integration_claude",
   "test_integration_ollama",
@@ -120,16 +124,8 @@ if #errors > 0 then
   vim.cmd("cquit 1")
 else
   print("\nAll tests passed!")
+  vim.cmd("qa!") -- Exit successfully
 end
 
--- Function to run a specific test file
-function M.run_file(test_file)
-  local ok, test_set = pcall(dofile, test_file)
-  if ok and test_set then
-    require("mini.test").run(test_set)
-  else
-    print("Failed to load test file: " .. tostring(test_set))
-  end
-end
-
-return M
+-- Don't return anything to avoid mini.test thinking this is a test module
+-- The test runner should just execute and exit
