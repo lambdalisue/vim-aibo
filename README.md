@@ -372,13 +372,16 @@ Plus all console buffer mappings.
 
 ### Agent-Specific (Claude)
 
-| Key                  | Action         |
-| -------------------- | -------------- |
-| `<S-Tab>`\* / `<F2>` | Switch mode    |
-| `<C-o>`              | Toggle verbose |
-| `<C-t>`              | Show todo      |
-| `<C-_>`              | Undo           |
-| `<C-v>`              | Paste          |
+| Key                       | Action                   |
+| ------------------------- | ------------------------ |
+| `<S-Tab>`\* / `<F2>`      | Switch mode              |
+| `<C-o>`                   | Toggle verbose           |
+| `<C-t>`                   | Show todo                |
+| `<C-_>` / `<C-->`         | Undo                     |
+| `<C-v>`                   | Paste                    |
+| `?`                       | Show shortcuts (n)       |
+| `!`                       | Enter bash mode (n)      |
+| `#`                       | Memorize context (n)     |
 
 ### Agent-Specific (Codex)
 
@@ -438,13 +441,16 @@ vim.keymap.set('n', '<C-k>', '<Plug>(aibo-prompt-submit-close)', { buffer = bufn
 
 #### Claude Agent
 
-| <Plug> Mapping                | Description    |
-| ----------------------------- | -------------- |
-| `<Plug>(aibo-claude-mode)`    | Toggle mode    |
-| `<Plug>(aibo-claude-verbose)` | Toggle verbose |
-| `<Plug>(aibo-claude-todo)`    | Show todo      |
-| `<Plug>(aibo-claude-undo)`    | Undo           |
-| `<Plug>(aibo-claude-paste)`   | Paste          |
+| <Plug> Mapping                   | Description       |
+| -------------------------------- | ----------------- |
+| `<Plug>(aibo-claude-mode)`       | Toggle mode       |
+| `<Plug>(aibo-claude-verbose)`    | Toggle verbose    |
+| `<Plug>(aibo-claude-todo)`       | Show todo         |
+| `<Plug>(aibo-claude-undo)`       | Undo              |
+| `<Plug>(aibo-claude-paste)`      | Paste             |
+| `<Plug>(aibo-claude-shortcuts)`  | Show shortcuts    |
+| `<Plug>(aibo-claude-bash-mode)`  | Enter bash mode   |
+| `<Plug>(aibo-claude-memorize)`   | Memorize context  |
 
 #### Codex Agent
 
@@ -495,94 +501,6 @@ require('aibo').setup({
 })
 ```
 
-## API
-
-### Core Functions
-
-```lua
-local aibo = require('aibo')
-
--- Configure the plugin (call once)
-aibo.setup({
-  submit_delay = 150,
-  -- ... other configuration
-})
-
--- Send raw data to terminal
-aibo.send('Hello\n', bufnr)
-
--- Submit with automatic return key
-aibo.submit('What is Neovim?', bufnr)
-
--- Get current configuration
-local config = aibo.get_config()
-
--- Get buffer type configuration
-local prompt_cfg = aibo.get_buffer_config("prompt")
-
--- Get agent-specific configuration
-local agent_cfg = aibo.get_agent_config("claude")
-```
-
-## Testing
-
-The project uses [mini.test](https://github.com/echasnovski/mini.nvim/blob/main/readmes/mini-test.md) for unit testing.
-
-### Running Tests
-
-Using `just`:
-
-```bash
-just test           # Run all tests
-just test-file aibo # Run specific test file
-just test-watch     # Run tests in watch mode
-just check          # Run lint, format, and tests
-```
-
-Direct execution:
-
-```bash
-nvim --headless -c "luafile tests/test_runner.lua" -c "qa!"
-```
-
-### Test Structure
-
-```
-tests/
-├── helpers.lua                 # Common test utilities
-├── test_runner.lua            # Main test runner
-├── test_aibo.lua              # Core module tests
-├── test_plugin.lua            # Plugin command tests
-├── test_integration_claude.lua # Claude integration tests
-├── test_integration_codex.lua  # Codex integration tests
-└── test_integration_ollama.lua # Ollama integration tests
-```
-
-### Writing Tests
-
-Tests are organized using mini.test's test sets. Each test file should return a test set:
-
-```lua
-local helpers = require("tests.helpers")
-local T = require("mini.test")
-
-local test_set = T.new_set()
-
-test_set.hooks.pre_case = function()
-  helpers.setup()  -- Clean environment
-end
-
-test_set.hooks.post_case = function()
-  helpers.cleanup()  -- Clean up
-end
-
-T.add_test("my test", function()
-  -- Test code
-  T.expect.equality(actual, expected)
-end)
-
-return test_set
-```
 
 ## License
 
@@ -590,9 +508,18 @@ MIT License
 
 ## Contributing
 
-Contributions welcome. Please:
+We welcome contributions! Please see [CONTRIBUTING.md](CONTRIBUTING.md) for:
 
-1. Write tests for new features
-2. Ensure all tests pass with `just test`
-3. Run `just check` before submitting
-4. Report issues and submit pull requests on GitHub
+- Development setup and workflow
+- Architecture documentation
+- Testing guidelines
+- API documentation
+- Code style guide
+
+For quick reference:
+1. Fork and clone the repository
+2. Create a feature branch
+3. Make your changes with tests
+4. Submit a pull request
+
+Report issues and submit pull requests on [GitHub](https://github.com/lambdalisue/nvim-aibo)

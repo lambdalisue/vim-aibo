@@ -1,0 +1,564 @@
+*aibo-dev.txt*	Developer Documentation for nvim-aibo
+
+Author:  lambdalisue <lambdalisue@gmail.com>
+License: MIT license
+
+=============================================================================
+CONTENTS					*aibo-dev-contents*
+
+INTRODUCTION				|aibo-dev-introduction|
+ARCHITECTURE				|aibo-dev-architecture|
+  MODULE STRUCTURE			|aibo-dev-modules|
+  DATA FLOW				|aibo-dev-dataflow|
+  INTEGRATION POINTS			|aibo-dev-integration|
+API REFERENCE				|aibo-dev-api|
+  PUBLIC API				|aibo-dev-api-public|
+  INTERNAL API				|aibo-dev-api-internal|
+  COMMAND MODULE API			|aibo-dev-api-command|
+  INTEGRATION MODULE API		|aibo-dev-api-integration|
+TESTING					|aibo-dev-testing|
+  TEST STRUCTURE			|aibo-dev-test-structure|
+  WRITING TESTS				|aibo-dev-test-writing|
+  RUNNING TESTS				|aibo-dev-test-running|
+DEVELOPMENT				|aibo-dev-development|
+  SETUP					|aibo-dev-setup|
+  WORKFLOW				|aibo-dev-workflow|
+  DEBUGGING				|aibo-dev-debugging|
+CONTRIBUTING				|aibo-dev-contributing|
+  CODE STYLE				|aibo-dev-style|
+  COMMIT CONVENTIONS			|aibo-dev-commits|
+  PULL REQUESTS				|aibo-dev-pr|
+ADDING INTEGRATIONS			|aibo-dev-new-integration|
+PLUGIN MAPPINGS				|aibo-dev-plug-mappings|
+
+=============================================================================
+INTRODUCTION					*aibo-dev-introduction*
+
+This document provides comprehensive developer documentation for nvim-aibo.
+For user documentation, see |aibo.txt|.
+
+This guide covers:
+- Internal architecture and module organization
+- API documentation for extending the plugin
+- Testing framework and guidelines
+- Development workflow and best practices
+- How to add new AI tool integrations
+
+=============================================================================
+ARCHITECTURE					*aibo-dev-architecture*
+
+The plugin follows a modular architecture with clear separation of concerns.
+
+MODULE STRUCTURE				*aibo-dev-modules*
+
+Directory layout:
+>
+	lua/aibo/
+	├── command/                    # Command modules
+	│   ├── aibo.lua               # Main Aibo command
+	│   └── aibo_send.lua          # AiboSend command
+	├── integration/               # AI agent integrations
+	│   ├── claude.lua            # Claude integration
+	│   ├── codex.lua             # Codex integration
+	│   └── ollama.lua            # Ollama integration
+	├── internal/                  # Internal utilities
+	│   ├── argparse.lua          # Argument parsing
+	│   ├── console.lua           # Console buffer mgmt
+	│   ├── controller.lua        # Process controller
+	│   ├── prompt.lua            # Prompt buffer mgmt
+	│   ├── send.lua              # Content sending
+	│   └── utils.lua             # Common utilities
+	├── health.lua                # Health check
+	└── init.lua                  # Main entry point
+
+	plugin/
+	└── aibo.lua                  # Command registration
+
+	ftplugin/
+	├── aibo-prompt.lua           # Prompt filetype
+	├── aibo-console.lua          # Console filetype
+	└── aibo-agent-*.lua          # Agent-specific
+<
+
+Key principles:
+- Command modules handle user-facing commands
+- Integration modules own their <Plug> mappings
+- Internal modules provide shared utilities
+- Clear boundaries between components
+
+DATA FLOW					*aibo-dev-dataflow*
+
+User command flow:
+>
+	User Input → Command Module → Controller → Terminal Process
+	                     ↓              ↓
+	              Argument Parse    Buffer Setup
+<
+
+Message submission flow:
+>
+	Prompt Buffer → Send Module → Terminal → Console Buffer
+	      ↓             ↓            ↓             ↓
+	  User Input    Formatting    Process     Display
+<
+
+INTEGRATION POINTS				*aibo-dev-integration*
+
+Extension points for new features:
+
+1. Command hooks via `on_attach` callbacks
+2. Agent-specific integrations in `integration/`
+3. Custom <Plug> mappings in ftplugin files
+4. Buffer-specific configuration
+
+=============================================================================
+API REFERENCE					*aibo-dev-api*
+
+PUBLIC API					*aibo-dev-api-public*
+
+Core module (`require("aibo")`):
+
+`aibo.setup({opts})`				*aibo.setup()*
+		Configure the plugin. Can be called multiple times.
+
+		Parameters: ~
+		  {opts}  (table) Configuration options
+		    - submit_delay (number): Delay in ms (default: 100)
+		    - prompt_height (number): Prompt window height (default: 10)
+		    - prompt (table): Prompt buffer configuration
+		    - console (table): Console buffer configuration
+		    - agents (table): Agent-specific configuration
+
+`aibo.send({data}, {bufnr})`			*aibo.send()*
+		Send raw data to terminal.
+
+		Parameters: ~
+		  {data}   (string) Data to send
+		  {bufnr}  (number) Buffer number
+
+`aibo.submit({text}, {bufnr})`			*aibo.submit()*
+		Submit text with automatic return key.
+
+		Parameters: ~
+		  {text}   (string) Text to submit
+		  {bufnr}  (number) Buffer number
+
+`aibo.get_config()`				*aibo.get_config()*
+		Get current configuration.
+
+		Returns: ~
+		  (table) Current configuration
+
+`aibo.get_buffer_config({type})`		*aibo.get_buffer_config()*
+		Get buffer type configuration.
+
+		Parameters: ~
+		  {type}  (string) "prompt" or "console"
+
+		Returns: ~
+		  (table) Buffer configuration
+
+`aibo.get_agent_config({agent})`		*aibo.get_agent_config()*
+		Get agent-specific configuration.
+
+		Parameters: ~
+		  {agent}  (string) Agent name (e.g., "claude")
+
+		Returns: ~
+		  (table) Agent configuration
+
+INTERNAL API					*aibo-dev-api-internal*
+
+Internal modules (not part of public API, may change):
+
+`internal.controller`				*aibo-dev-controller*
+		Process and buffer lifecycle management.
+
+		Functions: ~
+		  - new(): Create new controller instance
+		  - start(): Start terminal process
+		  - send(): Send data to process
+		  - close(): Clean up resources
+
+`internal.argparse`				*aibo-dev-argparse*
+		Command-line argument parsing.
+
+		Functions: ~
+		  - parse(): Parse command arguments
+		  - get_option_completions(): Get completions
+		  - parse_for_completion(): Parse for completion context
+
+`internal.console`				*aibo-dev-console*
+		Console buffer management.
+
+		Functions: ~
+		  - setup_buffer(): Initialize console buffer
+		  - setup_mappings(): Set up key mappings
+
+`internal.prompt`				*aibo-dev-prompt*
+		Prompt buffer management.
+
+		Functions: ~
+		  - setup_buffer(): Initialize prompt buffer
+		  - setup_mappings(): Set up key mappings
+
+`internal.send`					*aibo-dev-send*
+		Content sending logic.
+
+		Functions: ~
+		  - call(): Send content with options
+
+COMMAND MODULE API				*aibo-dev-api-command*
+
+Command modules export:
+
+`setup()`					*aibo-dev-command-setup*
+		Initialize command module and register commands.
+
+`call({opts})`					*aibo-dev-command-call*
+		Execute command with options.
+
+		Parameters: ~
+		  {opts}  (table) Command options
+
+INTEGRATION MODULE API				*aibo-dev-api-integration*
+
+Integration modules export:
+
+`plug_mappings`					*aibo-dev-integration-mappings*
+		Table of <Plug> mapping definitions.
+
+		Structure: ~
+>
+		{
+		  ["<Plug>(aibo-agent-action)"] = function(bufnr)
+		    -- Implementation
+		  end,
+		}
+<
+
+`setup({bufnr}, {info})`			*aibo-dev-integration-setup*
+		Set up integration for buffer.
+
+		Parameters: ~
+		  {bufnr}  (number) Buffer number
+		  {info}   (table) Context information
+
+=============================================================================
+TESTING						*aibo-dev-testing*
+
+The project uses mini.test for testing.
+
+TEST STRUCTURE					*aibo-dev-test-structure*
+
+Test organization:
+>
+	tests/
+	├── unit/                 # Unit tests
+	│   ├── test_aibo_core.lua
+	│   ├── test_argparse.lua
+	│   └── test_console.lua
+	├── integrations/         # Integration tests
+	│   ├── test_claude.lua
+	│   ├── test_codex.lua
+	│   └── test_ollama.lua
+	├── commands/             # Command tests
+	│   ├── test_aibo_command.lua
+	│   └── test_aibo_send_command.lua
+	├── plugin/               # Plugin tests
+	│   └── test_plugin_setup.lua
+	├── helpers.lua          # Test utilities
+	└── test_runner.lua      # Test runner
+<
+
+WRITING TESTS					*aibo-dev-test-writing*
+
+Test structure:
+>
+	local helpers = require("tests.helpers")
+	local T = require("mini.test")
+
+	local test_set = T.new_set()
+
+	-- Setup/teardown
+	test_set.hooks.pre_case = function()
+	  helpers.setup()
+	end
+
+	test_set.hooks.post_case = function()
+	  helpers.cleanup()
+	end
+
+	-- Test cases
+	test_set["function works correctly"] = function()
+	  -- Arrange
+	  local input = "test"
+
+	  -- Act
+	  local result = module.function(input)
+
+	  -- Assert
+	  T.expect.equality(result, "expected")
+	end
+
+	return test_set
+<
+
+Test guidelines:
+- One test file per module
+- Test public API thoroughly
+- Include edge cases
+- Keep tests independent
+- Use descriptive names
+
+RUNNING TESTS					*aibo-dev-test-running*
+
+Using just:
+>
+	just test           # Run all tests
+	just test-file aibo # Run specific file
+	just test-watch     # Watch mode
+<
+
+Direct execution:
+>
+	nvim --headless -c "luafile tests/test_runner.lua" -c "qa!"
+<
+
+=============================================================================
+DEVELOPMENT					*aibo-dev-development*
+
+SETUP						*aibo-dev-setup*
+
+Prerequisites:
+- Neovim 0.10.0+
+- Lua 5.1 or LuaJIT
+- Git
+- just (optional)
+
+Initial setup:
+>
+	# Fork and clone
+	git clone https://github.com/your-username/nvim-aibo.git
+	cd nvim-aibo
+
+	# Install mini.test
+	git clone https://github.com/echasnovski/mini.nvim.git /tmp/mini
+	mkdir -p ~/.local/share/nvim/site/pack/vendor/start/mini.nvim/lua/mini
+	cp /tmp/mini/lua/mini/test.lua \
+	   ~/.local/share/nvim/site/pack/vendor/start/mini.nvim/lua/mini/
+
+	# Verify setup
+	nvim -c "checkhealth aibo"
+<
+
+WORKFLOW					*aibo-dev-workflow*
+
+Development workflow:
+
+1. Create feature branch:
+>
+	git checkout -b feature/your-feature
+<
+
+2. Make changes following code style
+
+3. Run tests:
+>
+	just test
+<
+
+4. Lint code:
+>
+	just lint
+<
+
+5. Commit with conventional commits:
+>
+	git commit -m "feat(module): add new feature"
+<
+
+DEBUGGING					*aibo-dev-debugging*
+
+Debugging tips:
+
+Enable debug logging:
+>
+	vim.g.aibo_debug = true
+<
+
+Inspect data:
+>
+	vim.notify(vim.inspect(data), vim.log.levels.DEBUG)
+<
+
+Check terminal output:
+>
+	:terminal
+	:messages
+<
+
+Process inspection:
+>
+	:!ps aux | grep <process>
+<
+
+=============================================================================
+CONTRIBUTING					*aibo-dev-contributing*
+
+CODE STYLE					*aibo-dev-style*
+
+Lua style guide:
+
+1. Naming conventions:
+   - snake_case for variables/functions
+   - PascalCase for modules
+   - Prefix private with underscore
+
+2. Documentation:
+   - Use LuaLS annotations
+   - Document complex logic
+   - Keep comments concise
+
+Example:
+>
+	local M = {}
+
+	--- Public function description
+	---@param param string Parameter description
+	---@return string result Description
+	function M.public_function(param)
+	  -- Implementation
+	end
+
+	-- Private helper
+	local function _private_helper()
+	  -- Implementation
+	end
+
+	return M
+<
+
+COMMIT CONVENTIONS				*aibo-dev-commits*
+
+Use conventional commits:
+
+- feat: New features
+- fix: Bug fixes
+- docs: Documentation
+- style: Code style
+- refactor: Refactoring
+- test: Testing
+- chore: Maintenance
+
+Examples:
+>
+	feat(integration): add support for new AI tool
+	fix(console): resolve buffer cleanup issue
+	docs: update API documentation
+	refactor(core): improve module structure
+<
+
+PULL REQUESTS					*aibo-dev-pr*
+
+PR checklist:
+
+- [ ] Tests pass
+- [ ] Linting passes
+- [ ] Documentation updated
+- [ ] Conventional commits used
+- [ ] Clear PR description
+
+=============================================================================
+ADDING INTEGRATIONS				*aibo-dev-new-integration*
+
+To add support for a new AI tool:
+
+1. Create integration module:
+>
+	-- lua/aibo/integration/myai.lua
+	local M = {}
+
+	-- Define <Plug> mappings
+	M.plug_mappings = {
+	  ["<Plug>(aibo-myai-action)"] = function(bufnr)
+	    -- Implementation
+	  end,
+	}
+
+	-- Setup function
+	function M.setup(bufnr, info)
+	  -- Setup logic
+	end
+
+	return M
+<
+
+2. Create ftplugin file:
+>
+	-- ftplugin/aibo-agent-myai.lua
+	local bufnr = vim.api.nvim_get_current_buf()
+
+	-- Load integration
+	local integration = require("aibo.integration.myai")
+
+	-- Set up mappings
+	for plug, handler in pairs(integration.plug_mappings) do
+	  vim.keymap.set("n", plug, function()
+	    handler(bufnr)
+	  end, { buffer = bufnr, silent = true })
+	end
+
+	-- Default key mappings
+	vim.keymap.set("n", "<C-x>", "<Plug>(aibo-myai-action)",
+	  { buffer = bufnr })
+<
+
+3. Update command completion:
+>
+	-- In lua/aibo/command/aibo.lua
+	local known_tools = { "claude", "codex", "ollama", "myai" }
+<
+
+4. Add tests:
+>
+	-- tests/integrations/test_myai.lua
+	local test_set = T.new_set()
+	-- Test implementation
+	return test_set
+<
+
+5. Update documentation in README and help files
+
+=============================================================================
+PLUGIN MAPPINGS					*aibo-dev-plug-mappings*
+
+Creating <Plug> mappings:
+
+1. Define in integration module:
+>
+	M.plug_mappings = {
+	  ["<Plug>(aibo-agent-action)"] = handler_function,
+	}
+<
+
+2. Register in ftplugin:
+>
+	vim.keymap.set("n", "<Plug>(aibo-agent-action)", handler,
+	  { buffer = bufnr, silent = true })
+<
+
+3. Create default mapping:
+>
+	vim.keymap.set("n", "<C-x>", "<Plug>(aibo-agent-action)",
+	  { buffer = bufnr })
+<
+
+Naming convention:
+- Format: <Plug>(aibo-{context}-{action})
+- Examples:
+  - <Plug>(aibo-prompt-submit)
+  - <Plug>(aibo-claude-mode)
+  - <Plug>(aibo-console-clear)
+
+vim:tw=78:ts=8:ft=help:norl:

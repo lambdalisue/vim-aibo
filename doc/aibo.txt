@@ -18,6 +18,7 @@ INTERFACE				|aibo-interface|
   PLUG MAPPINGS				|aibo-plug-mappings|
 HEALTH CHECK				|aibo-health|
 FAQ					|aibo-faq|
+DEVELOPER DOCUMENTATION			|aibo-dev|
 
 =============================================================================
 INTRODUCTION					*aibo-introduction*
@@ -41,6 +42,9 @@ Key features:
 - Also works with any interactive CLI tool (REPLs, database clients, etc.)
 - Clean separation between console and prompt
 - Automatic buffer management
+
+For developer documentation, architecture details, and contribution guidelines,
+see |aibo-dev.txt|.
 
 =============================================================================
 REQUIREMENTS					*aibo-requirements*
@@ -562,40 +566,40 @@ Default key mappings are defined in ftplugin files. These can be customized
 through configuration (see |aibo-customization|).
 
 Console buffer mappings:
-	<CR>		Submit empty line (normal mode)
-	<C-c>		Send ESC to terminal (normal/insert mode)
-	g<C-c>		Send interrupt signal (normal mode)
-	<C-l>		Clear terminal (normal mode)
-	<C-n>		Navigate to next in history (normal mode)
-	<C-p>		Navigate to previous in history (normal mode)
-	<Down>		Send down arrow (normal mode)
-	<Up>		Send up arrow (normal mode)
+	<CR>		Submit empty line (n)
+	<C-c>		Send ESC to terminal (n/i)
+	g<C-c>		Send interrupt signal (n)
+	<C-l>		Clear terminal (n)
+	<C-n>		Navigate to next in history (n)
+	<C-p>		Navigate to previous in history (n)
+	<Down>		Send down arrow (n)
+	<Up>		Send up arrow (n)
 
 Prompt buffer mappings:
-	<CR>		Submit content (normal mode)
-	<C-Enter>	Submit and close (normal/insert mode)
-	<F5>		Submit and close (normal/insert mode)
+	<CR>		Submit content (n)
+	<C-Enter>	Submit and close (n/i)
+	<F5>		Submit and close (n/i)
 	:w		Submit content (command)
 	:wq		Submit and close (command)
 
-Claude agent mappings (normal and insert mode):
-	<S-Tab>		Switch mode
-	<F2>		Switch mode (alternative)
-	<C-o>		Toggle verbose
-	<C-t>		Show todo
-	<C-_>		Undo (also <C-->)
-	<C-v>		Paste
-	?		Show shortcuts
-	!		Enter bash mode
-	#		Memorize context
+Claude agent mappings:
+	<S-Tab>		Switch mode (n/i)
+	<F2>		Switch mode alternative (n/i)
+	<C-o>		Toggle verbose (n/i)
+	<C-t>		Show todo (n/i)
+	<C-_>		Undo (n/i, also <C-->)
+	<C-v>		Paste (n/i)
+	?		Show shortcuts (n)
+	!		Enter bash mode (n)
+	#		Memorize context (n)
 
 Codex agent mappings:
-	<C-t>		Show transcript (normal/insert mode)
-	<Home>		Move to beginning (normal/insert mode)
-	<End>		Move to end (normal/insert mode)
-	<PageUp>	Page up (normal/insert mode)
-	<PageDown>	Page down (normal/insert mode)
-	q		Quit (normal mode only)
+	<C-t>		Show transcript (n/i)
+	<Home>		Move to beginning (n/i)
+	<End>		Move to end (n/i)
+	<PageUp>	Page up (n/i)
+	<PageDown>	Page down (n/i)
+	q		Quit (n)
 
 Note: Some key combinations require modern terminal emulators. Use
 alternatives like <F5> if certain combinations don't work.
@@ -679,42 +683,6 @@ This is useful for troubleshooting issues with the plugin or verifying that
 your environment is properly configured for using aibo.nvim.
 
 =============================================================================
-TESTING						*aibo-testing*
-
-The project uses mini.test for unit testing.
-
-Running tests~
-
-Using `just`:
->
-	just test           # Run all tests
-	just test-file aibo # Run specific test file
-	just test-watch     # Run tests in watch mode
-	just check          # Run lint, format, and tests
-<
-
-Direct execution:
->
-	nvim --headless -c "luafile tests/test_runner.lua" -c "qa!"
-<
-
-Test structure~
-
-	tests/
-	├── helpers.lua                 # Common test utilities
-	├── test_runner.lua            # Main test runner
-	├── test_aibo.lua              # Core module tests
-	├── test_plugin.lua            # Plugin command tests
-	├── test_integration_claude.lua # Claude integration tests
-	├── test_integration_codex.lua  # Codex integration tests
-	└── test_integration_ollama.lua # Ollama integration tests
-
-Writing tests~
-
-Tests are organized using mini.test's test sets. See the existing test
-files for examples of how to write tests for aibo.nvim.
-
-=============================================================================
 FAQ						*aibo-faq*
 
 Q: Why does aibo require Neovim 0.10.0+?
@@ -757,6 +725,25 @@ Q: How do I terminate an AI session?
 A: Use `:bdelete!` or `:bwipeout!` on the console buffer. The exclamation
    mark is required to force deletion. This will terminate the process and
    close the associated prompt buffer.
+
+=============================================================================
+DEVELOPER DOCUMENTATION				*aibo-dev*
+
+For comprehensive developer documentation including:
+- Architecture and module structure
+- API reference
+- Testing guidelines
+- Development workflow
+- How to add new integrations
+
+See |aibo-dev.txt|
+
+Quick links:
+- Architecture: |aibo-dev-architecture|
+- API Reference: |aibo-dev-api|
+- Testing: |aibo-dev-testing|
+- Contributing: |aibo-dev-contributing|
+- Adding Integrations: |aibo-dev-new-integration|
 
 ==============================================================================
 vim:tw=78:ts=8:ft=help:norl:
