@@ -1,4 +1,4 @@
--- Tests for the core aibo module
+-- Tests for the core aibo module (lua/aibo/init.lua)
 
 local helpers = require("tests.helpers")
 local T = require("mini.test")

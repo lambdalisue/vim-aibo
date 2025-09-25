@@ -1,4 +1,4 @@
--- Tests for argument parsing functionality
+-- Tests for argument parsing utilities (lua/aibo/internal/argparse.lua)
 
 local helpers = require("tests.helpers")
 local T = require("mini.test")
@@ -279,5 +279,41 @@ end
 
 -- Test removed: options_to_args function has been removed from production code
 -- This function was only used for testing and not needed in production
+
+-- Test for boolean flags with false value in known_options
+test_set["parse handles boolean flags correctly"] = function()
+  local argparse = require("aibo.internal.argparse")
+
+  -- This tests the fix for the bug where boolean flags (value=false) were treated as unknown
+  local known_options = {
+    opener = true, -- -opener=value (takes a value)
+    stay = false, -- -stay flag (boolean flag)
+    toggle = false, -- -toggle flag (boolean flag)
+    reuse = false, -- -reuse flag (boolean flag)
+  }
+
+  -- Test individual boolean flags
+  local options1, remaining1 = argparse.parse({ "-stay" }, { known_options = known_options })
+  T.expect.equality(options1.stay, true)
+  T.expect.equality(#remaining1, 0)
+
+  local options2, remaining2 = argparse.parse({ "-toggle" }, { known_options = known_options })
+  T.expect.equality(options2.toggle, true)
+  T.expect.equality(#remaining2, 0)
+
+  local options3, remaining3 = argparse.parse({ "-reuse" }, { known_options = known_options })
+  T.expect.equality(options3.reuse, true)
+  T.expect.equality(#remaining3, 0)
+
+  -- Test combination of flags and key-value options
+  local options4, remaining4 = argparse.parse(
+    { "-opener=split", "-reuse", "claude" },
+    { known_options = known_options }
+  )
+  T.expect.equality(options4.opener, "split")
+  T.expect.equality(options4.reuse, true)
+  T.expect.equality(#remaining4, 1)
+  T.expect.equality(remaining4[1], "claude")
+end
 
 return test_set

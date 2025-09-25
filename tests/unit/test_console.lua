@@ -1,5 +1,4 @@
--- Tests for console opener functionality
--- Specifically testing the fixes for proper vim command construction
+-- Tests for console opener functionality (lua/aibo/internal/console.lua)
 
 local helpers = require("tests.helpers")
 local T = require("mini.test")
