@@ -464,32 +464,33 @@ function M.setup_plug_mappings(bufnr)
     vim.cmd("quit")
   end, { buffer = bufnr, desc = "Close console" })
 
+  local termcode = require("aibo.internal.termcode")
   vim.keymap.set("n", "<Plug>(aibo-console-esc)", function()
-    aibo.send(vim.api.nvim_replace_termcodes("<Esc>", true, false, true), bufnr)
+    aibo.send(termcode.resolve("<Esc>"), bufnr)
   end, { buffer = bufnr, desc = "Send ESC to agent" })
 
   vim.keymap.set("n", "<Plug>(aibo-console-interrupt)", function()
-    aibo.send(vim.api.nvim_replace_termcodes("<C-c>", true, false, true), bufnr)
+    aibo.send(termcode.resolve("<C-c>"), bufnr)
   end, { buffer = bufnr, desc = "Send interrupt signal (original <C-c>)" })
 
   vim.keymap.set("n", "<Plug>(aibo-console-clear)", function()
-    aibo.send(vim.api.nvim_replace_termcodes("<C-l>", true, false, true), bufnr)
+    aibo.send(termcode.resolve("<C-l>"), bufnr)
   end, { buffer = bufnr, desc = "Clear screen" })
 
   vim.keymap.set("n", "<Plug>(aibo-console-next)", function()
-    aibo.send(vim.api.nvim_replace_termcodes("<C-n>", true, false, true), bufnr)
+    aibo.send(termcode.resolve("<C-n>"), bufnr)
   end, { buffer = bufnr, desc = "Next history" })
 
   vim.keymap.set("n", "<Plug>(aibo-console-prev)", function()
-    aibo.send(vim.api.nvim_replace_termcodes("<C-p>", true, false, true), bufnr)
+    aibo.send(termcode.resolve("<C-p>"), bufnr)
   end, { buffer = bufnr, desc = "Previous history" })
 
   vim.keymap.set("n", "<Plug>(aibo-console-down)", function()
-    aibo.send(vim.api.nvim_replace_termcodes("<Down>", true, false, true), bufnr)
+    aibo.send(termcode.resolve("<Down>"), bufnr)
   end, { buffer = bufnr, desc = "Move down" })
 
   vim.keymap.set("n", "<Plug>(aibo-console-up)", function()
-    aibo.send(vim.api.nvim_replace_termcodes("<Up>", true, false, true), bufnr)
+    aibo.send(termcode.resolve("<Up>"), bufnr)
   end, { buffer = bufnr, desc = "Move up" })
 end
 

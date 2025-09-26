@@ -108,7 +108,8 @@ function M.submit(data, bufnr)
   aibo.controller.send(data)
 
   -- Convert submit key to terminal codes
-  local submit_key = vim.api.nvim_replace_termcodes("<CR>", true, false, true)
+  local termcode = require("aibo.internal.termcode")
+  local submit_key = termcode.resolve("<CR>")
 
   vim.defer_fn(function()
     aibo.controller.send(submit_key)
