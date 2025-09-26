@@ -22,7 +22,14 @@ function M.new(bufnr)
     ---Send data to terminal
     ---@param data string Data to send
     send = function(data)
-      vim.fn.chansend(chan, data)
+      local ok, err = pcall(vim.fn.chansend, chan, data)
+      if not ok then
+        vim.notify(
+          string.format("Failed to send data to terminal: %s", tostring(err)),
+          vim.log.levels.ERROR,
+          { title = "Aibo" }
+        )
+      end
     end,
   }
 
