@@ -62,7 +62,7 @@ local function find_buffer_window_in_tabpage(bufnr)
   return nil
 end
 
----Follow terminal output to bottom
+---Follow terminal output to bottom (smart follow - only scrolls if near bottom)
 ---@param bufnr integer Buffer number
 ---@return nil
 local function follow(bufnr)
@@ -70,8 +70,38 @@ local function follow(bufnr)
   if winid == -1 then
     return
   end
+
+  -- Smart follow: only scroll if already near bottom
   vim.api.nvim_win_call(winid, function()
-    vim.cmd("normal! G")
+    local win_height = vim.api.nvim_win_get_height(0)
+    local buf_line_count = vim.api.nvim_buf_line_count(bufnr)
+    local view = vim.fn.winsaveview()
+    local current_bottom_line = view.topline + win_height - 1
+
+    -- Use Neovim's scrolloff setting as threshold
+    -- Prefer window-local setting, fallback to global
+    local threshold = vim.wo.scrolloff
+    if threshold == -1 then
+      threshold = vim.o.scrolloff
+    end
+    -- Ensure minimum threshold (provide some margin even if scrolloff is 0)
+    threshold = math.max(threshold, 3)
+
+    -- Check if viewport is near bottom
+    local is_near_bottom = current_bottom_line >= (buf_line_count - threshold)
+
+    -- Don't scroll if already at the last line
+    local cursor_line = vim.api.nvim_win_get_cursor(0)[1]
+    local is_at_bottom = cursor_line == buf_line_count
+
+    -- Only scroll if near bottom but not yet at the very bottom
+    if is_near_bottom and not is_at_bottom then
+      -- Use Lua API to move cursor to last line
+      local last_line = vim.api.nvim_buf_line_count(bufnr)
+      local last_col = #vim.api.nvim_buf_get_lines(bufnr, last_line - 1, last_line, false)[1]
+      vim.api.nvim_win_set_cursor(0, { last_line, last_col })
+    end
+    -- Preserve scroll position when user is reviewing history (when is_near_bottom is false)
   end)
 end
 
