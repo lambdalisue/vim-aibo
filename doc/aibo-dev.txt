@@ -180,6 +180,22 @@ Internal modules (not part of public API, may change):
 		  - send(): Send data to process
 		  - close(): Clean up resources
 
+`internal.termcode`				*aibo-dev-termcode*
+		Terminal escape sequence translation.
+
+		IMPORTANT: Use this module instead of nvim_replace_termcodes ~
+		when sending keys to terminal programs.
+
+		Functions: ~
+		  - resolve(input): Convert Vim key notation to terminal codes
+
+		Why use termcode.resolve instead of nvim_replace_termcodes: ~
+		  - nvim_replace_termcodes returns Neovim's internal codes
+		  - Terminal programs expect ANSI escape sequences
+		  - Example difference:
+		    nvim_replace_termcodes("<Up>") → "\x80\x6B\x75" (internal)
+		    termcode.resolve("<Up>")       → "\27[A" (ANSI sequence)
+
 `internal.argparse`				*aibo-dev-argparse*
 		Command-line argument parsing.
 
@@ -553,6 +569,43 @@ Creating <Plug> mappings:
 	vim.keymap.set("n", "<C-x>", "<Plug>(aibo-agent-action)",
 	  { buffer = bufnr })
 <
+
+SENDING KEYS TO TERMINAL			*aibo-dev-terminal-keys*
+
+When creating mappings that send keys to the terminal, use
+`termcode.resolve()` instead of `nvim_replace_termcodes()`:
+
+CORRECT example:
+>
+	local termcode = require("aibo.internal.termcode")
+	local aibo = require("aibo")
+
+	vim.keymap.set("n", "<Leader>au", function()
+	  -- Send Up arrow to terminal
+	  aibo.send(termcode.resolve("<Up>"), bufnr)
+	end, { buffer = bufnr, desc = "Send Up arrow" })
+
+	vim.keymap.set("n", "<Leader>ac", function()
+	  -- Send Ctrl-C to interrupt
+	  aibo.send(termcode.resolve("<C-c>"), bufnr)
+	end, { buffer = bufnr, desc = "Interrupt process" })
+<
+
+INCORRECT (will not work):
+>
+	-- This sends Neovim's internal codes, not terminal sequences!
+	vim.keymap.set("n", "<Leader>au", function()
+	  local up = vim.api.nvim_replace_termcodes("<Up>", true, false, true)
+	  aibo.send(up, bufnr)  -- Sends "\x80\x6B\x75" instead of "\27[A"
+	end, { buffer = bufnr })
+<
+
+Supported key formats:
+- Navigation: <Up>, <Down>, <Left>, <Right>, <Home>, <End>
+- Function keys: <F1> through <F12>
+- Control combinations: <C-a>, <C-c>, <C-l>, etc.
+- Modified keys: <S-Tab>, <C-Left>, <A-Up>, etc.
+- Special keys: <CR>, <Tab>, <Esc>, <Space>, <BS>
 
 Naming convention:
 - Format: <Plug>(aibo-{context}-{action})
