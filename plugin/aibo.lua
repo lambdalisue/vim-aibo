@@ -26,3 +26,28 @@ vim.api.nvim_create_autocmd("BufReadCmd", {
 -- Initialize command modules
 require("aibo.command.aibo").setup()
 require("aibo.command.aibo_send").setup()
+
+-- Debug/maintenance commands for console margin
+vim.api.nvim_create_user_command("AiboUpdateMargin", function(opts)
+  local console = require("aibo.internal.console")
+  if opts.count > 0 then
+    console.force_update_margin(opts.count)
+  else
+    console.force_update_margin()
+  end
+end, {
+  desc = "Force update console bottom margin",
+  count = true,
+})
+
+vim.api.nvim_create_user_command("AiboDebugMargin", function(opts)
+  local console = require("aibo.internal.console")
+  if opts.count > 0 then
+    console.debug_margin(opts.count)
+  else
+    console.debug_margin()
+  end
+end, {
+  desc = "Debug console margin state",
+  count = true,
+})

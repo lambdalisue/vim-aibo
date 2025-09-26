@@ -87,6 +87,37 @@ local function format_prompt_bufname(winid)
   return string.format("aiboprompt://%d", winid)
 end
 
+---Re-apply bottom margin for existing console buffer
+---@param bufnr integer Buffer number
+---@return nil
+local function reapply_bottom_margin(bufnr)
+  local config = require("aibo").get_config()
+  local ns = vim.api.nvim_create_namespace("aibo_console_margin")
+
+  local function add_margin()
+    -- Clear existing virtual text
+    vim.api.nvim_buf_clear_namespace(bufnr, ns, 0, -1)
+
+    -- Get the last line of the buffer
+    local last_line = vim.api.nvim_buf_line_count(bufnr) - 1
+
+    -- Create virtual lines for padding
+    local virt_lines = {}
+    for i = 1, config.prompt_height do
+      table.insert(virt_lines, { { "", "Normal" } })
+    end
+
+    -- Set virtual lines below the last line
+    vim.api.nvim_buf_set_extmark(bufnr, ns, last_line, 0, {
+      virt_lines = virt_lines,
+      virt_lines_above = false,
+    })
+  end
+
+  -- Apply margin with a small delay
+  vim.defer_fn(add_margin, 50)
+end
+
 ---Ensure insert mode in buffer
 ---@param bufnr integer Buffer number
 ---@return nil
@@ -112,14 +143,58 @@ end
 ---Handle InsertEnter event
 ---@return nil
 local function InsertEnter()
-  local winid = vim.api.nvim_get_current_win()
-  local bufname = format_prompt_bufname(winid)
-  local prompt_winid = vim.fn.bufwinid(bufname)
+  local console_winid = vim.api.nvim_get_current_win()
+  local bufname = format_prompt_bufname(console_winid)
+  local prompt_bufnr = vim.fn.bufnr(bufname)
+
+  -- Check if prompt window already exists
+  local prompt_winid = vim.fn.bufwinid(prompt_bufnr)
 
   if prompt_winid == -1 then
+    -- Create or get prompt buffer
+    if prompt_bufnr == -1 then
+      -- Create new prompt buffer with special name
+      prompt_bufnr = vim.fn.bufnr(bufname, true)
+    end
+
     local config = require("aibo").get_config()
-    vim.cmd(string.format("rightbelow %dsplit %s", config.prompt_height, vim.fn.fnameescape(bufname)))
+
+    -- Get console window dimensions and position
+    local console_width = vim.api.nvim_win_get_width(console_winid)
+    local console_height = vim.api.nvim_win_get_height(console_winid)
+    local console_pos = vim.api.nvim_win_get_position(console_winid)
+
+    -- Calculate floating window position (bottom of console window)
+    local float_row = console_pos[1] + console_height - config.prompt_height
+    local float_col = console_pos[2]
+
+    -- Create floating window for prompt with border
+    prompt_winid = vim.api.nvim_open_win(prompt_bufnr, true, {
+      relative = 'editor',
+      width = console_width - 2,  -- Account for border
+      height = config.prompt_height,
+      row = float_row,
+      col = float_col + 1,  -- Indent slightly for border alignment
+      style = 'minimal',
+      border = { '─', '─', '─', '', '', '', '', '' },  -- Top border only
+      title = ' Prompt ',
+      title_pos = 'center',
+      zindex = 50,  -- Ensure it's above console
+    })
+
+    -- Set window options for prompt
+    vim.wo[prompt_winid].winhighlight = 'Normal:Normal,FloatBorder:Comment,FloatTitle:Title'
+    vim.wo[prompt_winid].cursorline = false
+    vim.wo[prompt_winid].number = false
+    vim.wo[prompt_winid].relativenumber = false
+    vim.wo[prompt_winid].signcolumn = 'no'
+    vim.wo[prompt_winid].wrap = true
+    vim.wo[prompt_winid].linebreak = true
+
+    -- Store console window reference in buffer variable
+    vim.b[prompt_bufnr].console_winid = console_winid
   else
+    -- Focus existing prompt window
     vim.api.nvim_set_current_win(prompt_winid)
   end
 
@@ -155,18 +230,32 @@ end
 ---@param bufnr integer The buffer to start the terminal in
 ---@param cmd string The command to execute
 ---@param args string[] Command arguments
+---@param on_output? function Callback for stdout/stderr output
 ---@return integer job_id The job ID, or 0 on failure
-local function start_terminal_job(bufnr, cmd, args)
+local function start_terminal_job(bufnr, cmd, args, on_output)
   -- Build the command array for jobstart
   local cmd_array = { cmd }
   vim.list_extend(cmd_array, args)
 
+  -- Setup job options with output callbacks
+  local job_opts = {
+    term = true,
+  }
+
+  -- Add output callbacks if provided
+  if on_output then
+    job_opts.on_stdout = function(...)
+      vim.defer_fn(on_output, 50)
+    end
+    job_opts.on_stderr = function(...)
+      vim.defer_fn(on_output, 50)
+    end
+  end
+
   -- Start the terminal job with proper argument handling
   -- The buffer needs to be focused for jobstart to attach the terminal
   return vim.api.nvim_buf_call(bufnr, function()
-    return vim.fn.jobstart(cmd_array, {
-      term = true,
-    })
+    return vim.fn.jobstart(cmd_array, job_opts)
   end)
 end
 
@@ -189,8 +278,13 @@ function M.open(cmd, args, opener, stay)
   -- Apply the opener command to show the buffer in a window
   open_buffer_in_window(bufnr, opener)
 
-  -- Start the terminal job
-  local job_id = start_terminal_job(bufnr, cmd, args)
+  -- Create a function to update bottom margin
+  local update_margin_callback = function()
+    reapply_bottom_margin(bufnr)
+  end
+
+  -- Start the terminal job with output callback
+  local job_id = start_terminal_job(bufnr, cmd, args, update_margin_callback)
 
   if job_id <= 0 then
     vim.api.nvim_err_writeln("Failed to start terminal: " .. cmd)
@@ -241,6 +335,78 @@ function M.open(cmd, args, opener, stay)
 
   -- Set filetype (this triggers ftplugin files)
   vim.bo[bufnr].filetype = string.format("aibo-console.aibo-agent-%s", cmd)
+
+  -- Add virtual lines at the end of buffer to create bottom margin
+  local config = require("aibo").get_config()
+  local ns = vim.api.nvim_create_namespace("aibo_console_margin")
+
+  -- Function to add virtual lines for bottom padding
+  local function add_bottom_margin()
+    -- Clear existing virtual text
+    vim.api.nvim_buf_clear_namespace(bufnr, ns, 0, -1)
+
+    -- Get the last line of the buffer
+    local last_line = vim.api.nvim_buf_line_count(bufnr) - 1
+
+    -- Create virtual lines for padding
+    local virt_lines = {}
+    for i = 1, config.prompt_height do
+      table.insert(virt_lines, { { "", "Normal" } })
+    end
+
+    -- Set virtual lines below the last line
+    vim.api.nvim_buf_set_extmark(bufnr, ns, last_line, 0, {
+      virt_lines = virt_lines,
+      virt_lines_above = false,
+    })
+  end
+
+  -- Add margin initially
+  vim.defer_fn(add_bottom_margin, 100)
+
+  -- Update margin when window focus changes or scrolls
+  -- Note: Terminal output updates are handled by jobstart callbacks
+  vim.api.nvim_create_autocmd({
+    "WinEnter",
+    "WinLeave",
+    "BufWinEnter",
+    "WinScrolled"
+  }, {
+    group = augroup,
+    buffer = bufnr,
+    callback = function()
+      -- Debounce to avoid excessive updates
+      vim.defer_fn(add_bottom_margin, 10)
+    end,
+  })
+
+  -- Update floating prompt position when console window is resized
+  vim.api.nvim_create_autocmd("WinResized", {
+    group = augroup,
+    callback = function()
+      local console_win = vim.fn.bufwinid(bufnr)
+      if console_win ~= -1 then
+        local bufname = format_prompt_bufname(console_win)
+        local prompt_bufnr = vim.fn.bufnr(bufname)
+        local prompt_winid = vim.fn.bufwinid(prompt_bufnr)
+
+        if prompt_winid ~= -1 then
+          -- Update floating window position and size
+          local console_width = vim.api.nvim_win_get_width(console_win)
+          local console_height = vim.api.nvim_win_get_height(console_win)
+          local console_pos = vim.api.nvim_win_get_position(console_win)
+
+          vim.api.nvim_win_set_config(prompt_winid, {
+            relative = 'editor',
+            width = console_width - 2,
+            height = config.prompt_height,
+            row = console_pos[1] + console_height - config.prompt_height,
+            col = console_pos[2] + 1,
+          })
+        end
+      end
+    end,
+  })
 
   -- Call on_attach callbacks AFTER ftplugin files have run
   local aibo_module = require("aibo")
@@ -341,6 +507,9 @@ function M.toggle(cmd, args, opener, stay)
     -- Show the selected console
     open_buffer_in_window(console_bufnr, opener or "split")
 
+    -- Re-apply bottom margin when showing existing console
+    reapply_bottom_margin(console_bufnr)
+
     -- Enter insert mode when console becomes visible (unless stay option is set)
     if not stay then
       vim.cmd("startinsert")
@@ -392,6 +561,9 @@ function M.reuse(cmd, args, opener, stay)
     -- Focus the visible console
     vim.api.nvim_set_current_win(visible_in_tabpage[1].win)
 
+    -- Re-apply bottom margin when focusing existing console
+    reapply_bottom_margin(visible_in_tabpage[1].bufnr)
+
     -- Enter insert mode (unless stay option is set)
     if not stay then
       vim.cmd("startinsert")
@@ -412,6 +584,14 @@ function M.reuse(cmd, args, opener, stay)
 
     if win_to_focus then
       vim.api.nvim_set_current_win(win_to_focus)
+
+      -- Re-apply bottom margin when focusing existing console
+      for _, item in ipairs(visible_in_tabpage) do
+        if item.win == win_to_focus then
+          reapply_bottom_margin(item.bufnr)
+          break
+        end
+      end
 
       -- Enter insert mode (unless stay option is set)
       if not stay then
@@ -443,6 +623,9 @@ function M.reuse(cmd, args, opener, stay)
     -- Show the selected console
     open_buffer_in_window(console_bufnr, opener or "split")
 
+    -- Re-apply bottom margin when showing existing console
+    reapply_bottom_margin(console_bufnr)
+
     -- Enter insert mode when console becomes visible (unless stay option is set)
     if not stay then
       vim.cmd("startinsert")
@@ -455,6 +638,96 @@ function M.reuse(cmd, args, opener, stay)
   end
 
   return true
+end
+
+---Force update bottom margin for console buffer
+---@param bufnr? integer Buffer number (optional, defaults to current)
+---@return nil
+function M.force_update_margin(bufnr)
+  bufnr = bufnr or vim.api.nvim_get_current_buf()
+
+  -- Check if it's a console buffer
+  local ft = vim.bo[bufnr].filetype or ""
+  if not ft:match("^aibo%-console") then
+    vim.notify("Not a console buffer", vim.log.levels.WARN, { title = "Aibo" })
+    return
+  end
+
+  -- Apply margin immediately (no defer for forced update)
+  local config = require("aibo").get_config()
+  local ns = vim.api.nvim_create_namespace("aibo_console_margin")
+
+  -- Clear existing virtual text
+  vim.api.nvim_buf_clear_namespace(bufnr, ns, 0, -1)
+
+  -- Get the last line of the buffer
+  local last_line = vim.api.nvim_buf_line_count(bufnr) - 1
+
+  -- Create virtual lines for padding
+  local virt_lines = {}
+  for i = 1, config.prompt_height do
+    table.insert(virt_lines, { { "", "Normal" } })
+  end
+
+  -- Set virtual lines below the last line
+  vim.api.nvim_buf_set_extmark(bufnr, ns, last_line, 0, {
+    virt_lines = virt_lines,
+    virt_lines_above = false,
+  })
+
+  -- Debug information
+  local extmarks = vim.api.nvim_buf_get_extmarks(bufnr, ns, 0, -1, {details = true})
+
+  vim.notify(string.format(
+    "Margin updated:\n" ..
+    "  Buffer: %d\n" ..
+    "  Prompt height: %d\n" ..
+    "  Virtual lines: %d extmarks\n" ..
+    "  Last line: %d",
+    bufnr,
+    config.prompt_height,
+    #extmarks,
+    vim.api.nvim_buf_line_count(bufnr)
+  ), vim.log.levels.INFO, { title = "Aibo Console Margin" })
+end
+
+---Debug console margin state
+---@param bufnr? integer Buffer number (optional, defaults to current)
+---@return nil
+function M.debug_margin(bufnr)
+  bufnr = bufnr or vim.api.nvim_get_current_buf()
+
+  local ft = vim.bo[bufnr].filetype or ""
+  if not ft:match("^aibo%-console") then
+    vim.notify("Not a console buffer", vim.log.levels.WARN, { title = "Aibo" })
+    return
+  end
+
+  local config = require("aibo").get_config()
+  local ns = vim.api.nvim_create_namespace("aibo_console_margin")
+  local extmarks = vim.api.nvim_buf_get_extmarks(bufnr, ns, 0, -1, {details = true})
+
+  print("=== Console Margin Debug Info ===")
+  print("Buffer: " .. bufnr)
+  print("Filetype: " .. ft)
+  print("Prompt height (config): " .. config.prompt_height)
+  print("Buffer line count: " .. vim.api.nvim_buf_line_count(bufnr))
+  print("Extmarks found: " .. #extmarks)
+
+  if #extmarks > 0 then
+    print("\nExtmark details:")
+    for i, mark in ipairs(extmarks) do
+      local id, row, col, details = mark[1], mark[2], mark[3], mark[4]
+      print(string.format("  [%d] Row: %d, Col: %d", id, row, col))
+      if details.virt_lines then
+        print("    Virtual lines: " .. #details.virt_lines)
+      end
+    end
+  else
+    print("\n⚠ No virtual lines found!")
+  end
+
+  print("\nTo force update, run: :AiboUpdateMargin")
 end
 
 ---Setup console <Plug> mappings

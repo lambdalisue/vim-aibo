@@ -4,6 +4,16 @@ local M = {}
 ---@param bufnr integer Prompt buffer number
 ---@return integer Console buffer number
 local function find_console_bufnr(bufnr)
+  -- For floating window, console_winid is stored in buffer variable
+  local console_winid = vim.b[bufnr].console_winid
+  if console_winid then
+    local console_bufnr = vim.fn.winbufnr(console_winid)
+    if console_bufnr ~= -1 then
+      return console_bufnr
+    end
+  end
+
+  -- Fallback: parse from buffer name (for compatibility)
   local bufname = vim.api.nvim_buf_get_name(bufnr)
   local winid = string.match(bufname, "^aiboprompt://(%d+)$")
 
