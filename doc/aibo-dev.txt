@@ -167,6 +167,22 @@ Core module (`require("aibo")`):
 		Returns: ~
 		  (table) Agent configuration
 
+`aibo.termcode.resolve({input})`		*aibo.termcode.resolve()*
+		Convert Vim key notation to terminal escape sequences.
+
+		Parameters: ~
+		  {input}  (string) Key notation like "<Up>", "<C-A>"
+
+		Returns: ~
+		  (string|nil) Terminal escape sequence
+
+		Example: ~
+>
+		  aibo.termcode.resolve("<Up>")    -- Returns "\27[A"
+		  aibo.termcode.resolve("<C-c>")   -- Returns "\3"
+		  aibo.termcode.resolve("<S-Tab>") -- Returns "\27[Z"
+<
+
 INTERNAL API					*aibo-dev-api-internal*
 
 Internal modules (not part of public API, may change):
@@ -180,8 +196,8 @@ Internal modules (not part of public API, may change):
 		  - send(): Send data to process
 		  - close(): Clean up resources
 
-`internal.termcode`				*aibo-dev-termcode*
-		Terminal escape sequence translation.
+`aibo.termcode`					*aibo-dev-termcode*
+		Terminal escape sequence translation (public API).
 
 		IMPORTANT: Use this module instead of nvim_replace_termcodes ~
 		when sending keys to terminal programs.
@@ -189,12 +205,12 @@ Internal modules (not part of public API, may change):
 		Functions: ~
 		  - resolve(input): Convert Vim key notation to terminal codes
 
-		Why use termcode.resolve instead of nvim_replace_termcodes: ~
+		Why use aibo.termcode.resolve instead of nvim_replace_termcodes: ~
 		  - nvim_replace_termcodes returns Neovim's internal codes
 		  - Terminal programs expect ANSI escape sequences
 		  - Example difference:
 		    nvim_replace_termcodes("<Up>") → "\x80\x6B\x75" (internal)
-		    termcode.resolve("<Up>")       → "\27[A" (ANSI sequence)
+		    aibo.termcode.resolve("<Up>")  → "\27[A" (ANSI sequence)
 
 `internal.argparse`				*aibo-dev-argparse*
 		Command-line argument parsing.
@@ -573,21 +589,20 @@ Creating <Plug> mappings:
 SENDING KEYS TO TERMINAL			*aibo-dev-terminal-keys*
 
 When creating mappings that send keys to the terminal, use
-`termcode.resolve()` instead of `nvim_replace_termcodes()`:
+`aibo.termcode.resolve()` instead of `nvim_replace_termcodes()`:
 
 CORRECT example:
 >
-	local termcode = require("aibo.internal.termcode")
 	local aibo = require("aibo")
 
 	vim.keymap.set("n", "<Leader>au", function()
 	  -- Send Up arrow to terminal
-	  aibo.send(termcode.resolve("<Up>"), bufnr)
+	  aibo.send(aibo.termcode.resolve("<Up>"), bufnr)
 	end, { buffer = bufnr, desc = "Send Up arrow" })
 
 	vim.keymap.set("n", "<Leader>ac", function()
 	  -- Send Ctrl-C to interrupt
-	  aibo.send(termcode.resolve("<C-c>"), bufnr)
+	  aibo.send(aibo.termcode.resolve("<C-c>"), bufnr)
 	end, { buffer = bufnr, desc = "Interrupt process" })
 <
 

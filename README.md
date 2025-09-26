@@ -510,22 +510,21 @@ The built-in `nvim_replace_termcodes()` returns Neovim's internal key representa
 #### Correct Usage
 
 ```lua
-local termcode = require('aibo.internal.termcode')
 local aibo = require('aibo')
 
 -- Send navigation keys
 vim.keymap.set('n', '<leader>au', function()
-  aibo.send(termcode.resolve('<Up>'), bufnr)
+  aibo.send(aibo.termcode.resolve('<Up>'), bufnr)
 end, { buffer = bufnr, desc = 'Send Up arrow' })
 
 -- Send control sequences
 vim.keymap.set('n', '<leader>ac', function()
-  aibo.send(termcode.resolve('<C-c>'), bufnr)
+  aibo.send(aibo.termcode.resolve('<C-c>'), bufnr)
 end, { buffer = bufnr, desc = 'Interrupt process' })
 
 -- Send multiple keys
 vim.keymap.set('n', '<leader>ah', function()
-  local keys = termcode.resolve('<Home><S-End>')
+  local keys = aibo.termcode.resolve('<Home><S-End>')
   aibo.send(keys, bufnr)
 end, { buffer = bufnr, desc = 'Select to end of line' })
 ```

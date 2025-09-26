@@ -292,21 +292,20 @@ function M.setup_plug_mappings(bufnr)
     aibo.send(CODEX_CODES.transcript, bufnr)
   end, { buffer = bufnr, desc = "Transcript (Ctrl+T)" })
 
-  local termcode = require("aibo.internal.termcode")
   vim.keymap.set({ "n", "i" }, "<Plug>(aibo-codex-home)", function()
-    aibo.send(termcode.resolve("<Home>"), bufnr)
+    aibo.send(aibo.termcode.resolve("<Home>"), bufnr)
   end, { buffer = bufnr, desc = "Home" })
 
   vim.keymap.set({ "n", "i" }, "<Plug>(aibo-codex-end)", function()
-    aibo.send(termcode.resolve("<End>"), bufnr)
+    aibo.send(aibo.termcode.resolve("<End>"), bufnr)
   end, { buffer = bufnr, desc = "End" })
 
   vim.keymap.set({ "n", "i" }, "<Plug>(aibo-codex-page-up)", function()
-    aibo.send(termcode.resolve("<PageUp>"), bufnr)
+    aibo.send(aibo.termcode.resolve("<PageUp>"), bufnr)
   end, { buffer = bufnr, desc = "Page up" })
 
   vim.keymap.set({ "n", "i" }, "<Plug>(aibo-codex-page-down)", function()
-    aibo.send(termcode.resolve("<PageDown>"), bufnr)
+    aibo.send(aibo.termcode.resolve("<PageDown>"), bufnr)
   end, { buffer = bufnr, desc = "Page down" })
 
   vim.keymap.set({ "n", "i" }, "<Plug>(aibo-codex-quit)", function()

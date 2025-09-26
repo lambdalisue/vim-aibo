@@ -160,33 +160,32 @@ function M.setup_plug_mappings(bufnr)
     vim.cmd("wq")
   end, { buffer = bufnr, desc = "Submit prompt and close" })
 
-  local termcode = require("aibo.internal.termcode")
   vim.keymap.set({ "n", "i" }, "<Plug>(aibo-prompt-esc)", function()
-    aibo.send(termcode.resolve("<Esc>"), bufnr)
+    aibo.send(aibo.termcode.resolve("<Esc>"), bufnr)
   end, { buffer = bufnr, desc = "Send ESC to agent" })
 
   vim.keymap.set({ "n", "i" }, "<Plug>(aibo-prompt-interrupt)", function()
-    aibo.send(termcode.resolve("<C-c>"), bufnr)
+    aibo.send(aibo.termcode.resolve("<C-c>"), bufnr)
   end, { buffer = bufnr, desc = "Send interrupt signal (original <C-c>)" })
 
   vim.keymap.set({ "n", "i" }, "<Plug>(aibo-prompt-clear)", function()
-    aibo.send(termcode.resolve("<C-l>"), bufnr)
+    aibo.send(aibo.termcode.resolve("<C-l>"), bufnr)
   end, { buffer = bufnr, desc = "Clear screen" })
 
   vim.keymap.set({ "n", "i" }, "<Plug>(aibo-prompt-next)", function()
-    aibo.send(termcode.resolve("<C-n>"), bufnr)
+    aibo.send(aibo.termcode.resolve("<C-n>"), bufnr)
   end, { buffer = bufnr, desc = "Next history" })
 
   vim.keymap.set({ "n", "i" }, "<Plug>(aibo-prompt-prev)", function()
-    aibo.send(termcode.resolve("<C-p>"), bufnr)
+    aibo.send(aibo.termcode.resolve("<C-p>"), bufnr)
   end, { buffer = bufnr, desc = "Previous history" })
 
   vim.keymap.set({ "n", "i" }, "<Plug>(aibo-prompt-down)", function()
-    aibo.send(termcode.resolve("<Down>"), bufnr)
+    aibo.send(aibo.termcode.resolve("<Down>"), bufnr)
   end, { buffer = bufnr, desc = "Move down" })
 
   vim.keymap.set({ "n", "i" }, "<Plug>(aibo-prompt-up)", function()
-    aibo.send(termcode.resolve("<Up>"), bufnr)
+    aibo.send(aibo.termcode.resolve("<Up>"), bufnr)
   end, { buffer = bufnr, desc = "Move up" })
 end
 

@@ -1,4 +1,4 @@
--- Tests for termcode module (lua/aibo/internal/termcode.lua)
+-- Tests for termcode module (lua/aibo/termcode.lua)
 
 local helpers = require("tests.helpers")
 local T = require("mini.test")
@@ -17,7 +17,7 @@ local test_set = T.new_set({
 
 -- Test basic key resolution
 test_set["resolves basic navigation keys"] = function()
-  local termcode = require("aibo.internal.termcode")
+  local termcode = require("aibo.termcode")
 
   -- Arrow keys
   T.eq(termcode.resolve("<Up>"), "\27[A")
@@ -36,7 +36,7 @@ end
 
 -- Test control characters
 test_set["resolves control characters"] = function()
-  local termcode = require("aibo.internal.termcode")
+  local termcode = require("aibo.termcode")
 
   T.eq(termcode.resolve("<CR>"), "\13")
   T.eq(termcode.resolve("<Enter>"), "\13")
@@ -48,7 +48,7 @@ end
 
 -- Test Ctrl combinations
 test_set["resolves Ctrl+letter combinations"] = function()
-  local termcode = require("aibo.internal.termcode")
+  local termcode = require("aibo.termcode")
 
   -- Ctrl+A through Ctrl+Z
   T.eq(termcode.resolve("<C-A>"), "\1")
@@ -63,7 +63,7 @@ end
 
 -- Test modified keys
 test_set["resolves modified navigation keys"] = function()
-  local termcode = require("aibo.internal.termcode")
+  local termcode = require("aibo.termcode")
 
   -- Shift combinations
   T.eq(termcode.resolve("<S-Up>"), "\27[1;2A")
@@ -85,7 +85,7 @@ end
 
 -- Test function keys
 test_set["resolves function keys"] = function()
-  local termcode = require("aibo.internal.termcode")
+  local termcode = require("aibo.termcode")
 
   -- Basic function keys
   T.eq(termcode.resolve("<F1>"), "\27OP")
@@ -108,7 +108,7 @@ end
 
 -- Test multiple keys
 test_set["resolves multiple key sequences"] = function()
-  local termcode = require("aibo.internal.termcode")
+  local termcode = require("aibo.termcode")
 
   T.eq(termcode.resolve("<Up><Down>"), "\27[A\27[B")
   T.eq(termcode.resolve("<C-A><C-B>"), "\1\2")
@@ -117,7 +117,7 @@ end
 
 -- Test literal text
 test_set["handles literal text"] = function()
-  local termcode = require("aibo.internal.termcode")
+  local termcode = require("aibo.termcode")
 
   T.eq(termcode.resolve("hello"), "hello")
   T.eq(termcode.resolve("123"), "123")
@@ -126,7 +126,7 @@ end
 
 -- Test edge cases
 test_set["handles edge cases"] = function()
-  local termcode = require("aibo.internal.termcode")
+  local termcode = require("aibo.termcode")
 
   -- Empty input
   T.eq(termcode.resolve(""), nil)
@@ -148,7 +148,7 @@ end
 
 -- Test case sensitivity
 test_set["handles case variations"] = function()
-  local termcode = require("aibo.internal.termcode")
+  local termcode = require("aibo.termcode")
 
   -- Keys are case-insensitive
   T.eq(termcode.resolve("<up>"), "\27[A")
