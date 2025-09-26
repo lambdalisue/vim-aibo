@@ -215,7 +215,7 @@ function M.open(cmd, args, opener, stay)
       follow(bufnr)
     end,
   }
-  vim.b.aibo = aibo
+  vim.b[bufnr].aibo = aibo
 
   -- Setup buffer autocmds
   local augroup = vim.api.nvim_create_augroup("aibo_console_" .. bufnr, { clear = true })
@@ -247,7 +247,7 @@ function M.open(cmd, args, opener, stay)
   local info = {
     type = "console",
     agent = cmd,
-    aibo = vim.b.aibo,
+    aibo = aibo,
   }
 
   -- Call buffer type on_attach
