@@ -347,8 +347,8 @@ function M.toggle(cmd, args, opener, stay)
     end
 
     -- Restore focus to original window if stay option is set
-    if stay and orig_win and vim.api.nvim_win_is_valid(orig_win) then
-      vim.api.nvim_set_current_win(orig_win)
+    if stay then
+      utils.restore_window_focus(orig_win)
     end
   end
 
@@ -398,8 +398,8 @@ function M.reuse(cmd, args, opener, stay)
     end
 
     -- Restore focus to original window if stay option is set
-    if stay and orig_win and vim.api.nvim_win_is_valid(orig_win) then
-      vim.api.nvim_set_current_win(orig_win)
+    if stay then
+      utils.restore_window_focus(orig_win)
     end
     return true
   elseif #visible_in_tabpage > 1 then
@@ -449,8 +449,8 @@ function M.reuse(cmd, args, opener, stay)
     end
 
     -- Restore focus to original window if stay option is set
-    if stay and orig_win and vim.api.nvim_win_is_valid(orig_win) then
-      vim.api.nvim_set_current_win(orig_win)
+    if stay then
+      utils.restore_window_focus(orig_win)
     end
   end
 
