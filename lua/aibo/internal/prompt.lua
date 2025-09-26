@@ -43,9 +43,10 @@ local function WinLeave()
 end
 
 ---Handle BufWritePre event
+---@param args table Event arguments
 ---@return nil
-local function BufWritePre()
-  vim.bo.modified = true
+local function BufWritePre(args)
+  vim.bo[args.buf].modified = true
 end
 
 ---Handle BufWriteCmd event
