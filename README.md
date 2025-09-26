@@ -501,6 +501,53 @@ require('aibo').setup({
 })
 ```
 
+### Sending Keys to Terminal
+
+When creating custom mappings that send keys to the terminal, **you must use `termcode.resolve()` instead of `vim.api.nvim_replace_termcodes()`**.
+
+The built-in `nvim_replace_termcodes()` returns Neovim's internal key representations (e.g., `\x80\x6B\x75` for `<Up>`), which terminal programs cannot understand. The `termcode.resolve()` function converts Vim key notation to actual ANSI escape sequences (e.g., `\27[A` for `<Up>`) that terminals expect.
+
+#### Correct Usage
+
+```lua
+local aibo = require('aibo')
+
+-- Send navigation keys
+vim.keymap.set('n', '<leader>au', function()
+  aibo.send(aibo.termcode.resolve('<Up>'), bufnr)
+end, { buffer = bufnr, desc = 'Send Up arrow' })
+
+-- Send control sequences
+vim.keymap.set('n', '<leader>ac', function()
+  aibo.send(aibo.termcode.resolve('<C-c>'), bufnr)
+end, { buffer = bufnr, desc = 'Interrupt process' })
+
+-- Send multiple keys
+vim.keymap.set('n', '<leader>ah', function()
+  local keys = aibo.termcode.resolve('<Home><S-End>')
+  aibo.send(keys, bufnr)
+end, { buffer = bufnr, desc = 'Select to end of line' })
+```
+
+#### Incorrect Usage (Will Not Work)
+
+```lua
+-- ❌ This sends Neovim's internal codes, not terminal sequences!
+vim.keymap.set('n', '<leader>au', function()
+  local up = vim.api.nvim_replace_termcodes('<Up>', true, false, true)
+  aibo.send(up, bufnr)  -- Sends "\x80\x6B\x75" instead of "\27[A"
+end, { buffer = bufnr })
+```
+
+#### Supported Key Formats
+
+- **Navigation**: `<Up>`, `<Down>`, `<Left>`, `<Right>`, `<Home>`, `<End>`
+- **Pages**: `<PageUp>`, `<PageDown>`
+- **Function**: `<F1>` through `<F12>`
+- **Control**: `<C-a>`, `<C-c>`, `<C-l>`, etc.
+- **Modified**: `<S-Tab>`, `<C-Left>`, `<A-Up>`, `<C-S-F5>`, etc.
+- **Special**: `<CR>`, `<Tab>`, `<Esc>`, `<Space>`, `<BS>`
+
 
 ## License
 

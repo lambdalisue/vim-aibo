@@ -108,7 +108,7 @@ function M.submit(data, bufnr)
   aibo.controller.send(data)
 
   -- Convert submit key to terminal codes
-  local submit_key = vim.api.nvim_replace_termcodes("<CR>", true, false, true)
+  local submit_key = M.termcode.resolve("<CR>")
 
   vim.defer_fn(function()
     aibo.controller.send(submit_key)
@@ -118,5 +118,8 @@ function M.submit(data, bufnr)
     aibo.follow()
   end, config.submit_delay)
 end
+
+-- Expose termcode as part of the public API
+M.termcode = require("aibo.termcode")
 
 return M
