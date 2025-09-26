@@ -36,32 +36,6 @@ local function find_console_buffers(cmd, args)
   return matching_buffers
 end
 
----Check if a buffer is visible in any window
----@param bufnr integer Buffer number
----@return integer|nil Window ID if visible, nil otherwise
-local function find_buffer_window(bufnr)
-  for _, win in ipairs(vim.api.nvim_list_wins()) do
-    if vim.api.nvim_win_get_buf(win) == bufnr then
-      return win
-    end
-  end
-  return nil
-end
-
----Check if a buffer is visible in the current tabpage
----@param bufnr integer Buffer number
----@return integer|nil Window ID if visible in current tabpage, nil otherwise
-local function find_buffer_window_in_tabpage(bufnr)
-  local tabpage = vim.api.nvim_get_current_tabpage()
-  local wins = vim.api.nvim_tabpage_list_wins(tabpage)
-  for _, win in ipairs(wins) do
-    if vim.api.nvim_win_get_buf(win) == bufnr then
-      return win
-    end
-  end
-  return nil
-end
-
 ---Follow terminal output to bottom (smart follow - only scrolls if near bottom)
 ---@param bufnr integer Buffer number
 ---@return nil
@@ -225,7 +199,6 @@ function M.open(cmd, args, opener, stay)
 
   -- Store the job ID in the buffer for later reference
   vim.b[bufnr].terminal_job_id = job_id
-  local winid = vim.api.nvim_get_current_win()
   local controller = require("aibo.internal.controller").new(bufnr)
 
   if not controller then
@@ -233,7 +206,7 @@ function M.open(cmd, args, opener, stay)
     return
   end
 
-  vim.b.aibo = {
+  local aibo = {
     cmd = cmd,
     args = args,
     controller = controller,
@@ -241,6 +214,7 @@ function M.open(cmd, args, opener, stay)
       follow(bufnr)
     end,
   }
+  vim.b[bufnr].aibo = aibo
 
   -- Setup buffer autocmds
   local augroup = vim.api.nvim_create_augroup("aibo_console_" .. bufnr, { clear = true })
@@ -272,7 +246,7 @@ function M.open(cmd, args, opener, stay)
   local info = {
     type = "console",
     agent = cmd,
-    aibo = vim.b.aibo,
+    aibo = aibo,
   }
 
   -- Call buffer type on_attach
@@ -289,7 +263,7 @@ function M.open(cmd, args, opener, stay)
 
   vim.cmd("stopinsert")
 
-  follow(winid)
+  aibo.follow()
   InsertEnter()
 
   -- Restore focus to original window if stay option is set
@@ -323,8 +297,9 @@ function M.toggle(cmd, args, opener, stay)
   -- Check for visible consoles in current tabpage
   local visible_in_tabpage = {}
   for _, bufnr in ipairs(matching_buffers) do
-    local win_id = find_buffer_window_in_tabpage(bufnr)
-    if win_id then
+    local winnr = vim.fn.bufwinnr(bufnr)
+    if winnr ~= -1 then
+      local win_id = vim.fn.win_getid(winnr)
       table.insert(visible_in_tabpage, { bufnr = bufnr, win = win_id })
     end
   end
@@ -352,8 +327,8 @@ function M.toggle(cmd, args, opener, stay)
   local console_bufnr = utils.select_or_first(matching_buffers, "Select console to show:", function(bufnr)
     local display = string.format("Buffer %d", bufnr)
     -- Add status if visible in another tabpage
-    local win = find_buffer_window(bufnr)
-    if win then
+    local winid = vim.fn.bufwinid(bufnr)
+    if winid ~= -1 then
       display = display .. " (visible in another tab)"
     end
     return display
@@ -371,8 +346,8 @@ function M.toggle(cmd, args, opener, stay)
     end
 
     -- Restore focus to original window if stay option is set
-    if stay and orig_win and vim.api.nvim_win_is_valid(orig_win) then
-      vim.api.nvim_set_current_win(orig_win)
+    if stay then
+      utils.restore_window_focus(orig_win)
     end
   end
 
@@ -404,8 +379,9 @@ function M.reuse(cmd, args, opener, stay)
   -- Check for visible consoles in current tabpage
   local visible_in_tabpage = {}
   for _, bufnr in ipairs(matching_buffers) do
-    local win_id = find_buffer_window_in_tabpage(bufnr)
-    if win_id then
+    local winnr = vim.fn.bufwinnr(bufnr)
+    if winnr ~= -1 then
+      local win_id = vim.fn.win_getid(winnr)
       table.insert(visible_in_tabpage, { bufnr = bufnr, win = win_id })
     end
   end
@@ -421,8 +397,8 @@ function M.reuse(cmd, args, opener, stay)
     end
 
     -- Restore focus to original window if stay option is set
-    if stay and orig_win and vim.api.nvim_win_is_valid(orig_win) then
-      vim.api.nvim_set_current_win(orig_win)
+    if stay then
+      utils.restore_window_focus(orig_win)
     end
     return true
   elseif #visible_in_tabpage > 1 then
@@ -453,8 +429,8 @@ function M.reuse(cmd, args, opener, stay)
   local console_bufnr = utils.select_or_first(matching_buffers, "Select console to show:", function(bufnr)
     local display = string.format("Buffer %d", bufnr)
     -- Add status if visible in another tabpage
-    local win = find_buffer_window(bufnr)
-    if win then
+    local winid = vim.fn.bufwinid(bufnr)
+    if winid ~= -1 then
       display = display .. " (visible in another tab)"
     end
     return display
@@ -472,8 +448,8 @@ function M.reuse(cmd, args, opener, stay)
     end
 
     -- Restore focus to original window if stay option is set
-    if stay and orig_win and vim.api.nvim_win_is_valid(orig_win) then
-      vim.api.nvim_set_current_win(orig_win)
+    if stay then
+      utils.restore_window_focus(orig_win)
     end
   end
 
