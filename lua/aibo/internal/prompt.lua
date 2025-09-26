@@ -35,13 +35,6 @@ local function submit_content(bufnr)
   vim.api.nvim_win_set_cursor(0, { 1, 0 })
 end
 
----Handle WinLeave event
----@return nil
-local function WinLeave()
-  local winnr = vim.fn.winnr()
-  vim.cmd(string.format("noautocmd %dhide", winnr))
-end
-
 ---Handle BufWritePre event
 ---@return nil
 local function BufWritePre()
@@ -91,13 +84,6 @@ function M.init(prompt_bufnr)
 
   -- Setup buffer autocmds
   local augroup = vim.api.nvim_create_augroup("aibo_prompt_" .. prompt_bufnr, { clear = true })
-
-  vim.api.nvim_create_autocmd("WinLeave", {
-    group = augroup,
-    buffer = prompt_bufnr,
-    nested = true,
-    callback = WinLeave,
-  })
 
   vim.api.nvim_create_autocmd("BufWritePre", {
     group = augroup,
@@ -155,10 +141,6 @@ function M.setup_plug_mappings(bufnr)
   vim.keymap.set({ "n", "i" }, "<Plug>(aibo-prompt-submit)", function()
     vim.cmd("write")
   end, { buffer = bufnr, desc = "Submit prompt" })
-
-  vim.keymap.set({ "n", "i" }, "<Plug>(aibo-prompt-submit-close)", function()
-    vim.cmd("wq")
-  end, { buffer = bufnr, desc = "Submit prompt and close" })
 
   vim.keymap.set({ "n", "i" }, "<Plug>(aibo-prompt-esc)", function()
     aibo.send(aibo.termcode.resolve("<Esc>"), bufnr)
