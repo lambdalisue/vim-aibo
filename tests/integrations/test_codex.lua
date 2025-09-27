@@ -12,6 +12,26 @@ local test_set = T.new_set({
   },
 })
 
+-- Test Codex is_available
+test_set["Codex is_available"] = function()
+  local codex = require("aibo.integration.codex")
+
+  -- Mock executable
+  local restore = mock.mock_executable({
+    codex = true,
+  })
+
+  T.expect.equality(codex.is_available(), true, "Should be available when codex exists")
+
+  -- Test when not available
+  vim.fn.executable = function()
+    return 0
+  end
+  T.expect.equality(codex.is_available(), false, "Should not be available when codex missing")
+
+  restore()
+end
+
 -- Test Codex argument completions
 test_set["Codex argument completions"] = function()
   local codex = require("aibo.integration.codex")
