@@ -1,5 +1,5 @@
 -- Simple test runner for aibo.nvim
--- Run with: nvim --headless -c "luafile tests/test_runner.lua" -c "qa!"
+-- Run with: nvim --headless -c "luafile tests/runner.lua" -c "qa!"
 
 local M = {}
 

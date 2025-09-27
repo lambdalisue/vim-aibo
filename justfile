@@ -18,7 +18,7 @@ fmt:
 # Run all tests
 test:
 	@echo "Running tests..."
-	@nvim --headless -c "luafile tests/test_runner.lua" -c "qa!" 2>&1 | tee test-results.log
+	@nvim --headless -c "luafile tests/runner.lua" -c "qa!" 2>&1 | tee test-results.log
 
 # Run a specific test file
 test-file FILE:
@@ -30,7 +30,7 @@ test-watch:
 	@while true; do \
 		clear; \
 		date; \
-		nvim --headless -c "luafile tests/test_runner.lua" -c "qa!"; \
+		nvim --headless -c "luafile tests/runner.lua" -c "qa!"; \
 		echo "Waiting for changes... Press Ctrl+C to exit"; \
 		fswatch -1 lua/ tests/ plugin/ ftplugin/ 2>/dev/null || sleep 5; \
 	done
