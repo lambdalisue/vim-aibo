@@ -227,8 +227,8 @@ function M.get_command_completions(arglead, cmdline, _cursorpos)
   return completions
 end
 
-----Check if claude command is available
-----@return boolean
+---Check if claude command is available
+---@return boolean
 function M.is_available()
   return vim.fn.executable("claude") == 1
 end

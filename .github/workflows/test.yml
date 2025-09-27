@@ -32,6 +32,19 @@ jobs:
 
       - run: nvim --version
 
-      - run: |
-          just deps-mini-nvim
-          just test
+      - name: Setup dependencies
+        run: just deps-mini-nvim
+
+      - name: Run tests
+        shell: bash
+        run: |
+          set -o pipefail
+          nvim --version | tee test-results.log
+          just test 2>&1 | tee -a test-results.log
+
+      - name: Upload test results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-results-${{ matrix.os }}-${{ matrix.neovim }}
+          path: test-results.log

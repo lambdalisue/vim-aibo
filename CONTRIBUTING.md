@@ -59,8 +59,7 @@ lua/aibo/
 │   ├── argparse.lua          # Command argument parsing
 │   ├── console_window.lua    # Console window management
 │   ├── prompt_window.lua     # Prompt window management
-│   ├── timing.lua            # Debounce and throttle utilities
-│   └── argparse.lua          # Command argument parsing
+│   └── timing.lua            # Debounce and throttle utilities
 ├── health.lua                # Health check implementation
 └── init.lua                  # Main module entry point
 
