@@ -1,4 +1,4 @@
--- Tests for the core aibo module (lua/aibo/init.lua)
+-- Tests for aibo/init.lua
 
 local T = require("mini.test")
 
@@ -55,10 +55,10 @@ test_set["get_buffer_config"] = function()
       no_default_mappings = false,
       custom_console_option = "console_value",
     },
-    agents = {
+    tools = {
       claude = {
         no_default_mappings = false,
-        custom_agent_option = "agent_value",
+        custom_tool_option = "tool_value",
       },
     },
   })
@@ -67,16 +67,13 @@ test_set["get_buffer_config"] = function()
   local prompt_config = aibo.get_buffer_config("prompt")
   T.expect.equality(prompt_config.no_default_mappings, true)
   T.expect.equality(prompt_config.custom_prompt_option, "prompt_value")
-  T.expect.equality(prompt_config.custom_agent_option, nil) -- Should not have agent config
+  T.expect.equality(prompt_config.custom_tool_option, nil) -- Should not have tool config
 
   -- Test console buffer config
   local console_config = aibo.get_buffer_config("console")
   T.expect.equality(console_config.no_default_mappings, false)
   T.expect.equality(console_config.custom_console_option, "console_value")
-  T.expect.equality(console_config.custom_agent_option, nil) -- Should not have agent config
-
-  -- Test that get_buffer_config no longer accepts agent parameter
-  -- (This would cause an error if we try to pass it)
+  T.expect.equality(console_config.custom_tool_option, nil) -- Should not have tool config
 end
 
 -- Test tool config functions
@@ -155,7 +152,7 @@ test_set["configuration merging"] = function()
       no_default_mappings = true,
       on_attach = function() end,
     },
-    agents = {
+    tools = {
       claude = {
         custom_option = "value1",
       },
@@ -165,7 +162,7 @@ test_set["configuration merging"] = function()
   -- Second setup should merge
   aibo.setup({
     prompt_height = 20,
-    agents = {
+    tools = {
       claude = {
         another_option = "value2",
       },
@@ -181,9 +178,47 @@ test_set["configuration merging"] = function()
   T.expect.equality(config.submit_delay, 150) -- From first setup
   T.expect.equality(config.prompt_height, 20) -- From second setup
   T.expect.equality(config.prompt.no_default_mappings, true) -- From first setup
-  T.expect.equality(config.agents.claude.custom_option, "value1") -- From first setup
-  T.expect.equality(config.agents.claude.another_option, "value2") -- From second setup
-  T.expect.equality(config.agents.codex.new_option, "value3") -- From second setup
+  T.expect.equality(config.tools.claude.custom_option, "value1") -- From first setup
+  T.expect.equality(config.tools.claude.another_option, "value2") -- From second setup
+  T.expect.equality(config.tools.codex.new_option, "value3") -- From second setup
+end
+
+-- Test termcode export
+test_set["termcode module is exported"] = function()
+  local aibo = require("aibo")
+
+  -- Check that termcode is exposed
+  T.expect.equality(type(aibo.termcode), "table", "termcode should be a table")
+  T.expect.equality(type(aibo.termcode.resolve), "function", "termcode.resolve should be a function")
+
+  -- Basic functionality test
+  local result = aibo.termcode.resolve("<C-w>")
+  T.expect.equality(type(result), "string", "resolve should return a string")
+end
+
+-- Test integration export
+test_set["integration module is exported"] = function()
+  local aibo = require("aibo")
+
+  -- Check that integration is exposed
+  T.expect.equality(type(aibo.integration), "table", "integration should be a table")
+
+  -- Check that integration provides the expected API
+  T.expect.equality(type(aibo.integration.get_module), "function", "integration.get_module should be a function")
+  T.expect.equality(
+    type(aibo.integration.available_integrations),
+    "function",
+    "integration.available_integrations should be a function"
+  )
+  T.expect.equality(type(aibo.integration.is_available), "function", "integration.is_available should be a function")
+  T.expect.equality(type(aibo.integration.check_health), "function", "integration.check_health should be a function")
+
+  -- Check that available_integrations returns expected tools
+  local integrations = aibo.integration.available_integrations()
+  T.expect.equality(type(integrations), "table", "available_integrations should return a table")
+  T.expect.equality(vim.tbl_contains(integrations, "claude"), true, "Should include claude")
+  T.expect.equality(vim.tbl_contains(integrations, "codex"), true, "Should include codex")
+  T.expect.equality(vim.tbl_contains(integrations, "ollama"), true, "Should include ollama")
 end
 
 return test_set
