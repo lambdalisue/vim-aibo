@@ -1,20 +1,10 @@
--- Tests for timing module (lua/aibo/internal/timing.lua)
+local eq = MiniTest.expect.equality
+local helpers = require("tests.helpers")
 
-local T = require("mini.test")
-
--- Test set
-local test_set = T.new_set({
-  hooks = {
-    post_case = function()
-      vim.cmd("silent! %bwipeout!")
-      -- Ensure timers are cleaned up
-      collectgarbage("collect")
-    end,
-  },
-})
+local T = helpers.new_set()
 
 -- Debounce tests
-test_set["debounce delays function execution"] = function()
+T["debounce delays function execution"] = function()
   local timing = require("aibo.internal.timing")
 
   local called = false
@@ -25,16 +15,16 @@ test_set["debounce delays function execution"] = function()
   end)
 
   fn("test")
-  T.expect.equality(called, false, "Function should not be called immediately")
+  eq(called, false)
 
   vim.wait(150, function()
     return called
   end)
-  T.expect.equality(called, true, "Function should be called after delay")
-  T.expect.equality(value, "test", "Function should receive correct argument")
+  eq(called, true)
+  eq(value, "test")
 end
 
-test_set["debounce cancels previous timer on multiple calls"] = function()
+T["debounce cancels previous timer on multiple calls"] = function()
   local timing = require("aibo.internal.timing")
 
   local call_count = 0
@@ -51,11 +41,11 @@ test_set["debounce cancels previous timer on multiple calls"] = function()
   vim.wait(150, function()
     return call_count > 0
   end)
-  T.expect.equality(call_count, 1, "Function should only be called once")
-  T.expect.equality(last_value, "third", "Function should receive last argument")
+  eq(call_count, 1)
+  eq(last_value, "third")
 end
 
-test_set["debounce handles multiple arguments"] = function()
+T["debounce handles multiple arguments"] = function()
   local timing = require("aibo.internal.timing")
 
   local args = nil
@@ -68,12 +58,12 @@ test_set["debounce handles multiple arguments"] = function()
   vim.wait(150, function()
     return args ~= nil
   end)
-  T.expect.equality(args[1], "one", "First argument should be correct")
-  T.expect.equality(args[2], "two", "Second argument should be correct")
-  T.expect.equality(args[3], "three", "Third argument should be correct")
+  eq(args[1], "one")
+  eq(args[2], "two")
+  eq(args[3], "three")
 end
 
-test_set["debounce creates independent functions"] = function()
+T["debounce creates independent functions"] = function()
   local timing = require("aibo.internal.timing")
 
   local count1 = 0
@@ -93,11 +83,11 @@ test_set["debounce creates independent functions"] = function()
   vim.wait(150, function()
     return count1 > 0 and count2 > 0
   end)
-  T.expect.equality(count1, 1, "First function should be called once")
-  T.expect.equality(count2, 1, "Second function should be called once")
+  eq(count1, 1)
+  eq(count2, 1)
 end
 
-test_set["debounce handles rapid successive calls"] = function()
+T["debounce handles rapid successive calls"] = function()
   local timing = require("aibo.internal.timing")
 
   local call_count = 0
@@ -115,10 +105,10 @@ test_set["debounce handles rapid successive calls"] = function()
   vim.wait(200, function()
     return call_count > 0
   end)
-  T.expect.equality(call_count, 1, "Function should only be called once after rapid calls")
+  eq(call_count, 1)
 end
 
-test_set["debounce executes after exact delay"] = function()
+T["debounce executes after exact delay"] = function()
   local timing = require("aibo.internal.timing")
 
   local called = false
@@ -130,16 +120,16 @@ test_set["debounce executes after exact delay"] = function()
 
   -- Should not be called before delay
   vim.wait(50)
-  T.expect.equality(called, false, "Function should not be called before delay")
+  eq(called, false)
 
   -- Should be called after delay
   vim.wait(150, function()
     return called
   end)
-  T.expect.equality(called, true, "Function should be called after delay")
+  eq(called, true)
 end
 
-test_set["debounce handles nil arguments"] = function()
+T["debounce handles nil arguments"] = function()
   local timing = require("aibo.internal.timing")
 
   local args = nil
@@ -152,11 +142,11 @@ test_set["debounce handles nil arguments"] = function()
   vim.wait(150, function()
     return args ~= nil
   end)
-  T.expect.equality(args[1], nil, "First argument should be nil")
-  T.expect.equality(args[2], "value", "Second argument should be correct")
+  eq(args[1], nil)
+  eq(args[2], "value")
 end
 
-test_set["debounce works with zero delay"] = function()
+T["debounce works with zero delay"] = function()
   local timing = require("aibo.internal.timing")
 
   local called = false
@@ -169,11 +159,11 @@ test_set["debounce works with zero delay"] = function()
   vim.wait(50, function()
     return called
   end)
-  T.expect.equality(called, true, "Function should be called with zero delay")
+  eq(called, true)
 end
 
 -- Throttle tests
-test_set["throttle executes immediately on first call"] = function()
+T["throttle executes immediately on first call"] = function()
   local timing = require("aibo.internal.timing")
 
   local called = false
@@ -182,10 +172,10 @@ test_set["throttle executes immediately on first call"] = function()
   end)
 
   fn()
-  T.expect.equality(called, true, "Function should execute immediately on first call")
+  eq(called, true)
 end
 
-test_set["throttle limits execution rate"] = function()
+T["throttle limits execution rate"] = function()
   local timing = require("aibo.internal.timing")
 
   local call_count = 0
@@ -195,11 +185,11 @@ test_set["throttle limits execution rate"] = function()
 
   -- First call executes immediately
   fn()
-  T.expect.equality(call_count, 1, "First call should execute immediately")
+  eq(call_count, 1)
 
   -- Second call should be throttled
   fn()
-  T.expect.equality(call_count, 1, "Second call should be throttled")
+  eq(call_count, 1)
 
   -- Wait for throttle period
   vim.wait(150, function()
@@ -207,10 +197,10 @@ test_set["throttle limits execution rate"] = function()
   end)
 
   -- Now it should execute the pending call
-  T.expect.equality(call_count, 2, "Pending call should execute after throttle period")
+  eq(call_count, 2)
 end
 
-test_set["throttle executes trailing call with latest arguments"] = function()
+T["throttle executes trailing call with latest arguments"] = function()
   local timing = require("aibo.internal.timing")
 
   local values = {}
@@ -225,12 +215,12 @@ test_set["throttle executes trailing call with latest arguments"] = function()
   vim.wait(150, function()
     return #values >= 2
   end)
-  T.expect.equality(#values, 2, "Should have two executions")
-  T.expect.equality(values[1], "first", "First value should be from immediate execution")
-  T.expect.equality(values[2], "third", "Second value should be from last throttled call")
+  eq(#values, 2)
+  eq(values[1], "first")
+  eq(values[2], "third")
 end
 
-test_set["throttle handles multiple arguments"] = function()
+T["throttle handles multiple arguments"] = function()
   local timing = require("aibo.internal.timing")
 
   local args = nil
@@ -239,12 +229,12 @@ test_set["throttle handles multiple arguments"] = function()
   end)
 
   fn("one", "two", "three")
-  T.expect.equality(args[1], "one", "First argument should be correct")
-  T.expect.equality(args[2], "two", "Second argument should be correct")
-  T.expect.equality(args[3], "three", "Third argument should be correct")
+  eq(args[1], "one")
+  eq(args[2], "two")
+  eq(args[3], "three")
 end
 
-test_set["throttle creates independent functions"] = function()
+T["throttle creates independent functions"] = function()
   local timing = require("aibo.internal.timing")
 
   local count1 = 0
@@ -260,22 +250,22 @@ test_set["throttle creates independent functions"] = function()
 
   fn1()
   fn2()
-  T.expect.equality(count1, 1, "First function should execute immediately")
-  T.expect.equality(count2, 1, "Second function should execute immediately")
+  eq(count1, 1)
+  eq(count2, 1)
 
   fn1()
   fn2()
-  T.expect.equality(count1, 1, "First function should be throttled")
-  T.expect.equality(count2, 1, "Second function should be throttled")
+  eq(count1, 1)
+  eq(count2, 1)
 
   vim.wait(100, function()
     return count1 > 1 and count2 > 1
   end)
-  T.expect.equality(count1, 2, "First function should execute pending call")
-  T.expect.equality(count2, 2, "Second function should execute pending call")
+  eq(count1, 2)
+  eq(count2, 2)
 end
 
-test_set["throttle handles rapid successive calls"] = function()
+T["throttle handles rapid successive calls"] = function()
   local timing = require("aibo.internal.timing")
 
   local call_count = 0
@@ -295,10 +285,10 @@ test_set["throttle handles rapid successive calls"] = function()
   end)
   -- With throttling at 100ms interval, we expect about 3-4 executions
   local is_in_range = call_count >= 3 and call_count <= 5
-  T.expect.equality(is_in_range, true, string.format("Expected 3-4 executions, got %d", call_count))
+  eq(is_in_range, true)
 end
 
-test_set["throttle works with zero delay"] = function()
+T["throttle works with zero delay"] = function()
   local timing = require("aibo.internal.timing")
 
   local call_count = 0
@@ -309,10 +299,10 @@ test_set["throttle works with zero delay"] = function()
   fn()
   fn()
   fn()
-  T.expect.equality(call_count, 3, "All calls should execute with zero delay")
+  eq(call_count, 3)
 end
 
-test_set["throttle handles nil arguments"] = function()
+T["throttle handles nil arguments"] = function()
   local timing = require("aibo.internal.timing")
 
   local args_list = {}
@@ -321,17 +311,17 @@ test_set["throttle handles nil arguments"] = function()
   end)
 
   fn(nil, "value")
-  T.expect.equality(#args_list, 1, "First call should execute")
-  T.expect.equality(args_list[1][1], nil, "First argument should be nil")
-  T.expect.equality(args_list[1][2], "value", "Second argument should be correct")
+  eq(#args_list, 1)
+  eq(args_list[1][1], nil)
+  eq(args_list[1][2], "value")
 
   fn("test", nil)
   vim.wait(100, function()
     return #args_list >= 2
   end)
-  T.expect.equality(#args_list, 2, "Second call should execute after throttle")
-  T.expect.equality(args_list[2][1], "test", "First argument should be correct")
-  T.expect.equality(args_list[2][2], nil, "Second argument should be nil")
+  eq(#args_list, 2)
+  eq(args_list[2][1], "test")
+  eq(args_list[2][2], nil)
 end
 
-return test_set
+return T

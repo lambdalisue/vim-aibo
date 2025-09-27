@@ -1,121 +1,117 @@
--- Tests for OpenAI Codex integration (lua/aibo/integration/codex.lua)
+local eq = MiniTest.expect.equality
+local helpers = require("tests.helpers")
 
-local mock = require("tests.mock")
-local T = require("mini.test")
-
--- Test set
-local test_set = T.new_set({
-  hooks = {
-    post_case = function()
-      vim.cmd("silent! %bwipeout!")
-    end,
-  },
-})
+local T = helpers.new_set()
 
 -- Test Codex is_available
-test_set["Codex is_available"] = function()
+T["Codex is_available"] = function()
   local codex = require("aibo.integration.codex")
 
   -- Mock executable
-  local restore = mock.mock_executable({
-    codex = true,
-  })
+  local original_executable = vim.fn.executable
+  vim.fn.executable = function(cmd)
+    if cmd == "codex" then
+      return 1
+    end
+    return 0
+  end
 
-  T.expect.equality(codex.is_available(), true, "Should be available when codex exists")
+  eq(codex.is_available(), true)
 
   -- Test when not available
   vim.fn.executable = function()
     return 0
   end
-  T.expect.equality(codex.is_available(), false, "Should not be available when codex missing")
+  eq(codex.is_available(), false)
 
-  restore()
+  -- Restore
+  vim.fn.executable = original_executable
 end
 
 -- Test Codex argument completions
-test_set["Codex argument completions"] = function()
+T["Codex argument completions"] = function()
   local codex = require("aibo.integration.codex")
 
   -- Test completing arguments at the start
   local completions = codex.get_command_completions("", "codex ", 6)
-  T.expect.equality(vim.tbl_contains(completions, "--model"), true)
-  T.expect.equality(vim.tbl_contains(completions, "--ask-for-approval"), true)
-  T.expect.equality(vim.tbl_contains(completions, "--cd"), true)
-  T.expect.equality(vim.tbl_contains(completions, "--full-auto"), true)
-  T.expect.equality(vim.tbl_contains(completions, "--image"), true)
-  T.expect.equality(vim.tbl_contains(completions, "resume"), true)
+  eq(vim.tbl_contains(completions, "--model"), true)
+  eq(vim.tbl_contains(completions, "--ask-for-approval"), true)
+  eq(vim.tbl_contains(completions, "--cd"), true)
+  eq(vim.tbl_contains(completions, "--full-auto"), true)
+  eq(vim.tbl_contains(completions, "--image"), true)
+  eq(vim.tbl_contains(completions, "resume"), true)
 
   -- Test things that should NOT be in the new implementation
-  T.expect.equality(vim.tbl_contains(completions, "--config"), false)
-  T.expect.equality(vim.tbl_contains(completions, "--profile"), false)
-  T.expect.equality(vim.tbl_contains(completions, "--sandbox"), false)
-  T.expect.equality(vim.tbl_contains(completions, "--oss"), false)
-  T.expect.equality(vim.tbl_contains(completions, "exec"), false) -- Non-interactive
+  eq(vim.tbl_contains(completions, "--config"), false)
+  eq(vim.tbl_contains(completions, "--profile"), false)
+  eq(vim.tbl_contains(completions, "--sandbox"), false)
+  eq(vim.tbl_contains(completions, "--oss"), false)
+  eq(vim.tbl_contains(completions, "exec"), false) -- Non-interactive
 
   -- Test completing partial argument
   completions = codex.get_command_completions("--mod", "codex --mod", 11)
-  T.expect.equality(vim.tbl_contains(completions, "--model"), true)
-  T.expect.equality(vim.tbl_contains(completions, "--ask-for-approval"), false)
+  eq(vim.tbl_contains(completions, "--model"), true)
+  eq(vim.tbl_contains(completions, "--ask-for-approval"), false)
 
   -- Test completing short forms
   completions = codex.get_command_completions("-m", "codex -m", 8)
-  T.expect.equality(vim.tbl_contains(completions, "-m"), true)
-  T.expect.equality(vim.tbl_contains(completions, "--model"), false)
+  eq(vim.tbl_contains(completions, "-m"), true)
+  eq(vim.tbl_contains(completions, "--model"), false)
 
   completions = codex.get_command_completions("-a", "codex -a", 8)
-  T.expect.equality(vim.tbl_contains(completions, "-a"), true)
+  eq(vim.tbl_contains(completions, "-a"), true)
 
   completions = codex.get_command_completions("-C", "codex -C", 8)
-  T.expect.equality(vim.tbl_contains(completions, "-C"), true)
+  eq(vim.tbl_contains(completions, "-C"), true)
 
   completions = codex.get_command_completions("-i", "codex -i", 8)
-  T.expect.equality(vim.tbl_contains(completions, "-i"), true)
+  eq(vim.tbl_contains(completions, "-i"), true)
 end
 
 -- Test Codex subcommand completions
-test_set["Codex subcommand completions"] = function()
+T["Codex subcommand completions"] = function()
   local codex = require("aibo.integration.codex")
 
   -- Test completing "resume"
   local completions = codex.get_command_completions("res", "codex res", 9)
-  T.expect.equality(vim.tbl_contains(completions, "resume"), true)
+  eq(vim.tbl_contains(completions, "resume"), true)
 
   -- Test that non-interactive subcommands are NOT there
-  T.expect.equality(vim.tbl_contains(completions, "exec"), false)
-  T.expect.equality(vim.tbl_contains(completions, "completion"), false)
+  eq(vim.tbl_contains(completions, "exec"), false)
+  eq(vim.tbl_contains(completions, "completion"), false)
 
   -- Test completing full "resume" - when already typed, should offer other options or be empty
   completions = codex.get_command_completions("resume", "codex resume", 12)
   -- When "resume" is fully typed, it's recognized as a complete subcommand
   -- The completion list might be empty or contain other valid options
-  T.expect.equality(type(completions), "table")
+  eq(type(completions), "table")
 
   -- Test with space after resume - should show --last option
   completions = codex.get_command_completions("", "codex resume ", 13)
-  T.expect.equality(vim.tbl_contains(completions, "--last"), true)
+  eq(vim.tbl_contains(completions, "--last"), true)
   -- Should also show regular arguments
-  T.expect.equality(vim.tbl_contains(completions, "--model"), true)
+  eq(vim.tbl_contains(completions, "--model"), true)
 
   -- Test completing --last after resume
   completions = codex.get_command_completions("--l", "codex resume --l", 17)
-  T.expect.equality(vim.tbl_contains(completions, "--last"), true)
+  eq(vim.tbl_contains(completions, "--last"), true)
 end
 
 -- Test Codex model completions
-test_set["Codex model value completions"] = function()
+T["Codex model value completions"] = function()
   local codex = require("aibo.integration.codex")
 
   -- Test completing model values - OpenAI Codex doesn't have predefined model list
   local completions = codex.get_command_completions("", "codex --model ", 14)
-  T.expect.equality(#completions, 0) -- No predefined values
+  eq(#completions, 0) -- No predefined values
 
   -- Test with short form
   completions = codex.get_command_completions("", "codex -m ", 9)
-  T.expect.equality(#completions, 0) -- No predefined values
+  eq(#completions, 0) -- No predefined values
 end
 
 -- Test Codex working directory completions
-test_set["Codex cd directory completions"] = function()
+T["Codex cd directory completions"] = function()
   local codex = require("aibo.integration.codex")
 
   -- Mock getcompletion for directories
@@ -129,19 +125,19 @@ test_set["Codex cd directory completions"] = function()
 
   -- Test --cd completion
   local completions = codex.get_command_completions("", "codex --cd ", 11)
-  T.expect.equality(vim.tbl_contains(completions, "/home/user/projects/"), true)
-  T.expect.equality(vim.tbl_contains(completions, "/home/user/documents/"), true)
-  T.expect.equality(vim.tbl_contains(completions, "/tmp/"), true)
+  eq(vim.tbl_contains(completions, "/home/user/projects/"), true)
+  eq(vim.tbl_contains(completions, "/home/user/documents/"), true)
+  eq(vim.tbl_contains(completions, "/tmp/"), true)
 
   -- Test with short form -C
   completions = codex.get_command_completions("", "codex -C ", 9)
-  T.expect.equality(vim.tbl_contains(completions, "/home/user/projects/"), true)
+  eq(vim.tbl_contains(completions, "/home/user/projects/"), true)
 
   vim.fn.getcompletion = original_getcompletion
 end
 
 -- Test Codex image file completions
-test_set["Codex image file completions"] = function()
+T["Codex image file completions"] = function()
   local codex = require("aibo.integration.codex")
 
   -- Mock getcompletion for files
@@ -155,53 +151,53 @@ test_set["Codex image file completions"] = function()
 
   -- Test --image completion
   local completions = codex.get_command_completions("", "codex --image ", 14)
-  T.expect.equality(vim.tbl_contains(completions, "image1.png"), true)
-  T.expect.equality(vim.tbl_contains(completions, "image2.jpg"), true)
-  T.expect.equality(vim.tbl_contains(completions, "document.pdf"), true)
+  eq(vim.tbl_contains(completions, "image1.png"), true)
+  eq(vim.tbl_contains(completions, "image2.jpg"), true)
+  eq(vim.tbl_contains(completions, "document.pdf"), true)
 
   -- Test with short form -i
   completions = codex.get_command_completions("", "codex -i ", 9)
-  T.expect.equality(vim.tbl_contains(completions, "image1.png"), true)
+  eq(vim.tbl_contains(completions, "image1.png"), true)
 
   vim.fn.getcompletion = original_getcompletion
 end
 
 -- Test Codex flags without values
-test_set["Codex flags without values"] = function()
+T["Codex flags without values"] = function()
   local codex = require("aibo.integration.codex")
 
   -- Test --ask-for-approval flag which doesn't take a value
   local completions = codex.get_command_completions("--as", "codex --as", 10)
-  T.expect.equality(vim.tbl_contains(completions, "--ask-for-approval"), true)
+  eq(vim.tbl_contains(completions, "--ask-for-approval"), true)
 
   -- Test --full-auto flag which doesn't take a value
   completions = codex.get_command_completions("--fu", "codex --fu", 10)
-  T.expect.equality(vim.tbl_contains(completions, "--full-auto"), true)
+  eq(vim.tbl_contains(completions, "--full-auto"), true)
 
   -- After --full-auto, should still complete other arguments
   completions = codex.get_command_completions("", "codex --full-auto ", 18)
-  T.expect.equality(vim.tbl_contains(completions, "--model"), true)
-  T.expect.equality(vim.tbl_contains(completions, "--image"), true)
+  eq(vim.tbl_contains(completions, "--model"), true)
+  eq(vim.tbl_contains(completions, "--image"), true)
 end
 
 -- Test Codex mixed arguments
-test_set["Codex mixed arguments"] = function()
+T["Codex mixed arguments"] = function()
   local codex = require("aibo.integration.codex")
 
   -- Test completion after model is specified
   local completions = codex.get_command_completions("", "codex --model gpt-4 ", 20)
-  T.expect.equality(vim.tbl_contains(completions, "--ask-for-approval"), true)
-  T.expect.equality(vim.tbl_contains(completions, "--full-auto"), true)
-  T.expect.equality(vim.tbl_contains(completions, "--image"), true)
+  eq(vim.tbl_contains(completions, "--ask-for-approval"), true)
+  eq(vim.tbl_contains(completions, "--full-auto"), true)
+  eq(vim.tbl_contains(completions, "--image"), true)
 
   -- Test completion after multiple arguments
   completions = codex.get_command_completions("", "codex --model gpt-4 --full-auto ", 33)
-  T.expect.equality(vim.tbl_contains(completions, "--image"), true)
-  T.expect.equality(vim.tbl_contains(completions, "--cd"), true)
+  eq(vim.tbl_contains(completions, "--image"), true)
+  eq(vim.tbl_contains(completions, "--cd"), true)
 end
 
 -- Test check_health function
-test_set["Codex check_health"] = function()
+T["Codex check_health"] = function()
   local codex = require("aibo.integration.codex")
 
   -- Mock reporter
@@ -222,10 +218,13 @@ test_set["Codex check_health"] = function()
   }
 
   -- Mock executable
-  local restore = mock.mock_executable({
-    codex = true,
-    node = true,
-  })
+  local original_executable = vim.fn.executable
+  vim.fn.executable = function(cmd)
+    if cmd == "codex" or cmd == "node" then
+      return 1
+    end
+    return 0
+  end
 
   -- Mock env variable
   local original_env = vim.env.OPENAI_API_KEY
@@ -235,8 +234,8 @@ test_set["Codex check_health"] = function()
   codex.check_health(reporter)
 
   -- Check that appropriate messages were reported
-  T.expect.equality(reports[1].type, "start")
-  T.expect.equality(reports[1].msg:find("Codex") ~= nil, true)
+  eq(reports[1].type, "start")
+  eq(reports[1].msg:find("Codex") ~= nil, true)
 
   -- Should report that codex is found
   local has_ok_report = false
@@ -246,11 +245,11 @@ test_set["Codex check_health"] = function()
       break
     end
   end
-  T.expect.equality(has_ok_report, true)
+  eq(has_ok_report, true)
 
   -- Restore
   vim.env.OPENAI_API_KEY = original_env
-  restore()
+  vim.fn.executable = original_executable
 end
 
-return test_set
+return T

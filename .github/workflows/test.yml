@@ -30,20 +30,8 @@ jobs:
           neovim: true
           version: ${{ matrix.neovim }}
 
-      - name: Install mini.nvim
-        run: |
-          mkdir -p ~/.local/share/nvim/site/pack/deps/start
-          git clone --filter=blob:none https://github.com/echasnovski/mini.nvim ~/.local/share/nvim/site/pack/deps/start/mini.nvim
-
       - run: nvim --version
 
-      - run: just test
-
-      - name: Upload test results
-        if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: test-results-${{ matrix.os }}-${{ matrix.neovim }}
-          path: test-results.log
-          retention-days: 7
-
+      - run: |
+          just deps-mini-nvim
+          just test

@@ -1,22 +1,14 @@
--- Tests for plugin setup and loading (plugin/aibo.lua)
+local eq = MiniTest.expect.equality
+local helpers = require("tests.helpers")
 
-local T = require("mini.test")
-
--- Test set
-local test_set = T.new_set({
-  hooks = {
-    post_case = function()
-      vim.cmd("silent! %bwipeout!")
-    end,
-  },
-})
+local T = helpers.new_set()
 
 -- Test plugin loading guard
-test_set["Plugin loading guard"] = function()
+T["Plugin loading guard"] = function()
   -- First load should work
   vim.g.loaded_aibo = nil
   vim.cmd("runtime plugin/aibo.lua")
-  T.expect.equality(vim.g.loaded_aibo, 1)
+  eq(vim.g.loaded_aibo, 1)
 
   -- Second load should be blocked
   local before_cmds = vim.api.nvim_get_commands({})
@@ -24,28 +16,33 @@ test_set["Plugin loading guard"] = function()
   local after_cmds = vim.api.nvim_get_commands({})
 
   -- Command count should remain the same
-  T.expect.equality(vim.tbl_count(before_cmds), vim.tbl_count(after_cmds))
+  eq(vim.tbl_count(before_cmds), vim.tbl_count(after_cmds))
 end
 
 -- Test Aibo command existence
-test_set["Aibo command exists"] = function()
+T["Aibo command exists"] = function()
   vim.g.loaded_aibo = nil
   vim.cmd("runtime plugin/aibo.lua")
 
-  local commands = vim.api.nvim_get_commands({})
-  T.expect.equality(commands["Aibo"] ~= nil, true, "Aibo command should exist")
-  T.expect.equality(commands["Aibo"].nargs, "+", "Aibo should accept 1+ args")
+  local cmd = helpers.expect.command_exists("Aibo")
+  eq(cmd.nargs, "+")
 end
 
 -- Test AiboSend command existence
-test_set["AiboSend command exists"] = function()
+T["AiboSend command exists"] = function()
   vim.g.loaded_aibo = nil
   vim.cmd("runtime plugin/aibo.lua")
 
-  local commands = vim.api.nvim_get_commands({})
-  T.expect.equality(commands["AiboSend"] ~= nil, true, "AiboSend command should exist")
-  T.expect.equality(commands["AiboSend"].nargs, "*", "AiboSend should accept 0+ args")
-  T.expect.equality(commands["AiboSend"].range ~= nil, true, "AiboSend should support range")
+  local cmd = helpers.expect.command_exists("AiboSend")
+  eq(cmd.nargs, "*")
+  eq(cmd.range ~= nil, true)
 end
 
-return test_set
+-- Test plugin does not error on load
+T["Plugin loads without error"] = function()
+  vim.g.loaded_aibo = nil
+  local ok, err = pcall(vim.cmd, "runtime plugin/aibo.lua")
+  eq(ok, true)
+end
+
+return T
