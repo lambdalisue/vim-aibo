@@ -171,8 +171,8 @@ function M.check()
   local ftplugins = {
     "aibo-prompt.lua",
     "aibo-console.lua",
-    "aibo-agent-claude.lua",
-    "aibo-agent-codex.lua",
+    "aibo-tool-claude.lua",
+    "aibo-tool-codex.lua",
   }
 
   local plugin_root = debug.getinfo(1, "S").source:sub(2):match("(.*/)")

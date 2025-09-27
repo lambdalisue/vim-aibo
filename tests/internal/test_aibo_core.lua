@@ -83,12 +83,12 @@ test_set["get_buffer_config"] = function()
   -- (This would cause an error if we try to pass it)
 end
 
--- Test agent config functions
-test_set["get_agent_config"] = function()
+-- Test tool config functions
+test_set["get_tool_config"] = function()
   local aibo = require("aibo")
 
   aibo.setup({
-    agents = {
+    tools = {
       claude = {
         no_default_mappings = true,
         custom_option = "test",
@@ -100,16 +100,16 @@ test_set["get_agent_config"] = function()
   })
 
   -- Test claude config
-  local claude_config = aibo.get_agent_config("claude")
+  local claude_config = aibo.get_tool_config("claude")
   T.expect.equality(claude_config.no_default_mappings, true)
   T.expect.equality(claude_config.custom_option, "test")
 
   -- Test codex config
-  local codex_config = aibo.get_agent_config("codex")
+  local codex_config = aibo.get_tool_config("codex")
   T.expect.equality(codex_config.no_default_mappings, false)
 
-  -- Test unknown agent (should return empty table)
-  local unknown_config = aibo.get_agent_config("unknown")
+  -- Test unknown tool (should return empty table)
+  local unknown_config = aibo.get_tool_config("unknown")
   T.expect.equality(vim.tbl_count(unknown_config), 0)
 end
 

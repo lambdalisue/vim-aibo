@@ -311,7 +311,7 @@ function M.open(cmd, args, options)
 
   setup_mappings(bufnr)
   vim.b[bufnr].terminal_job_id = job_id
-  vim.bo[bufnr].filetype = string.format("aibo-console.aibo-agent-%s", cmd)
+  vim.bo[bufnr].filetype = string.format("aibo-console.aibo-tool-%s", cmd)
 
   -- WinClosed pattern is matched against window ID so we cannot use global one
   local augroup = vim.api.nvim_create_augroup(string.format("aibo_console_internal_open_%d", bufnr), { clear = true })
@@ -332,9 +332,9 @@ function M.open(cmd, args, options)
   if buffer_cfg.on_attach then
     buffer_cfg.on_attach(bufnr, info)
   end
-  local agent_cfg = aibo.get_agent_config(cmd)
-  if agent_cfg.on_attach then
-    agent_cfg.on_attach(bufnr, info)
+  local tool_cfg = aibo.get_tool_config(cmd)
+  if tool_cfg.on_attach then
+    tool_cfg.on_attach(bufnr, info)
   end
 
   -- Open an associated prompt window with insert mode
