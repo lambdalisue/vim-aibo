@@ -1,6 +1,5 @@
 -- Tests for :AiboSend command (lua/aibo/command/aibo_send.lua)
 
-local helpers = require("tests.helpers")
 local T = require("mini.test")
 
 -- Store original vim.ui.select
@@ -12,24 +11,6 @@ local initial_tab = vim.api.nvim_get_current_tabpage()
 -- Test set
 local test_set = T.new_set({
   hooks = {
-    pre_case = function()
-      helpers.setup()
-      -- Create a new tab for isolation and switch to it
-      vim.cmd("tabnew")
-      -- Mock vim.ui.select to prevent hanging on prompts
-      vim.ui.select = function(items, opts, on_choice)
-        -- Always select first item to prevent hanging
-        if items and #items > 0 then
-          on_choice(items[1])
-        else
-          on_choice(nil)
-        end
-      end
-      -- Reload the plugin to ensure commands are created
-      vim.cmd("runtime plugin/aibo.lua")
-      -- Clear all windows except current in this tab
-      vim.cmd("only")
-    end,
     post_case = function()
       -- Restore original vim.ui.select
       vim.ui.select = original_select
@@ -52,7 +33,7 @@ local test_set = T.new_set({
         vim.api.nvim_set_current_tabpage(initial_tab)
       end
 
-      helpers.cleanup()
+      vim.cmd("silent! %bwipeout!")
     end,
   },
 })

@@ -1,18 +1,12 @@
 -- Tests for timing module (lua/aibo/internal/timing.lua)
 
-local helpers = require("tests.helpers")
 local T = require("mini.test")
 
 -- Test set
 local test_set = T.new_set({
   hooks = {
-    pre_case = function()
-      helpers.setup()
-      -- Clear any existing timers between tests
-      collectgarbage("collect")
-    end,
     post_case = function()
-      helpers.cleanup()
+      vim.cmd("silent! %bwipeout!")
       -- Ensure timers are cleaned up
       collectgarbage("collect")
     end,

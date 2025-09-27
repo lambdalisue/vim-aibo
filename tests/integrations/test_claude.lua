@@ -1,16 +1,13 @@
 -- Tests for Claude integration (lua/aibo/integration/claude.lua)
 
-local helpers = require("tests.helpers")
+local mock = require("tests.mock")
 local T = require("mini.test")
 
 -- Test set
 local test_set = T.new_set({
   hooks = {
-    pre_case = function()
-      helpers.setup()
-    end,
     post_case = function()
-      helpers.cleanup()
+      vim.cmd("silent! %bwipeout!")
     end,
   },
 })
@@ -20,7 +17,7 @@ test_set["Claude is_available"] = function()
   local claude = require("aibo.integration.claude")
 
   -- Mock executable
-  local restore = helpers.mock_executable({
+  local restore = mock.mock_executable({
     claude = true,
   })
 

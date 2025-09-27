@@ -1,22 +1,16 @@
 -- Tests for :Aibo command functionality (lua/aibo/command/aibo.lua)
 
-local helpers = require("tests.helpers")
 local T = require("mini.test")
 
 -- Test set
 local test_set = T.new_set({
   hooks = {
-    pre_case = function()
-      helpers.setup()
-      -- Reload the plugin to ensure commands are created
-      vim.cmd("runtime plugin/aibo.lua")
-    end,
     post_case = function()
       -- Clear any mocked modules to avoid interfering with other tests
       package.loaded["aibo.integration.claude"] = nil
       package.loaded["aibo.integration.codex"] = nil
       package.loaded["aibo.integration.ollama"] = nil
-      helpers.cleanup()
+      vim.cmd("silent! %bwipeout!")
     end,
   },
 })

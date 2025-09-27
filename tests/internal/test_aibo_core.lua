@@ -1,16 +1,12 @@
 -- Tests for the core aibo module (lua/aibo/init.lua)
 
-local helpers = require("tests.helpers")
 local T = require("mini.test")
 
 -- Test set
 local test_set = T.new_set({
   hooks = {
-    pre_case = function()
-      helpers.setup()
-    end,
     post_case = function()
-      helpers.cleanup()
+      vim.cmd("silent! %bwipeout!")
     end,
   },
 })
