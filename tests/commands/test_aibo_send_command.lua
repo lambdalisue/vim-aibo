@@ -3,40 +3,56 @@
 local helpers = require("tests.helpers")
 local T = require("mini.test")
 
+-- Store original vim.ui.select
+local original_select = vim.ui.select
+
+-- Track the initial tab to return to
+local initial_tab = vim.api.nvim_get_current_tabpage()
+
 -- Test set
 local test_set = T.new_set({
   hooks = {
     pre_case = function()
       helpers.setup()
-      -- Reload the plugin to ensure commands are created
-      vim.cmd("runtime plugin/aibo.lua")
-      -- Clear any existing aibo buffers more thoroughly
-      for _, buf in ipairs(vim.api.nvim_list_bufs()) do
-        if vim.api.nvim_buf_is_valid(buf) then
-          local name = vim.api.nvim_buf_get_name(buf)
-          local ft = vim.bo[buf].filetype or ""
-          if name:match("^aibo://") or name:match("^aiboprompt://") or ft:match("^aibo%-") then
-            pcall(vim.api.nvim_buf_delete, buf, { force = true })
-          end
+      -- Create a new tab for isolation and switch to it
+      vim.cmd("tabnew")
+      -- Mock vim.ui.select to prevent hanging on prompts
+      vim.ui.select = function(items, opts, on_choice)
+        -- Always select first item to prevent hanging
+        if items and #items > 0 then
+          on_choice(items[1])
+        else
+          on_choice(nil)
         end
       end
-      -- Clear all windows except current
+      -- Reload the plugin to ensure commands are created
+      vim.cmd("runtime plugin/aibo.lua")
+      -- Clear all windows except current in this tab
       vim.cmd("only")
     end,
     post_case = function()
-      helpers.cleanup()
-      -- Clean up any created buffers more thoroughly
-      for _, buf in ipairs(vim.api.nvim_list_bufs()) do
-        if vim.api.nvim_buf_is_valid(buf) then
-          local name = vim.api.nvim_buf_get_name(buf)
-          local ft = vim.bo[buf].filetype or ""
-          if name:match("^aibo://") or name:match("^aiboprompt://") or ft:match("^aibo%-") then
-            pcall(vim.api.nvim_buf_delete, buf, { force = true })
+      -- Restore original vim.ui.select
+      vim.ui.select = original_select
+
+      -- Close all aibo buffers in the current tab before closing it
+      for _, winid in ipairs(vim.api.nvim_tabpage_list_wins(0)) do
+        local bufnr = vim.api.nvim_win_get_buf(winid)
+        if vim.api.nvim_buf_is_valid(bufnr) then
+          local name = vim.api.nvim_buf_get_name(bufnr)
+          if name:match("^aibo") then
+            pcall(vim.api.nvim_win_close, winid, true)
           end
         end
       end
-      -- Ensure all windows are closed
-      vim.cmd("only")
+
+      -- Close the test tab and return to initial tab
+      vim.cmd("tabclose!")
+      -- Ensure we're on the initial tab
+      if vim.api.nvim_tabpage_is_valid(initial_tab) then
+        vim.api.nvim_set_current_tabpage(initial_tab)
+      end
+
+      helpers.cleanup()
     end,
   },
 })
@@ -71,7 +87,7 @@ test_set["AiboSend without console shows error"] = function()
   local notify_msg = nil
   local original_notify = vim.notify
   vim.notify = function(msg, level, opts)
-    if opts and opts.title == "Aibo" and level == vim.log.levels.ERROR then
+    if level == vim.log.levels.WARN and msg:match("No Aibo console") then
       notify_called = true
       notify_msg = msg
     end
@@ -85,25 +101,29 @@ test_set["AiboSend without console shows error"] = function()
 
   -- Check that error was shown
   T.expect.equality(notify_called, true)
-  T.expect.equality(notify_msg, "No Aibo console buffers found in current tabpage")
+  T.expect.equality(notify_msg, "No Aibo console window found in current tabpage")
 end
 
 -- Test AiboSend with single console buffer
 test_set["AiboSend with single console"] = function()
   -- Create a mock console buffer
   local console_buf = vim.api.nvim_create_buf(false, true)
-  vim.api.nvim_buf_set_name(console_buf, "aibo://1")
+  vim.api.nvim_buf_set_name(console_buf, "aiboconsole://test//single")
   vim.bo[console_buf].filetype = "aibo-console"
   vim.b[console_buf].aibo = {
     cmd = "test",
     args = { "arg1" },
   }
 
-  -- Open console in a window (use normal split, not floating window)
-  vim.cmd("split")
+  -- Open console in a new tab to avoid multiple windows showing the same buffer
+  vim.cmd("tabedit")
   vim.api.nvim_set_current_buf(console_buf)
   local console_win = vim.api.nvim_get_current_win()
   vim.cmd("wincmd p") -- Go back to previous window
+
+  -- Create the prompt window for the console
+  local prompt = require("aibo.internal.prompt_window")
+  prompt.open(console_win)
 
   -- Create a test buffer with content
   local test_buf = vim.api.nvim_create_buf(false, true)
@@ -135,18 +155,22 @@ end
 test_set["AiboSend with range"] = function()
   -- Create a mock console buffer
   local console_buf = vim.api.nvim_create_buf(false, true)
-  vim.api.nvim_buf_set_name(console_buf, "aibo://2")
+  vim.api.nvim_buf_set_name(console_buf, "aiboconsole://test//range")
   vim.bo[console_buf].filetype = "aibo-console"
   vim.b[console_buf].aibo = {
     cmd = "test",
     args = {},
   }
 
-  -- Open console in a window (use normal split, not floating window)
-  vim.cmd("split")
+  -- Open console in a new tab to avoid multiple windows showing the same buffer
+  vim.cmd("tabedit")
   vim.api.nvim_set_current_buf(console_buf)
   local console_win = vim.api.nvim_get_current_win()
   vim.cmd("wincmd p") -- Go back to previous window
+
+  -- Create the prompt window for the console
+  local prompt = require("aibo.internal.prompt_window")
+  prompt.open(console_win)
 
   -- Create a test buffer with content
   local test_buf = vim.api.nvim_create_buf(false, true)
@@ -178,7 +202,7 @@ end
 test_set["AiboSend -input option"] = function()
   -- Create a mock console buffer
   local console_buf = vim.api.nvim_create_buf(false, true)
-  vim.api.nvim_buf_set_name(console_buf, "aibo://3")
+  vim.api.nvim_buf_set_name(console_buf, "aiboconsole://test//input")
   vim.bo[console_buf].filetype = "aibo-console"
   vim.b[console_buf].aibo = {
     cmd = "test",
@@ -193,6 +217,10 @@ test_set["AiboSend -input option"] = function()
     row = 0,
     col = 0,
   })
+
+  -- Create the prompt window for the console
+  local prompt = require("aibo.internal.prompt_window")
+  prompt.open(console_win)
 
   -- Create a test buffer with content
   local test_buf = vim.api.nvim_create_buf(false, true)
@@ -212,6 +240,9 @@ test_set["AiboSend -input option"] = function()
   -- Run AiboSend with -input
   vim.cmd("AiboSend -input")
 
+  -- Wait for deferred window switch
+  vim.wait(10)
+
   -- Check that focus moved to console window
   local current_win = vim.api.nvim_get_current_win()
   T.expect.equality(current_win, console_win)
@@ -225,15 +256,15 @@ end
 test_set["AiboSend with both options shows warning"] = function()
   -- Create a mock console buffer
   local console_buf = vim.api.nvim_create_buf(false, true)
-  vim.api.nvim_buf_set_name(console_buf, "aibo://4")
+  vim.api.nvim_buf_set_name(console_buf, "aiboconsole://test//both")
   vim.bo[console_buf].filetype = "aibo-console"
   vim.b[console_buf].aibo = {
     cmd = "test",
     args = {},
   }
 
-  -- Open console in a window (use normal split, not floating window)
-  vim.cmd("split")
+  -- Open console in a new tab to avoid multiple windows showing the same buffer
+  vim.cmd("tabedit")
   vim.api.nvim_set_current_buf(console_buf)
   local console_win = vim.api.nvim_get_current_win()
   vim.cmd("wincmd p") -- Go back to previous window
@@ -269,18 +300,22 @@ end
 test_set["AiboSend with prefix and suffix"] = function()
   -- Create a mock console buffer
   local console_buf = vim.api.nvim_create_buf(false, true)
-  vim.api.nvim_buf_set_name(console_buf, "aibo://prefix-suffix")
+  vim.api.nvim_buf_set_name(console_buf, "aiboconsole://test//prefix")
   vim.bo[console_buf].filetype = "aibo-console"
   vim.b[console_buf].aibo = {
     cmd = "test",
     args = {},
   }
 
-  -- Open console in a window
-  vim.cmd("split")
+  -- Open console in a new tab to avoid multiple windows showing the same buffer
+  vim.cmd("tabedit")
   vim.api.nvim_set_current_buf(console_buf)
   local console_win = vim.api.nvim_get_current_win()
   vim.cmd("wincmd p") -- Go back to previous window
+
+  -- Create the prompt window for the console
+  local prompt = require("aibo.internal.prompt_window")
+  prompt.open(console_win)
 
   -- Create a test buffer with content
   local test_buf = vim.api.nvim_create_buf(false, true)
@@ -305,79 +340,19 @@ test_set["AiboSend with prefix and suffix"] = function()
   vim.api.nvim_win_close(console_win, true)
 end
 
--- Test prompt buffer cursor positioning
-test_set["AiboSend moves cursor to end of prompt"] = function()
-  -- Create a mock console buffer
-  local console_buf = vim.api.nvim_create_buf(false, true)
-  vim.api.nvim_buf_set_name(console_buf, "aibo://5")
-  vim.bo[console_buf].filetype = "aibo-console"
-  vim.b[console_buf].aibo = {
-    cmd = "test",
-    args = {},
-  }
-
-  -- Open console in a window (use normal split, not floating window)
-  vim.cmd("split")
-  vim.api.nvim_set_current_buf(console_buf)
-  local console_win = vim.api.nvim_get_current_win()
-  vim.cmd("wincmd p") -- Go back to previous window
-
-  -- Create a test buffer with content
-  local test_buf = vim.api.nvim_create_buf(false, true)
-  vim.api.nvim_set_current_buf(test_buf)
-  vim.api.nvim_buf_set_lines(test_buf, 0, -1, false, { "line1", "line2 with more content" })
-
-  -- Get prompt buffer name
-  local prompt_bufname = string.format("aiboprompt://%d", console_win)
-
-  -- Open prompt buffer in a window BEFORE sending to test cursor positioning
-  local prompt_buf = vim.fn.bufnr(prompt_bufname)
-  if prompt_buf == -1 then
-    -- Create prompt buffer if it doesn't exist yet
-    prompt_buf = vim.api.nvim_create_buf(false, true)
-    vim.api.nvim_buf_set_name(prompt_buf, prompt_bufname)
-  end
-
-  -- Open prompt buffer in a window
-  vim.cmd("vsplit")
-  vim.api.nvim_set_current_buf(prompt_buf)
-  local prompt_win = vim.api.nvim_get_current_win()
-
-  -- Go back to test buffer
-  vim.cmd("wincmd p")
-
-  -- Run AiboSend - this should position cursor in the existing prompt window
-  vim.cmd("AiboSend")
-
-  -- Check cursor position in the prompt window
-  local cursor = vim.api.nvim_win_get_cursor(prompt_win)
-  T.expect.equality(cursor[1], 2) -- Should be on last line (line 2)
-  -- The column should be at or near the end of the last line
-  -- Allow for minor differences between Neovim versions
-  local last_line = vim.api.nvim_buf_get_lines(prompt_buf, 1, 2, false)[1]
-  local expected_col = vim.fn.strdisplaywidth(last_line)
-  local actual_col = cursor[2]
-  -- Accept if cursor is at the end or one character before (handles version differences)
-  T.expect.equality(actual_col >= expected_col - 1 and actual_col <= expected_col, true)
-
-  -- Clean up
-  vim.api.nvim_win_close(prompt_win, true)
-  vim.api.nvim_win_close(console_win, true)
-end
-
 -- Test appending to non-empty prompt buffer
 test_set["AiboSend appends to existing prompt content"] = function()
   -- Create a mock console buffer
   local console_buf = vim.api.nvim_create_buf(false, true)
-  vim.api.nvim_buf_set_name(console_buf, "aibo://6")
+  vim.api.nvim_buf_set_name(console_buf, "aiboconsole://test//append")
   vim.bo[console_buf].filetype = "aibo-console"
   vim.b[console_buf].aibo = {
     cmd = "test",
     args = {},
   }
 
-  -- Open console in a window (use normal split, not floating window)
-  vim.cmd("split")
+  -- Open console in a new tab to avoid multiple windows showing the same buffer
+  vim.cmd("tabedit")
   vim.api.nvim_set_current_buf(console_buf)
   local console_win = vim.api.nvim_get_current_win()
   vim.cmd("wincmd p") -- Go back to previous window
@@ -452,15 +427,15 @@ end
 test_set["AiboSend -replace replaces prompt content"] = function()
   -- Create a mock console buffer
   local console_buf = vim.api.nvim_create_buf(false, true)
-  vim.api.nvim_buf_set_name(console_buf, "aibo://replace-test")
+  vim.api.nvim_buf_set_name(console_buf, "aiboconsole://test//replace")
   vim.bo[console_buf].filetype = "aibo-console"
   vim.b[console_buf].aibo = {
     cmd = "test",
     args = {},
   }
 
-  -- Open console in a window (use normal split, not floating window)
-  vim.cmd("split")
+  -- Open console in a new tab to avoid multiple windows showing the same buffer
+  vim.cmd("tabedit")
   vim.api.nvim_set_current_buf(console_buf)
   local console_win = vim.api.nvim_get_current_win()
   vim.cmd("wincmd p") -- Go back to previous window
@@ -505,15 +480,15 @@ end
 test_set["AiboSend append vs replace behavior"] = function()
   -- Create a mock console buffer
   local console_buf = vim.api.nvim_create_buf(false, true)
-  vim.api.nvim_buf_set_name(console_buf, "aibo://append-replace")
+  vim.api.nvim_buf_set_name(console_buf, "aiboconsole://test//appendvs")
   vim.bo[console_buf].filetype = "aibo-console"
   vim.b[console_buf].aibo = {
     cmd = "test",
     args = {},
   }
 
-  -- Open console in a window (use normal split, not floating window)
-  vim.cmd("split")
+  -- Open console in a new tab to avoid multiple windows showing the same buffer
+  vim.cmd("tabedit")
   vim.api.nvim_set_current_buf(console_buf)
   local console_win = vim.api.nvim_get_current_win()
   vim.cmd("wincmd p") -- Go back to previous window
@@ -573,15 +548,15 @@ end
 test_set["AiboSend -replace with range"] = function()
   -- Create a mock console buffer
   local console_buf = vim.api.nvim_create_buf(false, true)
-  vim.api.nvim_buf_set_name(console_buf, "aibo://range-replace")
+  vim.api.nvim_buf_set_name(console_buf, "aiboconsole://test//replrange")
   vim.bo[console_buf].filetype = "aibo-console"
   vim.b[console_buf].aibo = {
     cmd = "test",
     args = {},
   }
 
-  -- Open console in a window (use normal split, not floating window)
-  vim.cmd("split")
+  -- Open console in a new tab to avoid multiple windows showing the same buffer
+  vim.cmd("tabedit")
   vim.api.nvim_set_current_buf(console_buf)
   local console_win = vim.api.nvim_get_current_win()
   vim.cmd("wincmd p") -- Go back to previous window

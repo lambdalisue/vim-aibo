@@ -24,7 +24,7 @@ local function get_command_version(_cmd, _args)
 end
 
 function M.check()
-  start("aibo.nvim")
+  start("aibo")
 
   -- Check Neovim version
   info("Neovim version: " .. vim.fn.execute("version"):match("NVIM v[^\n]+"))
@@ -200,12 +200,7 @@ function M.check()
 
   local core_modules = {
     { name = "aibo", desc = "Main module" },
-    { name = "aibo.internal.console", desc = "Console management" },
-    { name = "aibo.internal.prompt", desc = "Prompt management" },
-    { name = "aibo.internal.controller", desc = "Terminal controller" },
-    { name = "aibo.internal.send", desc = "Send functionality" },
-    { name = "aibo.internal.argparse", desc = "Argument parsing" },
-    { name = "aibo.internal.utils", desc = "Utility functions" },
+    { name = "aibo.termcode", desc = "Termcode module" },
     { name = "aibo.command.aibo", desc = ":Aibo command" },
     { name = "aibo.command.aibo_send", desc = ":AiboSend command" },
   }

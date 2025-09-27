@@ -52,10 +52,14 @@ test_set["aiboprompt autocmd"] = function()
   vim.g.loaded_aibo = nil
   vim.cmd("runtime plugin/aibo.lua")
 
+  -- Force reload the prompt_window module to ensure autocmds are created
+  package.loaded["aibo.internal.prompt_window"] = nil
+  require("aibo.internal.prompt_window")
+
   -- Check that autocmd is created
   local autocmds = vim.api.nvim_get_autocmds({
-    group = "aibo_plugin",
-    event = "BufReadCmd",
+    group = "aibo_prompt_internal",
+    event = "BufWriteCmd",
   })
 
   T.expect.equality(#autocmds > 0, true)

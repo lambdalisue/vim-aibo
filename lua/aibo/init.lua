@@ -12,7 +12,7 @@ local M = {}
 ---@field prompt_height? integer Height of prompt window (default: 10)
 
 ---@type AiboConfig
-local defaults = {
+local DEFAULTS = {
   prompt = {
     on_attach = nil,
     no_default_mappings = false,
@@ -23,12 +23,31 @@ local defaults = {
   },
   -- Agent-specific configurations can be added here
   agents = {},
+  submit_key = "<CR>",
   submit_delay = 100,
   prompt_height = 10,
 }
 
 ---@type AiboConfig
-local config = vim.deepcopy(defaults)
+local config = vim.deepcopy(DEFAULTS)
+
+---@param bufnr integer Buffer number
+---@return nil or { bufnr: integer, bufname: string, winid: integer, console_info?: table }
+local function find_console_info(bufnr)
+  local bufname = vim.api.nvim_buf_get_name(bufnr)
+  if bufname:match("^aiboconsole://") then
+    local console = require("aibo.internal.console_window")
+    return console.get_info_by_bufnr(bufnr)
+  elseif bufname:match("^aiboprompt://") then
+    local prompt = require("aibo.internal.prompt_window")
+    local info = prompt.get_info_by_bufnr(bufnr)
+    if not info or not info.console_info then
+      return nil
+    end
+    return info.console_info
+  end
+  return nil
+end
 
 ---Setup function to configure aibo
 ---@param opts? AiboConfig Configuration options
@@ -65,33 +84,16 @@ function M.get_agent_config(agent)
   return {}
 end
 
----@class AiboInstance
----@field cmd string Command name
----@field args string[] Command arguments
----@field controller table Controller instance
----@field follow function Function to follow terminal output
-
----Get aibo instance from buffer
----@param bufnr? integer Buffer number
----@return AiboInstance|nil Aibo instance or nil if not found
-local function get_aibo(bufnr)
-  bufnr = bufnr or vim.api.nvim_get_current_buf()
-  local aibo = vim.b[bufnr].aibo
-  if not aibo then
-    vim.notify(("No aibo instance found in buffer %d"):format(bufnr), vim.log.levels.ERROR, { title = "Aibo" })
-    return nil
-  end
-  return aibo
-end
-
 ---Send data to the terminal
 ---@param data string Data to send
 ---@param bufnr? integer Buffer number
 ---@return nil
 function M.send(data, bufnr)
-  local aibo = get_aibo(bufnr)
-  if aibo then
-    aibo.controller.send(data)
+  local console = require("aibo.internal.console_window")
+  bufnr = bufnr or vim.api.nvim_get_current_buf()
+  local console_info = find_console_info(bufnr)
+  if console_info then
+    console.send(console_info.bufnr, data)
   end
 end
 
@@ -100,23 +102,12 @@ end
 ---@param bufnr? integer Buffer number
 ---@return nil
 function M.submit(data, bufnr)
-  local aibo = get_aibo(bufnr)
-  if not aibo then
-    return
+  local console = require("aibo.internal.console_window")
+  bufnr = bufnr or vim.api.nvim_get_current_buf()
+  local console_info = find_console_info(bufnr)
+  if console_info then
+    console.submit(console_info.bufnr, data)
   end
-
-  aibo.controller.send(data)
-
-  -- Convert submit key to terminal codes
-  local submit_key = M.termcode.resolve("<CR>")
-
-  vim.defer_fn(function()
-    aibo.controller.send(submit_key)
-  end, config.submit_delay)
-
-  vim.defer_fn(function()
-    aibo.follow()
-  end, config.submit_delay)
 end
 
 -- Expose termcode as part of the public API

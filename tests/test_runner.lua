@@ -48,7 +48,9 @@ local test_files = {
   -- Unit tests
   "unit/test_aibo_core",
   "unit/test_argparse",
-  "unit/test_console",
+  "unit/test_console_window",
+  "unit/test_prompt_window",
+  "unit/test_timing",
 
   -- Command tests
   "commands/test_aibo_command",
