@@ -10,7 +10,7 @@ local aibo = require("aibo")
 require("aibo.integration.codex").setup_plug_mappings(bufnr)
 
 -- Default key mappings (unless disabled in config)
-local cfg = aibo.get_agent_config("codex")
+local cfg = aibo.get_tool_config("codex")
 if not (cfg and cfg.no_default_mappings) then
   vim.keymap.set({ "n", "i" }, "<C-t>", "<Plug>(aibo-codex-transcript)", { buffer = bufnr })
   vim.keymap.set({ "n", "i" }, "<Home>", "<Plug>(aibo-codex-home)", { buffer = bufnr })

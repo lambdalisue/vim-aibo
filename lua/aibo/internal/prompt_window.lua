@@ -321,7 +321,7 @@ function M.open(console_winid, options)
   vim.bo[bufnr].bufhidden = "hide"
   vim.bo[bufnr].buflisted = false
   vim.bo[bufnr].swapfile = false
-  vim.bo[bufnr].filetype = string.format("aibo-prompt.aibo-agent-%s", console_info.jobinfo.cmd)
+  vim.bo[bufnr].filetype = string.format("aibo-prompt.aibo-tool-%s", console_info.jobinfo.cmd)
 
   local info = {
     type = "prompt",
@@ -333,9 +333,9 @@ function M.open(console_winid, options)
   if buffer_cfg.on_attach then
     buffer_cfg.on_attach(bufnr, info)
   end
-  local agent_cfg = aibo.get_agent_config(console_info.cmd)
-  if agent_cfg.on_attach then
-    agent_cfg.on_attach(bufnr, info)
+  local tool_cfg = aibo.get_tool_config(console_info.cmd)
+  if tool_cfg.on_attach then
+    tool_cfg.on_attach(bufnr, info)
   end
 
   -- Start insert mode

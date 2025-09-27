@@ -10,7 +10,7 @@ local aibo = require("aibo")
 require("aibo.integration.claude").setup_plug_mappings(bufnr)
 
 -- Default key mappings (unless disabled in config)
-local cfg = aibo.get_agent_config("claude")
+local cfg = aibo.get_tool_config("claude")
 if not (cfg and cfg.no_default_mappings) then
   vim.keymap.set({ "n", "i" }, "<S-Tab>", "<Plug>(aibo-claude-mode)", { buffer = bufnr })
   vim.keymap.set({ "n", "i" }, "<F2>", "<Plug>(aibo-claude-mode)", { buffer = bufnr })

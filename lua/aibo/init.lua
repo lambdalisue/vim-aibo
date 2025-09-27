@@ -7,7 +7,7 @@ local M = {}
 ---@class AiboConfig
 ---@field prompt? AiboBufferConfig Configuration for prompt buffers
 ---@field console? AiboBufferConfig Configuration for console buffers
----@field agents? table<string, AiboBufferConfig> Agent-specific configurations
+---@field tools? table<string, AiboBufferConfig> Tool-specific configurations
 ---@field submit_delay? integer Delay before submit in ms (default: 100)
 ---@field prompt_height? integer Height of prompt window (default: 10)
 
@@ -21,8 +21,8 @@ local DEFAULTS = {
     on_attach = nil,
     no_default_mappings = false,
   },
-  -- Agent-specific configurations can be added here
-  agents = {},
+  -- Tool-specific configurations can be added here
+  tools = {},
   submit_key = "<CR>",
   submit_delay = 100,
   prompt_height = 10,
@@ -73,13 +73,13 @@ function M.get_buffer_config(buftype)
   return vim.deepcopy(config[buftype] or {})
 end
 
----Get configuration for a specific agent
----@param agent string Agent name (e.g., "claude", "codex")
----@return AiboBufferConfig Configuration for the agent (cloned)
-function M.get_agent_config(agent)
+---Get configuration for a specific tool
+---@param tool string Tool name (e.g., "claude", "codex")
+---@return AiboBufferConfig Configuration for the tool (cloned)
+function M.get_tool_config(tool)
   -- Start with base configuration for buffer type
-  if agent and config.agents and config.agents[agent] then
-    return vim.deepcopy(config.agents[agent])
+  if tool and config.tools and config.tools[tool] then
+    return vim.deepcopy(config.tools[tool])
   end
   return {}
 end
