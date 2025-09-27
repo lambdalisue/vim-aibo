@@ -45,12 +45,12 @@ _G.T = mini_test
 
 -- List of test files organized by category
 local test_files = {
-  -- Unit tests
-  "unit/test_aibo_core",
-  "unit/test_argparse",
-  "unit/test_console_window",
-  "unit/test_prompt_window",
-  "unit/test_timing",
+  -- Internal module tests
+  "internal/test_aibo_core",
+  "internal/test_argparse",
+  "internal/test_console_window",
+  "internal/test_prompt_window",
+  "internal/test_timing",
 
   -- Command tests
   "commands/test_aibo_command",
