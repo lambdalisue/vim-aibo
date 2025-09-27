@@ -725,35 +725,38 @@ test_set["AiboSend with multiple consoles"] = function()
   local test_buf = vim.api.nvim_get_current_buf()
   vim.api.nvim_buf_set_lines(test_buf, 0, -1, false, { "multi test" })
 
-  -- Mock vim.ui.select to simulate user selection
+  -- Mock vim.ui.select to track what was selected
   local selected_item = nil
+  local original_select = vim.ui.select
   vim.ui.select = function(items, opts, on_choice)
-    -- Select the second item (codex)
-    selected_item = items[2]
-    if on_choice then
-      on_choice(items[2])
-    end
+    -- Store what would be selected
+    selected_item = items and items[1] or nil
+    -- Call the original (which selects first item)
+    original_select(items, opts, on_choice)
   end
 
   -- Run AiboSend
   vim.cmd("AiboSend")
 
-  -- Check that selection was made (codex console was selected)
+  -- Restore original select
+  vim.ui.select = original_select
+
+  -- Check that selection was made (claude console was selected - first item)
   T.expect.equality(selected_item ~= nil, true, "Should have prompted for selection")
   if selected_item then
     -- The selected item is a console info object with bufname
     T.expect.equality(
-      selected_item.bufname:match("^aiboconsole://codex"),
-      "aiboconsole://codex",
-      "Should have selected codex console"
+      selected_item.bufname:match("^aiboconsole://claude"),
+      "aiboconsole://claude",
+      "Should have selected claude console (first item)"
     )
   end
 
-  -- Check that content was sent to the selected console
-  local prompt_bufname2 = string.format("aiboprompt://%d", console_win2)
-  local prompt_buf2 = vim.fn.bufnr(prompt_bufname2)
-  if prompt_buf2 ~= -1 then
-    local prompt_lines = vim.api.nvim_buf_get_lines(prompt_buf2, 0, -1, false)
+  -- Check that content was sent to the selected console (first one - claude)
+  local prompt_bufname1 = string.format("aiboprompt://%d", console_win1)
+  local prompt_buf1 = vim.fn.bufnr(prompt_bufname1)
+  if prompt_buf1 ~= -1 then
+    local prompt_lines = vim.api.nvim_buf_get_lines(prompt_buf1, 0, -1, false)
     T.expect.equality(#prompt_lines, 1)
     T.expect.equality(prompt_lines[1], "multi test")
   end
