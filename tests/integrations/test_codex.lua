@@ -15,26 +15,6 @@ local test_set = T.new_set({
   },
 })
 
--- Test Codex command availability
-test_set["Codex is_available"] = function()
-  local codex = require("aibo.integration.codex")
-
-  -- Mock executable
-  local restore = helpers.mock_executable({
-    codex = true,
-  })
-
-  T.expect.equality(codex.is_available(), true)
-
-  -- Test when not available
-  vim.fn.executable = function()
-    return 0
-  end
-  T.expect.equality(codex.is_available(), false)
-
-  restore()
-end
-
 -- Test Codex argument completions
 test_set["Codex argument completions"] = function()
   local codex = require("aibo.integration.codex")
@@ -201,28 +181,6 @@ test_set["Codex mixed arguments"] = function()
   completions = codex.get_command_completions("", "codex --model gpt-4 --full-auto ", 33)
   T.expect.equality(vim.tbl_contains(completions, "--image"), true)
   T.expect.equality(vim.tbl_contains(completions, "--cd"), true)
-end
-
--- Test get_help function
-test_set["Codex get_help"] = function()
-  local codex = require("aibo.integration.codex")
-
-  local help = codex.get_help()
-
-  -- Check that help is a table
-  T.expect.equality(type(help), "table")
-  T.expect.equality(#help > 0, true)
-
-  -- Check for key content in help
-  local help_text = table.concat(help, "\n")
-  T.expect.equality(help_text:find("OpenAI Codex") ~= nil, true)
-  T.expect.equality(help_text:find("resume") ~= nil, true)
-  T.expect.equality(help_text:find("--model") ~= nil, true)
-  T.expect.equality(help_text:find("--image") ~= nil, true)
-
-  -- Check that non-interactive exec subcommand is not mentioned
-  T.expect.equality(help_text:find(" exec ") == nil, true)
-  T.expect.equality(help_text:find("Non%-interactive") == nil, true)
 end
 
 -- Test check_health function

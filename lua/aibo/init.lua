@@ -112,5 +112,7 @@ end
 
 -- Expose termcode as part of the public API
 M.termcode = require("aibo.termcode")
+-- Expose integration as part of the public API
+M.integration = require("aibo.integration")
 
 return M

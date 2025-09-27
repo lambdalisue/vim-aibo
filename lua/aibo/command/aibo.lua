@@ -1,11 +1,5 @@
 local M = {}
 
-local INTEGRATIONS = {
-  claude = "aibo.integration.claude",
-  codex = "aibo.integration.codex",
-  ollama = "aibo.integration.ollama",
-}
-
 local OPENERS = {
   "-opener=split",
   "-opener=vsplit",
@@ -28,6 +22,7 @@ local OPENERS = {
 --- @return string[] List of completions
 local function complete(arglead, cmdline, cursorpos)
   local argparse = require("aibo.internal.argparse")
+  local integration = require("aibo.integration")
   local known_options = {
     opener = true, -- -opener=value
     stay = false, -- -stay flag
@@ -37,7 +32,7 @@ local function complete(arglead, cmdline, cursorpos)
 
   -- Parse command line to determine tool completion context first
   local state = argparse.parse_for_completion(cmdline, known_options)
-  local known_tools = vim.tbl_keys(INTEGRATIONS)
+  local known_tools = integration.available_integrations()
 
   -- Filter out empty strings from remaining
   local non_empty_remaining = vim.tbl_filter(function(arg)
@@ -114,18 +109,7 @@ local function complete(arglead, cmdline, cursorpos)
   end
 
   -- Delegate to tool integration
-  local module_name = INTEGRATIONS[tool]
-  if module_name then
-    local ok, integration = pcall(require, module_name)
-    if ok and integration.get_command_completions then
-      local comp_ok, completions = pcall(integration.get_command_completions, arglead, tool_cmdline, tool_cursorpos)
-      if comp_ok then
-        return completions
-      end
-    end
-  end
-
-  return {}
+  return integration.get_command_completions(tool, arglead, tool_cmdline, tool_cursorpos)
 end
 
 --- Execute Aibo command with given arguments and options

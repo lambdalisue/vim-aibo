@@ -101,17 +101,8 @@ function M.check()
     error = error,
     info = info,
   }
-
-  -- Check Claude integration
-  local ok_claude, claude = pcall(require, "aibo.integration.claude")
-  if ok_claude and claude.check_health then
-    claude.check_health(report)
-  end
-
-  -- Check Codex integration
-  local ok_codex, codex = pcall(require, "aibo.integration.codex")
-  if ok_codex and codex.check_health then
-    codex.check_health(report)
+  for _, tool in ipairs(aibo.integration.available_integrations()) do
+    aibo.integration.check_health(tool, report)
   end
 
   -- Check terminal features

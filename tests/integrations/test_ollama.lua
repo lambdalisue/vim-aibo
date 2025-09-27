@@ -15,26 +15,6 @@ local test_set = T.new_set({
   },
 })
 
--- Test Ollama command availability
-test_set["Ollama is_available"] = function()
-  local ollama = require("aibo.integration.ollama")
-
-  -- Mock executable
-  local restore = helpers.mock_executable({
-    ollama = true,
-  })
-
-  T.expect.equality(ollama.is_available(), true)
-
-  -- Test when not available
-  vim.fn.executable = function()
-    return 0
-  end
-  T.expect.equality(ollama.is_available(), false)
-
-  restore()
-end
-
 -- Test Ollama run subcommand completion
 test_set["Ollama run subcommand completion"] = function()
   local ollama = require("aibo.integration.ollama")
@@ -179,21 +159,6 @@ test_set["Ollama no models available"] = function()
   T.expect.equality(vim.tbl_contains(completions, "--verbose"), true)
 
   restore()
-end
-
--- Test Ollama help text
-test_set["Ollama help text"] = function()
-  local ollama = require("aibo.integration.ollama")
-
-  local help = ollama.get_help()
-  T.expect.equality(#help > 0, true)
-
-  -- Check for key content
-  local help_text = table.concat(help, "\n")
-  T.expect.equality(help_text:match("Ollama usage") ~= nil, true)
-  T.expect.equality(help_text:match("run") ~= nil, true)
-  T.expect.equality(help_text:match("--format") ~= nil, true)
-  T.expect.equality(help_text:match("--verbose") ~= nil, true)
 end
 
 return test_set
