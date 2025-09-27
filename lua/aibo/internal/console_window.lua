@@ -232,17 +232,22 @@ function M.find_info_in_tabpage(options)
   end
 
   local item = nil
+  local selected = false
   vim.ui.select(founds, {
     prompt = "Multiple Aibo console windows found. Select one:",
     format_item = function(v)
       return string.format("%s (bufnr: %d, winid: %d)", v.bufname, v.bufnr, v.winid)
     end,
   }, function(choice)
-    if not choice then
-      return
-    end
+    selected = true
     item = choice
   end)
+
+  -- Wait for selection to complete (needed for synchronous behavior in tests)
+  vim.wait(1000, function()
+    return selected
+  end, 1)
+
   return item
 end
 
