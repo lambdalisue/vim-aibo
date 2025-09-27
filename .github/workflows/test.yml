@@ -31,7 +31,7 @@ jobs:
       - name: Run tests
         run: |
           nvim --version
-          nvim --headless -c "luafile tests/test_runner.lua" -c "qa!"
+          nvim --headless -c "luafile tests/runner.lua" -c "qa!"
 
       - name: Upload test results
         if: always()
