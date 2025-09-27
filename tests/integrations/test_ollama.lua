@@ -12,6 +12,26 @@ local test_set = T.new_set({
   },
 })
 
+-- Test Ollama is_available
+test_set["Ollama is_available"] = function()
+  local ollama = require("aibo.integration.ollama")
+
+  -- Mock executable using mock.lua
+  local restore = mock.mock_executable({
+    ollama = true,
+  })
+
+  T.expect.equality(ollama.is_available(), true, "Should be available when ollama exists")
+
+  -- Test when not available
+  vim.fn.executable = function()
+    return 0
+  end
+  T.expect.equality(ollama.is_available(), false, "Should not be available when ollama missing")
+
+  restore()
+end
+
 -- Test Ollama run subcommand completion
 test_set["Ollama run subcommand completion"] = function()
   local ollama = require("aibo.integration.ollama")
