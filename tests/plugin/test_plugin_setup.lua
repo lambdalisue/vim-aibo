@@ -1,32 +1,14 @@
--- Tests for plugin setup and loading (plugin/aibo.lua)
-
+local eq = MiniTest.expect.equality
 local helpers = require("tests.helpers")
-local T = require("mini.test")
 
--- Test set
-local test_set = T.new_set({
-  hooks = {
-    pre_case = function()
-      helpers.setup()
-      -- Reload the plugin to ensure commands are created
-      vim.cmd("runtime plugin/aibo.lua")
-    end,
-    post_case = function()
-      -- Clear any mocked modules to avoid interfering with other tests
-      package.loaded["aibo.integration.claude"] = nil
-      package.loaded["aibo.integration.codex"] = nil
-      package.loaded["aibo.integration.ollama"] = nil
-      helpers.cleanup()
-    end,
-  },
-})
+local T = helpers.new_set()
 
 -- Test plugin loading guard
-test_set["Plugin loading guard"] = function()
+T["Plugin loading guard"] = function()
   -- First load should work
   vim.g.loaded_aibo = nil
   vim.cmd("runtime plugin/aibo.lua")
-  T.expect.equality(vim.g.loaded_aibo, 1)
+  eq(vim.g.loaded_aibo, 1)
 
   -- Second load should be blocked
   local before_cmds = vim.api.nvim_get_commands({})
@@ -34,41 +16,33 @@ test_set["Plugin loading guard"] = function()
   local after_cmds = vim.api.nvim_get_commands({})
 
   -- Command count should remain the same
-  T.expect.equality(vim.tbl_count(before_cmds), vim.tbl_count(after_cmds))
+  eq(vim.tbl_count(before_cmds), vim.tbl_count(after_cmds))
 end
 
 -- Test Aibo command existence
-test_set["Aibo command exists"] = function()
+T["Aibo command exists"] = function()
   vim.g.loaded_aibo = nil
   vim.cmd("runtime plugin/aibo.lua")
 
-  local commands = vim.api.nvim_get_commands({})
-  T.expect.equality(commands["Aibo"] ~= nil, true)
-  T.expect.equality(commands["Aibo"].nargs, "+")
+  local cmd = helpers.expect.command_exists("Aibo")
+  eq(cmd.nargs, "+")
 end
 
--- Test aiboprompt autocmd
-test_set["aiboprompt autocmd"] = function()
+-- Test AiboSend command existence
+T["AiboSend command exists"] = function()
   vim.g.loaded_aibo = nil
   vim.cmd("runtime plugin/aibo.lua")
 
-  -- Check that autocmd is created
-  local autocmds = vim.api.nvim_get_autocmds({
-    group = "aibo_plugin",
-    event = "BufReadCmd",
-  })
-
-  T.expect.equality(#autocmds > 0, true)
-
-  -- Find the aiboprompt autocmd
-  local found = false
-  for _, autocmd in ipairs(autocmds) do
-    if autocmd.pattern == "aiboprompt://*" then
-      found = true
-      break
-    end
-  end
-  T.expect.equality(found, true)
+  local cmd = helpers.expect.command_exists("AiboSend")
+  eq(cmd.nargs, "*")
+  eq(cmd.range ~= nil, true)
 end
 
-return test_set
+-- Test plugin does not error on load
+T["Plugin loads without error"] = function()
+  vim.g.loaded_aibo = nil
+  local ok, err = pcall(vim.cmd, "runtime plugin/aibo.lua")
+  eq(ok, true)
+end
+
+return T
