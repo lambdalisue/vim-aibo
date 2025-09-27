@@ -15,6 +15,15 @@ package.path = project_root .. "/lua/?.lua;" .. project_root .. "/lua/?/init.lua
 -- Load the plugin to register commands and setup
 vim.cmd("runtime plugin/aibo.lua")
 
+-- Mock vim.ui.select globally to prevent test hanging
+local original_ui_select = vim.ui.select
+vim.ui.select = function(items, opts, on_choice)
+  -- In tests, always select first item immediately
+  if on_choice then
+    on_choice(items and items[1] or nil)
+  end
+end
+
 -- Bootstrap mini.nvim if not installed (needed by test files)
 local mini_path = vim.fn.stdpath("data") .. "/site/pack/deps/start/mini.nvim"
 if not vim.loop.fs_stat(mini_path) then
