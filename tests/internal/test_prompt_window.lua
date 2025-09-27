@@ -1,6 +1,5 @@
 -- Tests for prompt_window module (lua/aibo/internal/prompt_window.lua)
 
-local helpers = require("tests.helpers")
 local T = require("mini.test")
 
 -- Test set
@@ -10,22 +9,8 @@ local _prompt = require("aibo.internal.prompt_window")
 
 local test_set = T.new_set({
   hooks = {
-    pre_case = function()
-      helpers.setup()
-      -- Disable all aibo autocmds that interfere with tests
-      pcall(vim.api.nvim_clear_autocmds, { group = "aibo_plugin" })
-      pcall(vim.api.nvim_clear_autocmds, { group = "aibo_console_internal" })
-      pcall(vim.api.nvim_clear_autocmds, { group = "aibo_prompt_internal" })
-      -- Clear any existing windows
-      for _, buf in ipairs(vim.api.nvim_list_bufs()) do
-        local name = vim.api.nvim_buf_get_name(buf)
-        if name:match("^aiboprompt://") or name:match("^aiboconsole://") then
-          pcall(vim.api.nvim_buf_delete, buf, { force = true })
-        end
-      end
-    end,
     post_case = function()
-      helpers.cleanup()
+      vim.cmd("silent! %bwipeout!")
       -- Clean up any created buffers/windows
       for _, buf in ipairs(vim.api.nvim_list_bufs()) do
         local name = vim.api.nvim_buf_get_name(buf)

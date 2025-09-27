@@ -1,16 +1,13 @@
 -- Tests for Ollama integration (lua/aibo/integration/ollama.lua)
 
-local helpers = require("tests.helpers")
+local mock = require("tests.mock")
 local T = require("mini.test")
 
 -- Test set
 local test_set = T.new_set({
   hooks = {
-    pre_case = function()
-      helpers.setup()
-    end,
     post_case = function()
-      helpers.cleanup()
+      vim.cmd("silent! %bwipeout!")
     end,
   },
 })
@@ -40,7 +37,7 @@ test_set["Ollama model completions"] = function()
   local ollama = require("aibo.integration.ollama")
 
   -- Mock ollama list output
-  local restore = helpers.mock_system({
+  local restore = mock.mock_system({
     ["ollama list"] = {
       result = [[NAME                  ID              SIZE      MODIFIED
 llama3:latest         abc123          5.5 GB    2 days ago
@@ -75,7 +72,7 @@ test_set["Ollama flag completions"] = function()
   local ollama = require("aibo.integration.ollama")
 
   -- Mock ollama list for models
-  local restore = helpers.mock_system({
+  local restore = mock.mock_system({
     ["ollama list"] = {
       result = "NAME ID SIZE MODIFIED\nllama3:latest abc123 5.5GB 2 days ago",
       error = 0,
@@ -107,7 +104,7 @@ test_set["Ollama flag value completions"] = function()
   local ollama = require("aibo.integration.ollama")
 
   -- Mock ollama list to avoid executing ollama
-  local restore = helpers.mock_system({
+  local restore = mock.mock_system({
     ["ollama list"] = {
       result = "NAME ID SIZE MODIFIED\nllama3:latest abc123 5.5GB 2 days ago",
       error = 0,
@@ -146,7 +143,7 @@ test_set["Ollama no models available"] = function()
   local ollama = require("aibo.integration.ollama")
 
   -- Mock empty ollama list
-  local restore = helpers.mock_system({
+  local restore = mock.mock_system({
     ["ollama list"] = {
       result = "NAME ID SIZE MODIFIED\n",
       error = 0,
