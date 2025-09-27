@@ -275,6 +275,7 @@ end
 ---   })
 function M.open(cmd, args, options)
   local aibo = require("aibo")
+  local integration = require("aibo.integration")
   local prompt = require("aibo.internal.prompt_window")
 
   args = args or {}
@@ -310,6 +311,7 @@ function M.open(cmd, args, options)
   vim.api.nvim_buf_set_name(bufnr, bufname)
 
   setup_mappings(bufnr)
+  integration.setup_mappings(cmd, bufnr)
   vim.b[bufnr].terminal_job_id = job_id
   vim.bo[bufnr].filetype = string.format("aibo-console.aibo-tool-%s", cmd)
 

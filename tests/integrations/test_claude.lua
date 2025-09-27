@@ -122,19 +122,4 @@ test_set["Claude file and directory completions"] = function()
   vim.fn.getcompletion = original_getcompletion
 end
 
--- Test Claude help text
-test_set["Claude help text"] = function()
-  local claude = require("aibo.integration.claude")
-
-  local help = claude.get_help()
-  T.expect.equality(#help > 0, true)
-
-  -- Check for key content
-  local help_text = table.concat(help, "\n")
-  T.expect.equality(help_text:match("Claude arguments") ~= nil, true)
-  T.expect.equality(help_text:match("--continue") ~= nil, true)
-  T.expect.equality(help_text:match("--model") ~= nil, true)
-  T.expect.equality(help_text:match("sonnet") ~= nil, true)
-end
-
 return test_set

@@ -6,9 +6,6 @@ vim.b.loaded_aibo_agent_claude_ftplugin = true
 local bufnr = vim.api.nvim_get_current_buf()
 local aibo = require("aibo")
 
--- Setup <Plug> mappings from Claude integration module
-require("aibo.integration.claude").setup_plug_mappings(bufnr)
-
 -- Default key mappings (unless disabled in config)
 local cfg = aibo.get_tool_config("claude")
 if not (cfg and cfg.no_default_mappings) then
@@ -23,3 +20,4 @@ if not (cfg and cfg.no_default_mappings) then
   vim.keymap.set("n", "!", "<Plug>(aibo-claude-bash-mode)", { buffer = bufnr })
   vim.keymap.set("n", "#", "<Plug>(aibo-claude-memorize)", { buffer = bufnr })
 end
+

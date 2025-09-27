@@ -286,6 +286,7 @@ end
 ---   })
 function M.open(console_winid, options)
   local aibo = require("aibo")
+  local integration = require("aibo.integration")
   local console = require("aibo.internal.console_window")
 
   local console_info = console.get_info_by_winid(console_winid)
@@ -317,6 +318,7 @@ function M.open(console_winid, options)
   end
 
   setup_mappings(bufnr)
+  integration.setup_mappings(console_info.jobinfo.cmd, bufnr)
   vim.bo[bufnr].buftype = "acwrite"
   vim.bo[bufnr].bufhidden = "hide"
   vim.bo[bufnr].buflisted = false
