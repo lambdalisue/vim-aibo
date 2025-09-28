@@ -277,7 +277,7 @@ T["parse handles boolean flags correctly"] = function()
     opener = true, -- -opener=value (takes a value)
     stay = false, -- -stay flag (boolean flag)
     toggle = false, -- -toggle flag (boolean flag)
-    reuse = false, -- -reuse flag (boolean flag)
+    focus = false, -- -focus flag (boolean flag)
   }
 
   -- Test individual boolean flags
@@ -289,17 +289,17 @@ T["parse handles boolean flags correctly"] = function()
   eq(options2.toggle, true)
   eq(#remaining2, 0)
 
-  local options3, remaining3 = argparse.parse({ "-reuse" }, { known_options = known_options })
-  eq(options3.reuse, true)
+  local options3, remaining3 = argparse.parse({ "-focus" }, { known_options = known_options })
+  eq(options3.focus, true)
   eq(#remaining3, 0)
 
   -- Test combination of flags and key-value options
   local options4, remaining4 = argparse.parse(
-    { "-opener=split", "-reuse", "claude" },
+    { "-opener=split", "-focus", "claude" },
     { known_options = known_options }
   )
   eq(options4.opener, "split")
-  eq(options4.reuse, true)
+  eq(options4.focus, true)
   eq(#remaining4, 1)
   eq(remaining4[1], "claude")
 end

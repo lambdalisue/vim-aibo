@@ -143,8 +143,8 @@ To close the session, use `:bdelete!` or `:bwipeout!` on the console buffer.
 " Toggle visibility of existing console
 :Aibo -toggle claude
 
-" Reuse existing console or open new one
-:Aibo -reuse claude
+" Focus on existing console or open new one
+:Aibo -focus claude
 ```
 
 > [!TIP]

@@ -333,12 +333,12 @@ COMMANDS					*aibo-commands*
 				- If console exists but hidden: show it
 				- If console doesn't exist: create it
 
-	-reuse			Reuse existing console or create new:
+	-focus			Focus on existing console or create new:
 				- If console exists: focus it
 				- If console doesn't exist: create it
 				Always focuses the console window.
 
-	Note: -toggle and -reuse are mutually exclusive.
+	Note: -toggle and -focus are mutually exclusive.
 	      Options with values support quoted strings for including spaces.
 
 	Examples:
@@ -363,7 +363,7 @@ COMMANDS					*aibo-commands*
 		:Aibo -opener=vsplit python -i
 		:Aibo -stay psql mydatabase
 		:Aibo -toggle claude
-		:Aibo -reuse node --interactive
+		:Aibo -focus node --interactive
 
 		" Dynamic window sizing with Vim script expressions
 		:Aibo -opener="<C-r>=&columns * 2 / 3<CR>vsplit" claude

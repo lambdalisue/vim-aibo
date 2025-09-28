@@ -135,7 +135,7 @@ end
 T["Call function with valid tool"] = function()
   local aibo_cmd = require("aibo.command.aibo")
 
-  -- Mock console_window.open (default behavior without toggle/reuse)
+  -- Mock console_window.open (default behavior without toggle/focus)
   local console_window = require("aibo.internal.console_window")
   local original_open = console_window.open
   local called_with = nil
@@ -188,8 +188,8 @@ T["Call function with options"] = function()
   toggle_called = false
   focus_called = false
 
-  -- Call with reuse option
-  aibo_cmd.call({ "codex" }, { reuse = true })
+  -- Call with focus option
+  aibo_cmd.call({ "codex" }, { focus = true })
   eq(focus_called, true)
   eq(toggle_called, false)
 
@@ -259,7 +259,7 @@ T["Opener option completion"] = function()
   eq(vim.tbl_contains(completions, "-opener=topleft\\ vsplit"), true)
 end
 
--- Test other options completion (-stay, -toggle, -reuse)
+-- Test other options completion (-stay, -toggle, -focus)
 T["Other options completion"] = function()
   local complete_fn = require("aibo.command.aibo")._internal.complete
 
@@ -267,7 +267,7 @@ T["Other options completion"] = function()
   local completions = complete_fn("-", "Aibo -", 6)
   eq(vim.tbl_contains(completions, "-stay"), true)
   eq(vim.tbl_contains(completions, "-toggle"), true)
-  eq(vim.tbl_contains(completions, "-reuse"), true)
+  eq(vim.tbl_contains(completions, "-focus"), true)
   eq(vim.tbl_contains(completions, "-opener="), true)
 
   -- Test partial option completion
@@ -279,8 +279,8 @@ T["Other options completion"] = function()
   eq(vim.tbl_contains(completions, "-toggle"), true)
   eq(vim.tbl_contains(completions, "-stay"), false)
 
-  completions = complete_fn("-r", "Aibo -r", 7)
-  eq(vim.tbl_contains(completions, "-reuse"), true)
+  completions = complete_fn("-f", "Aibo -f", 7)
+  eq(vim.tbl_contains(completions, "-focus"), true)
   eq(vim.tbl_contains(completions, "-stay"), false)
 end
 
@@ -325,13 +325,13 @@ T["Call function with mutually exclusive options"] = function()
   local original_notify = vim.notify
   local warning_shown = false
   vim.notify = function(msg, level, opts)
-    if msg:find("toggle and %-reuse cannot be used together") then
+    if msg:find("toggle and %-focus cannot be used together") then
       warning_shown = true
     end
   end
 
-  -- Call with both toggle and reuse (should warn and return)
-  aibo_cmd.call({ "claude" }, { toggle = true, reuse = true })
+  -- Call with both toggle and focus (should warn and return)
+  aibo_cmd.call({ "claude" }, { toggle = true, focus = true })
 
   eq(warning_shown, true)
 
@@ -460,11 +460,11 @@ T["Call function with all valid options"] = function()
     set_win_called_with = winid
   end
 
-  -- Call with opener, stay, and reuse options (valid combination)
+  -- Call with opener, stay, and focus options (valid combination)
   aibo_cmd.call({ "claude", "--model", "opus" }, {
     opener = "tabedit",
     stay = true,
-    reuse = true,
+    focus = true,
   })
 
   -- Verify correct function was called with correct options
