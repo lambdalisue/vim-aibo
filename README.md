@@ -223,6 +223,7 @@ This is particularly useful for sending code snippets, error messages, or other 
 require('aibo').setup({
   submit_delay = 100,         -- Delay in milliseconds (default: 100)
   prompt_height = 10,         -- Prompt window height (default: 10)
+  termcode_mode = 'hybrid',   -- Terminal escape sequence mode: 'hybrid', 'xterm', or 'csi-n' (default: 'hybrid')
 })
 ```
 
@@ -503,9 +504,9 @@ require('aibo').setup({
 
 ### Sending Keys to Terminal
 
-When creating custom mappings that send keys to the terminal, **you must use `termcode.resolve()` instead of `vim.api.nvim_replace_termcodes()`**.
+When creating custom mappings that send keys to the terminal, **you must use `aibo.resolve()` instead of `vim.api.nvim_replace_termcodes()`**.
 
-The built-in `nvim_replace_termcodes()` returns Neovim's internal key representations (e.g., `\x80\x6B\x75` for `<Up>`), which terminal programs cannot understand. The `termcode.resolve()` function converts Vim key notation to actual ANSI escape sequences (e.g., `\27[A` for `<Up>`) that terminals expect.
+The built-in `nvim_replace_termcodes()` returns Neovim's internal key representations (e.g., `\x80\x6B\x75` for `<Up>`), which terminal programs cannot understand. The `aibo.resolve()` function converts Vim key notation to actual ANSI escape sequences (e.g., `\27[A` for `<Up>`) that terminals expect.
 
 #### Correct Usage
 
@@ -514,17 +515,17 @@ local aibo = require('aibo')
 
 -- Send navigation keys
 vim.keymap.set('n', '<leader>au', function()
-  aibo.send(aibo.termcode.resolve('<Up>'), bufnr)
+  aibo.send(aibo.resolve('<Up>'), bufnr)
 end, { buffer = bufnr, desc = 'Send Up arrow' })
 
 -- Send control sequences
 vim.keymap.set('n', '<leader>ac', function()
-  aibo.send(aibo.termcode.resolve('<C-c>'), bufnr)
+  aibo.send(aibo.resolve('<C-c>'), bufnr)
 end, { buffer = bufnr, desc = 'Interrupt process' })
 
 -- Send multiple keys
 vim.keymap.set('n', '<leader>ah', function()
-  local keys = aibo.termcode.resolve('<Home><S-End>')
+  local keys = aibo.resolve('<Home><S-End>')
   aibo.send(keys, bufnr)
 end, { buffer = bufnr, desc = 'Select to end of line' })
 ```
@@ -547,6 +548,16 @@ end, { buffer = bufnr })
 - **Control**: `<C-a>`, `<C-c>`, `<C-l>`, etc.
 - **Modified**: `<S-Tab>`, `<C-Left>`, `<A-Up>`, `<C-S-F5>`, etc.
 - **Special**: `<CR>`, `<Tab>`, `<Esc>`, `<Space>`, `<BS>`
+
+#### Terminal Compatibility Modes
+
+The `termcode_mode` configuration controls how modified control characters are encoded:
+
+- **`hybrid`** (default): Uses traditional xterm sequences where widely supported (e.g., `\27[Z` for `<S-Tab>`), falls back to modern CSI sequences for others
+- **`xterm`**: Strictly uses traditional xterm sequences, returns `nil` for unsupported combinations
+- **`csi-n`**: Consistently uses modern CSI n;mu format (e.g., `\27[9;2u` for `<S-Tab>`)
+
+Most users should use the default `hybrid` mode. Use `xterm` for older terminals or `csi-n` for modern terminals with full modifier support.
 
 
 ## License
