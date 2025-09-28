@@ -9,7 +9,7 @@ local OPTS_CSI_N = { mode = "csi-n" }
 
 -- Test basic key resolution
 T["resolves basic navigation keys"] = function()
-  local termcode = require("aibo.termcode")
+  local termcode = require("aibo.internal.termcode")
 
   -- Arrow keys
   eq(termcode.resolve("<Up>"), "\27[A")
@@ -34,7 +34,7 @@ end
 
 -- Test control characters
 T["resolves control characters"] = function()
-  local termcode = require("aibo.termcode")
+  local termcode = require("aibo.internal.termcode")
 
   eq(termcode.resolve("<CR>"), "\13")
   eq(termcode.resolve("<Enter>"), "\13")
@@ -52,7 +52,7 @@ end
 
 -- Test control characters with modifiers (hybrid mode - default)
 T["resolves control characters with modifier - hybrid mode"] = function()
-  local termcode = require("aibo.termcode")
+  local termcode = require("aibo.internal.termcode")
 
   -- Control+key combinations (hybrid uses xterm where available, csi-n for others)
   eq(termcode.resolve("<C-CR>"), "\27[13;5u") -- CSI 13;5u (no xterm equivalent)
@@ -81,7 +81,7 @@ end
 
 -- Test control characters with modifiers (xterm mode)
 T["resolves control characters with modifier - xterm mode"] = function()
-  local termcode = require("aibo.termcode")
+  local termcode = require("aibo.internal.termcode")
 
   -- Control+key combinations
   eq(termcode.resolve("<C-CR>", OPTS_XTERM), nil) -- Not representable in xterm
@@ -110,7 +110,7 @@ end
 
 -- Test control characters with modifiers (csi-n mode)
 T["resolves control characters with modifier - csi-n mode"] = function()
-  local termcode = require("aibo.termcode")
+  local termcode = require("aibo.internal.termcode")
 
   -- Control+key combinations
   eq(termcode.resolve("<C-CR>", OPTS_CSI_N), "\27[13;5u") -- CSI 13;5u
@@ -139,7 +139,7 @@ end
 
 -- Test Ctrl combinations
 T["resolves Ctrl+letter combinations"] = function()
-  local termcode = require("aibo.termcode")
+  local termcode = require("aibo.internal.termcode")
 
   -- Ctrl+A through Ctrl+Z
   eq(termcode.resolve("<C-A>"), "\1")
@@ -160,7 +160,7 @@ end
 
 -- Test modified keys
 T["resolves modified navigation keys"] = function()
-  local termcode = require("aibo.termcode")
+  local termcode = require("aibo.internal.termcode")
 
   -- Shift combinations
   eq(termcode.resolve("<S-Up>"), "\27[1;2A")
@@ -188,7 +188,7 @@ end
 
 -- Test function keys
 T["resolves function keys"] = function()
-  local termcode = require("aibo.termcode")
+  local termcode = require("aibo.internal.termcode")
 
   -- Basic function keys
   eq(termcode.resolve("<F1>"), "\27OP")
@@ -217,7 +217,7 @@ end
 
 -- Test multiple keys
 T["resolves multiple key sequences"] = function()
-  local termcode = require("aibo.termcode")
+  local termcode = require("aibo.internal.termcode")
 
   eq(termcode.resolve("<Up><Down>"), "\27[A\27[B")
   eq(termcode.resolve("<C-A><C-B>"), "\1\2")
@@ -235,7 +235,7 @@ end
 
 -- Test literal text
 T["handles literal text"] = function()
-  local termcode = require("aibo.termcode")
+  local termcode = require("aibo.internal.termcode")
 
   eq(termcode.resolve("hello"), "hello")
   eq(termcode.resolve("123"), "123")
@@ -250,7 +250,7 @@ end
 
 -- Test edge cases
 T["handles edge cases"] = function()
-  local termcode = require("aibo.termcode")
+  local termcode = require("aibo.internal.termcode")
 
   -- Empty input
   eq(termcode.resolve(""), nil)
@@ -280,7 +280,7 @@ end
 
 -- Test case sensitivity
 T["handles case variations"] = function()
-  local termcode = require("aibo.termcode")
+  local termcode = require("aibo.internal.termcode")
 
   -- Keys are case-insensitive
   eq(termcode.resolve("<up>"), "\27[A")

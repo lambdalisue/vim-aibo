@@ -275,7 +275,7 @@ end
 ---   })
 function M.open(cmd, args, options)
   local aibo = require("aibo")
-  local integration = require("aibo.integration")
+  local integration = require("aibo.internal.integration")
   local prompt = require("aibo.internal.prompt_window")
 
   args = args or {}
@@ -557,7 +557,7 @@ end
 --- @see aibo.get_config() for submit_key and submit_delay configuration
 function M.submit(bufnr, input)
   local aibo = require("aibo")
-  local termcode = require("aibo.termcode")
+  local termcode = require("aibo.internal.termcode")
 
   local config = aibo.get_config()
   local submit_key = termcode.resolve(config.submit_key) or "\r"

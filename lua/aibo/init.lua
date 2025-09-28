@@ -116,7 +116,7 @@ end
 ---@param input string Key notation like "<Up>", "<C-A>", "<S-F5>", "<Up><Down>"
 ---@return string|nil Terminal escape sequence, or nil if unable to resolve
 function M.resolve(input)
-  local termcode = require("aibo.termcode")
+  local termcode = require("aibo.internal.termcode")
   return termcode.resolve(input, { mode = config.termcode_mode })
 end
 

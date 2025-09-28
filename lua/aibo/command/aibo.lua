@@ -22,7 +22,7 @@ local OPENERS = {
 --- @return string[] List of completions
 local function complete(arglead, cmdline, cursorpos)
   local argparse = require("aibo.internal.argparse")
-  local integration = require("aibo.integration")
+  local integration = require("aibo.internal.integration")
   local known_options = {
     opener = true, -- -opener=value
     stay = false, -- -stay flag

@@ -286,7 +286,7 @@ end
 ---   })
 function M.open(console_winid, options)
   local aibo = require("aibo")
-  local integration = require("aibo.integration")
+  local integration = require("aibo.internal.integration")
   local console = require("aibo.internal.console_window")
 
   local console_info = console.get_info_by_winid(console_winid)

@@ -101,7 +101,7 @@ function M.check()
     error = error,
     info = info,
   }
-  local integration = require("aibo.integration")
+  local integration = require("aibo.internal.integration")
   for _, tool in ipairs(integration.available_integrations()) do
     integration.check_health(tool, report)
   end
@@ -192,7 +192,7 @@ function M.check()
 
   local core_modules = {
     { name = "aibo", desc = "Main module" },
-    { name = "aibo.termcode", desc = "Termcode module" },
+    { name = "aibo.internal.termcode", desc = "Termcode module" },
     { name = "aibo.command.aibo", desc = ":Aibo command" },
     { name = "aibo.command.aibo_send", desc = ":AiboSend command" },
   }
