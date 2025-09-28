@@ -101,7 +101,7 @@ local function setup_mappings(bufnr)
     local winid = vim.api.nvim_get_current_win()
     local info = M.get_info_by_winid(winid)
     if info and info.console_info then
-      local code = aibo.termcode.resolve(key)
+      local code = aibo.resolve(key)
       console.send(info.console_info.bufnr, code)
     end
   end
@@ -286,7 +286,7 @@ end
 ---   })
 function M.open(console_winid, options)
   local aibo = require("aibo")
-  local integration = require("aibo.integration")
+  local integration = require("aibo.internal.integration")
   local console = require("aibo.internal.console_window")
 
   local console_info = console.get_info_by_winid(console_winid)

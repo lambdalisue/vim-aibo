@@ -124,6 +124,7 @@ The setup function can be called multiple times to update configuration:
 	require('aibo').setup({
 	  submit_delay = 100,    -- Delay before submit in ms (default: 100)
 	  prompt_height = 10,    -- Height of prompt window (default: 10)
+	  termcode_mode = 'hybrid', -- Terminal escape sequence mode (default: 'hybrid')
 	})
 
 	-- Can be called again later to update configuration
@@ -559,6 +560,29 @@ aibo.get_buffer_config({buftype})
 	Returns:~
 		Buffer type configuration table
 
+						*aibo.resolve()*
+aibo.resolve({input})
+	Resolve Vim-style key notation to terminal escape sequences using the
+	configured termcode_mode. This function converts key notations like
+	"<Up>", "<C-A>", "<S-F5>" to their ANSI escape sequences.
+>
+		local seq = require('aibo').resolve('<S-Tab>')
+		-- Returns "\27[Z" in hybrid mode (default)
+<
+	Parameters:~
+		{input}  String containing Vim key notation
+
+	Returns:~
+		String containing terminal escape sequence, or nil if unable
+		to resolve
+
+	The behavior depends on the termcode_mode configuration:
+	- 'hybrid' (default): Uses xterm sequences where supported,
+	  falls back to CSI sequences for others
+	- 'xterm': Strictly uses traditional xterm sequences, returns
+	  nil for unsupported combinations
+	- 'csi-n': Consistently uses modern CSI n;mu format
+
 -----------------------------------------------------------------------------
 KEY MAPPINGS					*aibo-key-mappings*
 
@@ -670,19 +694,19 @@ Example usage:
 CUSTOM MAPPINGS					*aibo-custom-mappings*
 
 When creating custom mappings that send keys to the terminal, you MUST use
-`aibo.termcode.resolve()` instead of `vim.api.nvim_replace_termcodes()`.
+`aibo.resolve()` instead of `vim.api.nvim_replace_termcodes()`.
 
-						*aibo-termcode*
-Why use aibo.termcode.resolve()~
+						*aibo-resolve*
+Why use aibo.resolve()~
 
 The built-in `nvim_replace_termcodes()` returns Neovim's internal key
 representations, which terminal programs cannot understand. The
-`aibo.termcode.resolve()` function converts Vim key notation to actual ANSI
+`aibo.resolve()` function converts Vim key notation to actual ANSI
 escape sequences that terminals expect.
 
 Example difference:
 - nvim_replace_termcodes("<Up>") returns "\x80\x6B\x75" (internal code)
-- aibo.termcode.resolve("<Up>") returns "\27[A" (ANSI escape sequence)
+- aibo.resolve("<Up>") returns "\27[A" (ANSI escape sequence)
 
 						*aibo-custom-mapping-example*
 Creating custom key mappings~
@@ -692,17 +716,17 @@ Creating custom key mappings~
 
 	-- Send navigation keys to terminal
 	vim.keymap.set('n', '<leader>au', function()
-	  aibo.send(aibo.termcode.resolve("<Up>"), bufnr)
+	  aibo.send(aibo.resolve("<Up>"), bufnr)
 	end, { buffer = bufnr, desc = "Send Up arrow" })
 
 	-- Send control sequences
 	vim.keymap.set('n', '<leader>ac', function()
-	  aibo.send(aibo.termcode.resolve("<C-c>"), bufnr)
+	  aibo.send(aibo.resolve("<C-c>"), bufnr)
 	end, { buffer = bufnr, desc = "Interrupt process" })
 
 	-- Send multiple keys
 	vim.keymap.set('n', '<leader>ah', function()
-	  local keys = aibo.termcode.resolve("<Home><S-End>")
+	  local keys = aibo.resolve("<Home><S-End>")
 	  aibo.send(keys, bufnr)
 	end, { buffer = bufnr, desc = "Select to end of line" })
 <
@@ -714,6 +738,22 @@ Supported key formats:
 - Control: <C-a>, <C-c>, <C-l>, etc.
 - Modified: <S-Tab>, <C-Left>, <A-Up>, <C-S-F5>, etc.
 - Special: <CR>, <Tab>, <Esc>, <Space>, <BS>
+
+						*aibo-termcode-mode*
+Terminal Compatibility Modes~
+
+The termcode_mode configuration controls how modified control characters
+are encoded when using aibo.resolve():
+
+- 'hybrid' (default): Uses traditional xterm sequences where widely
+  supported (e.g., \27[Z for <S-Tab>), falls back to modern CSI
+  sequences for others. Recommended for most users.
+
+- 'xterm': Strictly uses traditional xterm sequences, returns nil for
+  unsupported combinations. Use for older terminals.
+
+- 'csi-n': Consistently uses modern CSI n;mu format (e.g., \27[9;2u
+  for <S-Tab>). Use for modern terminals with full modifier support.
 
 =============================================================================
 HEALTH CHECK					*aibo-health*

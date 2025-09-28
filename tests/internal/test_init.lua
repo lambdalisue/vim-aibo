@@ -175,38 +175,59 @@ T["configuration merging"] = function()
   eq(config.tools.codex.new_option, "value3") -- From second setup
 end
 
--- Test termcode export
-T["termcode module is exported"] = function()
+-- Test termcode_mode configuration
+T["termcode_mode configuration"] = function()
+  -- Force reload to get clean state
+  package.loaded["aibo"] = nil
   local aibo = require("aibo")
 
-  -- Check that termcode is exposed
-  eq(type(aibo.termcode), "table")
-  eq(type(aibo.termcode.resolve), "function")
+  -- Test default termcode_mode
+  aibo.setup()
+  local config = aibo.get_config()
+  eq(config.termcode_mode, "hybrid")
 
-  -- Basic functionality test
-  local result = aibo.termcode.resolve("<C-w>")
-  eq(type(result), "string")
+  -- Test setting xterm mode
+  aibo.setup({
+    termcode_mode = "xterm",
+  })
+  config = aibo.get_config()
+  eq(config.termcode_mode, "xterm")
+
+  -- Test setting csi-n mode
+  aibo.setup({
+    termcode_mode = "csi-n",
+  })
+  config = aibo.get_config()
+  eq(config.termcode_mode, "csi-n")
 end
 
--- Test integration export
-T["integration module is exported"] = function()
+-- Test aibo.resolve function
+T["resolve function with termcode_mode"] = function()
+  -- Force reload to get clean state
+  package.loaded["aibo"] = nil
   local aibo = require("aibo")
 
-  -- Check that integration is exposed
-  eq(type(aibo.integration), "table")
+  -- Test with default hybrid mode
+  aibo.setup()
+  eq(aibo.resolve("<S-Tab>"), "\27[Z") -- xterm sequence
+  eq(aibo.resolve("<C-Space>"), "\0") -- xterm sequence
+  eq(aibo.resolve("<C-CR>"), "\27[13;5u") -- csi-n sequence (no xterm equivalent)
 
-  -- Check that integration provides the expected API
-  eq(type(aibo.integration.get_module), "function")
-  eq(type(aibo.integration.available_integrations), "function")
-  eq(type(aibo.integration.is_available), "function")
-  eq(type(aibo.integration.check_health), "function")
+  -- Test with xterm mode
+  aibo.setup({
+    termcode_mode = "xterm",
+  })
+  eq(aibo.resolve("<S-Tab>"), "\27[Z") -- xterm sequence
+  eq(aibo.resolve("<C-Space>"), "\0") -- xterm sequence
+  eq(aibo.resolve("<C-CR>"), nil) -- not representable in xterm
 
-  -- Check that available_integrations returns expected tools
-  local integrations = aibo.integration.available_integrations()
-  eq(type(integrations), "table")
-  eq(vim.tbl_contains(integrations, "claude"), true)
-  eq(vim.tbl_contains(integrations, "codex"), true)
-  eq(vim.tbl_contains(integrations, "ollama"), true)
+  -- Test with csi-n mode
+  aibo.setup({
+    termcode_mode = "csi-n",
+  })
+  eq(aibo.resolve("<S-Tab>"), "\27[9;2u") -- csi-n sequence
+  eq(aibo.resolve("<C-Space>"), "\27[32;5u") -- csi-n sequence
+  eq(aibo.resolve("<C-CR>"), "\27[13;5u") -- csi-n sequence
 end
 
 return T

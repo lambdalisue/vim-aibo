@@ -58,7 +58,9 @@ lua/aibo/
 ├── internal/                  # Internal utilities
 │   ├── argparse.lua          # Command argument parsing
 │   ├── console_window.lua    # Console window management
+│   ├── integration.lua       # Integration module loader
 │   ├── prompt_window.lua     # Prompt window management
+│   ├── termcode.lua          # Terminal escape sequences
 │   └── timing.lua            # Debounce and throttle utilities
 ├── health.lua                # Health check implementation
 └── init.lua                  # Main module entry point
@@ -256,6 +258,7 @@ local aibo = require('aibo')
 aibo.setup({
   submit_delay = 150,
   prompt_height = 10,
+  termcode_mode = 'hybrid',  -- 'hybrid', 'xterm', or 'csi-n'
   -- ... other configuration
 })
 
@@ -268,6 +271,11 @@ aibo.send(data, bufnr)
 ---@param text string Text to submit
 ---@param bufnr number Buffer number
 aibo.submit(text, bufnr)
+
+-- Resolve Vim key notation to terminal escape sequences
+---@param input string Key notation like "<Up>", "<C-A>", "<S-F5>"
+---@return string|nil Terminal escape sequence
+local seq = aibo.resolve(input)
 
 -- Get current configuration
 ---@return table config

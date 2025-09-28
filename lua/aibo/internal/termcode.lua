@@ -111,8 +111,48 @@ local function parse_key(str)
   return mod_str, key:lower()
 end
 
+-- Lookup table for ASCII codes of control characters
+local CHAR_CODES = {
+  cr = 13,
+  enter = 13,
+  ["return"] = 13,
+  tab = 9,
+  esc = 27,
+  escape = 27,
+  space = 32,
+  bs = 127,
+  backspace = 127,
+}
+
+--- Get ASCII code for control characters
+local function get_char_code(key)
+  return CHAR_CODES[key]
+end
+
+--- Get xterm sequence for specific key combinations
+local function get_xterm_sequence(mod, key)
+  if mod == "S" and key == "tab" then
+    return "\27[Z" -- S-Tab
+  elseif mod == "C" and key == "space" then
+    return "\0" -- C-Space
+  elseif mod == "C" and (key == "bs" or key == "backspace") then
+    return "\8" -- C-BS
+  end
+  return nil
+end
+
+--- Get CSI n;mu sequence for modified control characters
+local function get_csi_n_sequence(mod, key)
+  local char_code = get_char_code(key)
+  if char_code then
+    local mod_code = modifiers[mod] or 0
+    return string.format("\27[%d;%du", char_code, mod_code)
+  end
+  return nil
+end
+
 --- Build escape sequence for a key with optional modifiers
-local function build_sequence(key, mod)
+local function build_sequence(key, mod, mode)
   -- Handle Ctrl+letter (produces control characters directly)
   if mod == "C" and #key == 1 then
     local byte = string.byte(key)
@@ -132,7 +172,21 @@ local function build_sequence(key, mod)
   -- Get modifier code
   local mod_code = modifiers[mod] or 0
 
-  -- Build sequence based on type
+  -- Handle control characters with modifiers based on mode
+  if def.type == "char" and mod ~= "" then
+    if mode == "xterm" then
+      -- Special xterm sequences
+      return get_xterm_sequence(mod, key) -- nil if not representable in xterm
+    elseif mode == "csi-n" then
+      -- CSI n;mu format for all modified control characters
+      return get_csi_n_sequence(mod, key)
+    else -- hybrid mode (default)
+      -- Use xterm sequences where available, CSI n;mu for others
+      return get_xterm_sequence(mod, key) or get_csi_n_sequence(mod, key)
+    end
+  end
+
+  -- Build sequence based on type (for non-control characters)
   if def.type == "char" then
     -- Direct character - no escape sequence
     return def.char
@@ -164,11 +218,16 @@ end
 
 --- Resolve Vim-style key notation to terminal escape sequences
 --- @param input string Key notation like "<Up>", "<C-A>", "<S-F5>", "<Up><Down>"
+--- @param opts table|nil Options table with optional mode field ("hybrid", "xterm", "csi-n")
 --- @return string|nil Terminal escape sequence, or nil if unable to resolve
-function M.resolve(input)
+function M.resolve(input, opts)
+  opts = opts or {}
+
   if not input or input == "" then
     return nil
   end
+
+  local mode = opts.mode or "hybrid"
 
   local result = {}
   local i = 1
@@ -185,7 +244,7 @@ function M.resolve(input)
         local mod_str, key = parse_key(key_str)
 
         -- Build escape sequence
-        local seq = build_sequence(key, mod_str)
+        local seq = build_sequence(key, mod_str, mode)
         if seq then
           table.insert(result, seq)
         elseif #key == 1 then
