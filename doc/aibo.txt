@@ -123,6 +123,7 @@ The setup function can be called multiple times to update configuration:
 >
 	require('aibo').setup({
 	  submit_delay = 100,    -- Delay before submit in ms (default: 100)
+	  submit_key = '<CR>',   -- Key to send after submit (default: '<CR>')
 	  prompt_height = 10,    -- Height of prompt window (default: 10)
 	  termcode_mode = 'hybrid', -- Terminal escape sequence mode (default: 'hybrid')
 	})
@@ -157,6 +158,9 @@ Full configuration structure:
 	    on_attach = function(bufnr, info)
 	      -- Called when console buffer is created
 	      -- info.type = "console"
+	      -- info.cmd = command being executed
+	      -- info.args = command arguments
+	      -- info.job_id = terminal job ID
 	    end,
 	  },
 

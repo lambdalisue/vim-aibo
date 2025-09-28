@@ -119,7 +119,9 @@ This opens a terminal console running the interactive CLI tool with a prompt buf
 > - Example: `-opener="botright split"` or `-prefix='Question: '`
 
 > [!WARNING]
+>
 > **Key mapping difference:** To prevent unintended interrupts from the Vimmer's habit of hitting `<Esc>` repeatedly, `<Esc>` is NOT mapped in Aibo buffers. Instead:
+>
 > - Use `<C-c>` to send `<Esc>` to the AI tool (works in both normal and insert mode)
 > - Use `g<C-c>` to send the interrupt signal (original `<C-c>` behavior, normal mode only)
 
@@ -148,16 +150,28 @@ To close the session, use `:bdelete!` or `:bwipeout!` on the console buffer.
 ```
 
 > [!TIP]
-> You can use `<C-r>=` to dynamically calculate window sizes based on your terminal dimensions. This allows you to create proportional splits instead of fixed sizes:
+> While Aibo provides predefined `-opener` completions, you can use any valid Vim window command. To dynamically size windows based on your terminal dimensions, use Neovim's [`<C-r>=`](https://neovim.io/doc/user/cmdline.html#c_CTRL-R_%3D) expression register:
+>
 > ```vim
-> " Create a vertical split with 2/3 of the window width
 > :Aibo -opener="<C-r>=&columns * 2 / 3<CR>vsplit" claude
+> ```
 >
-> " Create a horizontal split with 1/2 of the window height
-> :Aibo -opener="<C-r>=&lines / 2<CR>split" codex
+> For better usability, we recommend defining custom commands or mappings:
 >
-> " Create a bottom split with 1/3 of the window height
-> :Aibo -opener="botright <C-r>=&lines / 3<CR>split" ollama run llama3
+> ```lua
+> -- Custom command for Claude with proportional window
+> vim.api.nvim_create_user_command('Claude', function(opts)
+>   local width = math.floor(vim.o.columns * 2 / 3)
+>   vim.cmd(string.format('Aibo -opener="%dvsplit" claude %s', width, opts.args))
+> end, { nargs = '*' })
+> ```
+>
+> ```lua
+> -- Key mapping for quick access with dynamic sizing
+> vim.keymap.set('n', '<leader>ai', function()
+>   local width = math.floor(vim.o.columns * 2 / 3)
+>   vim.cmd(string.format('Aibo -opener="%dvsplit" claude', width))
+> end, { desc = 'Open Claude AI assistant' })
 > ```
 
 ### Intelligent Command Completion
@@ -222,6 +236,7 @@ This is particularly useful for sending code snippets, error messages, or other 
 ```lua
 require('aibo').setup({
   submit_delay = 100,         -- Delay in milliseconds (default: 100)
+  submit_key = '<CR>',        -- Key to send after submit (default: '<CR>')
   prompt_height = 10,         -- Prompt window height (default: 10)
   termcode_mode = 'hybrid',   -- Terminal escape sequence mode: 'hybrid', 'xterm', or 'csi-n' (default: 'hybrid')
 })
@@ -252,6 +267,9 @@ require('aibo').setup({
     on_attach = function(bufnr, info)
       -- Custom setup for console buffers
       -- info.type = "console"
+      -- info.cmd = command being executed
+      -- info.args = command arguments
+      -- info.job_id = terminal job ID
     end,
   },
 
@@ -348,16 +366,16 @@ require('aibo').setup({
 
 ### Console Buffer
 
-| Key       | Action                          |
-| --------- | ------------------------------- |
-| `<CR>`    | Submit empty line               |
-| `<C-c>`   | Send ESC to terminal            |
-| `g<C-c>`  | Send interrupt signal           |
-| `<C-l>`   | Clear terminal                  |
-| `<C-n>`   | Navigate to next in history     |
-| `<C-p>`   | Navigate to previous in history |
-| `<Down>`  | Send down arrow                 |
-| `<Up>`    | Send up arrow                   |
+| Key      | Action                          |
+| -------- | ------------------------------- |
+| `<CR>`   | Submit empty line               |
+| `<C-c>`  | Send ESC to terminal            |
+| `g<C-c>` | Send interrupt signal           |
+| `<C-l>`  | Clear terminal                  |
+| `<C-n>`  | Navigate to next in history     |
+| `<C-p>`  | Navigate to previous in history |
+| `<Down>` | Send down arrow                 |
+| `<Up>`   | Send up arrow                   |
 
 ### Prompt Buffer
 
@@ -373,16 +391,16 @@ Plus all console buffer mappings.
 
 ### Tool-Specific (Claude)
 
-| Key                       | Action                   |
-| ------------------------- | ------------------------ |
-| `<S-Tab>`\* / `<F2>`      | Switch mode              |
-| `<C-o>`                   | Toggle verbose           |
-| `<C-t>`                   | Show todo                |
-| `<C-_>` / `<C-->`         | Undo                     |
-| `<C-v>`                   | Paste                    |
-| `?`                       | Show shortcuts (n)       |
-| `!`                       | Enter bash mode (n)      |
-| `#`                       | Memorize context (n)     |
+| Key                  | Action               |
+| -------------------- | -------------------- |
+| `<S-Tab>`\* / `<F2>` | Switch mode          |
+| `<C-o>`              | Toggle verbose       |
+| `<C-t>`              | Show todo            |
+| `<C-_>` / `<C-->`    | Undo                 |
+| `<C-v>`              | Paste                |
+| `?`                  | Show shortcuts (n)   |
+| `!`                  | Enter bash mode (n)  |
+| `#`                  | Memorize context (n) |
 
 ### Tool-Specific (Codex)
 
@@ -414,17 +432,17 @@ vim.keymap.set('n', '<C-k>', '<Plug>(aibo-prompt-submit-close)', { buffer = bufn
 
 #### Prompt Buffer
 
-| <Plug> Mapping                     | Description       |
-| ---------------------------------- | ----------------- |
-| `<Plug>(aibo-prompt-submit)`       | Submit prompt     |
-| `<Plug>(aibo-prompt-submit-close)` | Submit and close  |
-| `<Plug>(aibo-prompt-esc)`          | Send ESC to tool  |
-| `<Plug>(aibo-prompt-interrupt)`    | Interrupt tool    |
-| `<Plug>(aibo-prompt-clear)`        | Clear screen      |
-| `<Plug>(aibo-prompt-next)`         | Next history      |
-| `<Plug>(aibo-prompt-prev)`         | Previous history  |
-| `<Plug>(aibo-prompt-down)`         | Move down         |
-| `<Plug>(aibo-prompt-up)`           | Move up           |
+| <Plug> Mapping                     | Description      |
+| ---------------------------------- | ---------------- |
+| `<Plug>(aibo-prompt-submit)`       | Submit prompt    |
+| `<Plug>(aibo-prompt-submit-close)` | Submit and close |
+| `<Plug>(aibo-prompt-esc)`          | Send ESC to tool |
+| `<Plug>(aibo-prompt-interrupt)`    | Interrupt tool   |
+| `<Plug>(aibo-prompt-clear)`        | Clear screen     |
+| `<Plug>(aibo-prompt-next)`         | Next history     |
+| `<Plug>(aibo-prompt-prev)`         | Previous history |
+| `<Plug>(aibo-prompt-down)`         | Move down        |
+| `<Plug>(aibo-prompt-up)`           | Move up          |
 
 #### Console Buffer
 
@@ -442,16 +460,16 @@ vim.keymap.set('n', '<C-k>', '<Plug>(aibo-prompt-submit-close)', { buffer = bufn
 
 #### Claude Tool
 
-| <Plug> Mapping                   | Description       |
-| -------------------------------- | ----------------- |
-| `<Plug>(aibo-claude-mode)`       | Toggle mode       |
-| `<Plug>(aibo-claude-verbose)`    | Toggle verbose    |
-| `<Plug>(aibo-claude-todo)`       | Show todo         |
-| `<Plug>(aibo-claude-undo)`       | Undo              |
-| `<Plug>(aibo-claude-paste)`      | Paste             |
-| `<Plug>(aibo-claude-shortcuts)`  | Show shortcuts    |
-| `<Plug>(aibo-claude-bash-mode)`  | Enter bash mode   |
-| `<Plug>(aibo-claude-memorize)`   | Memorize context  |
+| <Plug> Mapping                  | Description      |
+| ------------------------------- | ---------------- |
+| `<Plug>(aibo-claude-mode)`      | Toggle mode      |
+| `<Plug>(aibo-claude-verbose)`   | Toggle verbose   |
+| `<Plug>(aibo-claude-todo)`      | Show todo        |
+| `<Plug>(aibo-claude-undo)`      | Undo             |
+| `<Plug>(aibo-claude-paste)`     | Paste            |
+| `<Plug>(aibo-claude-shortcuts)` | Show shortcuts   |
+| `<Plug>(aibo-claude-bash-mode)` | Enter bash mode  |
+| `<Plug>(aibo-claude-memorize)`  | Memorize context |
 
 #### Codex Tool
 
@@ -559,7 +577,6 @@ The `termcode_mode` configuration controls how modified control characters are e
 
 Most users should use the default `hybrid` mode. Use `xterm` for older terminals or `csi-n` for modern terminals with full modifier support.
 
-
 ## License
 
 MIT License
@@ -575,6 +592,7 @@ We welcome contributions! Please see [CONTRIBUTING.md](CONTRIBUTING.md) for:
 - Code style guide
 
 For quick reference:
+
 1. Fork and clone the repository
 2. Create a feature branch
 3. Make your changes with tests
