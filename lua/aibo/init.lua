@@ -10,6 +10,7 @@ local M = {}
 ---@field tools? table<string, AiboBufferConfig> Tool-specific configurations
 ---@field submit_delay? integer Delay before submit in ms (default: 100)
 ---@field prompt_height? integer Height of prompt window (default: 10)
+---@field termcode_mode? string Terminal escape sequence mode: "hybrid", "xterm", or "csi-n" (default: "hybrid")
 
 ---@type AiboConfig
 local DEFAULTS = {
@@ -26,6 +27,7 @@ local DEFAULTS = {
   submit_key = "<CR>",
   submit_delay = 100,
   prompt_height = 10,
+  termcode_mode = "hybrid",
 }
 
 ---@type AiboConfig
@@ -108,6 +110,14 @@ function M.submit(data, bufnr)
   if console_info then
     console.submit(console_info.bufnr, data)
   end
+end
+
+---Resolve Vim-style key notation to terminal escape sequences using configured termcode_mode
+---@param input string Key notation like "<Up>", "<C-A>", "<S-F5>", "<Up><Down>"
+---@return string|nil Terminal escape sequence, or nil if unable to resolve
+function M.resolve(input)
+  local termcode = require("aibo.termcode")
+  return termcode.resolve(input, { mode = config.termcode_mode })
 end
 
 -- Expose termcode as part of the public API

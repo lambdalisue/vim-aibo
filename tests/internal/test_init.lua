@@ -188,6 +188,61 @@ T["termcode module is exported"] = function()
   eq(type(result), "string")
 end
 
+-- Test termcode_mode configuration
+T["termcode_mode configuration"] = function()
+  -- Force reload to get clean state
+  package.loaded["aibo"] = nil
+  local aibo = require("aibo")
+
+  -- Test default termcode_mode
+  aibo.setup()
+  local config = aibo.get_config()
+  eq(config.termcode_mode, "hybrid")
+
+  -- Test setting xterm mode
+  aibo.setup({
+    termcode_mode = "xterm",
+  })
+  config = aibo.get_config()
+  eq(config.termcode_mode, "xterm")
+
+  -- Test setting csi-n mode
+  aibo.setup({
+    termcode_mode = "csi-n",
+  })
+  config = aibo.get_config()
+  eq(config.termcode_mode, "csi-n")
+end
+
+-- Test aibo.resolve function
+T["resolve function with termcode_mode"] = function()
+  -- Force reload to get clean state
+  package.loaded["aibo"] = nil
+  local aibo = require("aibo")
+
+  -- Test with default hybrid mode
+  aibo.setup()
+  eq(aibo.resolve("<S-Tab>"), "\27[Z") -- xterm sequence
+  eq(aibo.resolve("<C-Space>"), "\0") -- xterm sequence
+  eq(aibo.resolve("<C-CR>"), "\27[13;5u") -- csi-n sequence (no xterm equivalent)
+
+  -- Test with xterm mode
+  aibo.setup({
+    termcode_mode = "xterm",
+  })
+  eq(aibo.resolve("<S-Tab>"), "\27[Z") -- xterm sequence
+  eq(aibo.resolve("<C-Space>"), "\0") -- xterm sequence
+  eq(aibo.resolve("<C-CR>"), nil) -- not representable in xterm
+
+  -- Test with csi-n mode
+  aibo.setup({
+    termcode_mode = "csi-n",
+  })
+  eq(aibo.resolve("<S-Tab>"), "\27[9;2u") -- csi-n sequence
+  eq(aibo.resolve("<C-Space>"), "\27[32;5u") -- csi-n sequence
+  eq(aibo.resolve("<C-CR>"), "\27[13;5u") -- csi-n sequence
+end
+
 -- Test integration export
 T["integration module is exported"] = function()
   local aibo = require("aibo")
