@@ -58,16 +58,16 @@ Directory layout:
 	│   ├── aibo.lua               # Main Aibo command
 	│   └── aibo_send.lua          # AiboSend command
 	├── integration/               # AI tool integrations
-	│   ├── init.lua              # Integration management
 	│   ├── claude.lua            # Claude integration
 	│   ├── codex.lua             # Codex integration
 	│   └── ollama.lua            # Ollama integration
 	├── internal/                  # Internal utilities
 	│   ├── argparse.lua          # Argument parsing
 	│   ├── console_window.lua    # Console window management
+	│   ├── integration.lua       # Integration module loader
 	│   ├── prompt_window.lua     # Prompt window management
-	│   ├── timing.lua            # Debounce and throttle utilities
-	│   └── argparse.lua          # Argument parsing (already listed above)
+	│   ├── termcode.lua          # Terminal escape sequences
+	│   └── timing.lua            # Debounce and throttle utilities
 	├── health.lua                # Health check
 	└── init.lua                  # Main entry point
 
@@ -227,6 +227,30 @@ Internal modules (not part of public API, may change):
 		Functions: ~
 		  - debounce(): Create debounced function
 		  - throttle(): Create throttled function
+
+`internal.termcode`				*aibo-dev-termcode*
+		Terminal escape sequence translation.
+
+		Functions: ~
+		  - resolve(input, opts): Convert Vim key notation to terminal
+		    escape sequences. Options support mode: 'hybrid', 'xterm',
+		    or 'csi-n'
+
+		IMPORTANT: Use aibo.resolve() instead of accessing this ~
+		module directly. This is an internal module that may change.
+
+`internal.integration`			*aibo-dev-integration*
+		Integration module management and loading.
+
+		Functions: ~
+		  - get_module(name): Load an integration module
+		  - available_integrations(): List available integrations
+		  - is_available(name): Check if integration exists
+		  - check_health(name, report): Run health check
+		  - get_command_completions(): Get tool completions
+
+		This module manages loading of tool-specific integrations
+		(claude, codex, ollama) from the integration/ directory.
 
 COMMAND MODULE API				*aibo-dev-api-command*
 

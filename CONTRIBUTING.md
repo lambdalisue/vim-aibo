@@ -58,7 +58,9 @@ lua/aibo/
 ├── internal/                  # Internal utilities
 │   ├── argparse.lua          # Command argument parsing
 │   ├── console_window.lua    # Console window management
+│   ├── integration.lua       # Integration module loader
 │   ├── prompt_window.lua     # Prompt window management
+│   ├── termcode.lua          # Terminal escape sequences
 │   └── timing.lua            # Debounce and throttle utilities
 ├── health.lua                # Health check implementation
 └── init.lua                  # Main module entry point
