@@ -278,7 +278,7 @@ function M.setup_mappings(bufnr)
   end
 
   local send = function(key)
-    local code = aibo.termcode.resolve(key)
+    local code = aibo.resolve(key)
     aibo.send(code, bufnr)
   end
 

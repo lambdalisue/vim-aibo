@@ -175,19 +175,6 @@ T["configuration merging"] = function()
   eq(config.tools.codex.new_option, "value3") -- From second setup
 end
 
--- Test termcode export
-T["termcode module is exported"] = function()
-  local aibo = require("aibo")
-
-  -- Check that termcode is exposed
-  eq(type(aibo.termcode), "table")
-  eq(type(aibo.termcode.resolve), "function")
-
-  -- Basic functionality test
-  local result = aibo.termcode.resolve("<C-w>")
-  eq(type(result), "string")
-end
-
 -- Test termcode_mode configuration
 T["termcode_mode configuration"] = function()
   -- Force reload to get clean state
@@ -241,27 +228,6 @@ T["resolve function with termcode_mode"] = function()
   eq(aibo.resolve("<S-Tab>"), "\27[9;2u") -- csi-n sequence
   eq(aibo.resolve("<C-Space>"), "\27[32;5u") -- csi-n sequence
   eq(aibo.resolve("<C-CR>"), "\27[13;5u") -- csi-n sequence
-end
-
--- Test integration export
-T["integration module is exported"] = function()
-  local aibo = require("aibo")
-
-  -- Check that integration is exposed
-  eq(type(aibo.integration), "table")
-
-  -- Check that integration provides the expected API
-  eq(type(aibo.integration.get_module), "function")
-  eq(type(aibo.integration.available_integrations), "function")
-  eq(type(aibo.integration.is_available), "function")
-  eq(type(aibo.integration.check_health), "function")
-
-  -- Check that available_integrations returns expected tools
-  local integrations = aibo.integration.available_integrations()
-  eq(type(integrations), "table")
-  eq(vim.tbl_contains(integrations, "claude"), true)
-  eq(vim.tbl_contains(integrations, "codex"), true)
-  eq(vim.tbl_contains(integrations, "ollama"), true)
 end
 
 return T

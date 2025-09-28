@@ -120,9 +120,4 @@ function M.resolve(input)
   return termcode.resolve(input, { mode = config.termcode_mode })
 end
 
--- Expose termcode as part of the public API
-M.termcode = require("aibo.termcode")
--- Expose integration as part of the public API
-M.integration = require("aibo.integration")
-
 return M

@@ -78,7 +78,7 @@ local function setup_mappings(bufnr)
     local winid = vim.api.nvim_get_current_win()
     local info = M.get_info_by_winid(winid)
     if info and info.bufnr then
-      local code = aibo.termcode.resolve(key)
+      local code = aibo.resolve(key)
       M.send(info.bufnr, code)
     end
   end
@@ -87,7 +87,7 @@ local function setup_mappings(bufnr)
     local winid = vim.api.nvim_get_current_win()
     local info = M.get_info_by_winid(winid)
     if info and info.bufnr then
-      local code = aibo.termcode.resolve(key)
+      local code = aibo.resolve(key)
       M.submit(info.bufnr, code)
     end
   end

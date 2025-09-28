@@ -101,8 +101,9 @@ function M.check()
     error = error,
     info = info,
   }
-  for _, tool in ipairs(aibo.integration.available_integrations()) do
-    aibo.integration.check_health(tool, report)
+  local integration = require("aibo.integration")
+  for _, tool in ipairs(integration.available_integrations()) do
+    integration.check_health(tool, report)
   end
 
   -- Check terminal features
