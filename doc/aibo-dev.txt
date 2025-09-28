@@ -124,6 +124,7 @@ Core module (`require("aibo")`):
 		Parameters: ~
 		  {opts}  (table) Configuration options
 		    - submit_delay (number): Delay in ms (default: 100)
+		    - submit_key (string): Key to send after submit (default: '<CR>')
 		    - prompt_height (number): Prompt window height (default: 10)
 		    - termcode_mode (string): Terminal escape sequence mode
 		      'hybrid', 'xterm', or 'csi-n' (default: 'hybrid')

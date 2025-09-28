@@ -123,6 +123,7 @@ The setup function can be called multiple times to update configuration:
 >
 	require('aibo').setup({
 	  submit_delay = 100,    -- Delay before submit in ms (default: 100)
+	  submit_key = '<CR>',   -- Key to send after submit (default: '<CR>')
 	  prompt_height = 10,    -- Height of prompt window (default: 10)
 	  termcode_mode = 'hybrid', -- Terminal escape sequence mode (default: 'hybrid')
 	})
@@ -157,6 +158,9 @@ Full configuration structure:
 	    on_attach = function(bufnr, info)
 	      -- Called when console buffer is created
 	      -- info.type = "console"
+	      -- info.cmd = command being executed
+	      -- info.args = command arguments
+	      -- info.job_id = terminal job ID
 	    end,
 	  },
 
@@ -333,12 +337,12 @@ COMMANDS					*aibo-commands*
 				- If console exists but hidden: show it
 				- If console doesn't exist: create it
 
-	-reuse			Reuse existing console or create new:
+	-focus			Focus on existing console or create new:
 				- If console exists: focus it
 				- If console doesn't exist: create it
 				Always focuses the console window.
 
-	Note: -toggle and -reuse are mutually exclusive.
+	Note: -toggle and -focus are mutually exclusive.
 	      Options with values support quoted strings for including spaces.
 
 	Examples:
@@ -363,7 +367,7 @@ COMMANDS					*aibo-commands*
 		:Aibo -opener=vsplit python -i
 		:Aibo -stay psql mydatabase
 		:Aibo -toggle claude
-		:Aibo -reuse node --interactive
+		:Aibo -focus node --interactive
 
 		" Dynamic window sizing with Vim script expressions
 		:Aibo -opener="<C-r>=&columns * 2 / 3<CR>vsplit" claude

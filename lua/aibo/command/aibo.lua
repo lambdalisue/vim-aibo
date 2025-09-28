@@ -27,7 +27,7 @@ local function complete(arglead, cmdline, cursorpos)
     opener = true, -- -opener=value
     stay = false, -- -stay flag
     toggle = false, -- -toggle flag
-    reuse = false, -- -reuse flag
+    focus = false, -- -focus flag
   }
 
   -- Parse command line to determine tool completion context first
@@ -136,11 +136,11 @@ function M.call(args, options)
   local opener = options.opener
   local stay = options.stay or false
   local toggle = options.toggle or false
-  local reuse = options.reuse or false
+  local focus = options.focus or false
 
   -- Validate mutually exclusive options
-  if toggle and reuse then
-    vim.notify("Error: -toggle and -reuse cannot be used together", vim.log.levels.WARN, { title = "Aibo" })
+  if toggle and focus then
+    vim.notify("Error: -toggle and -focus cannot be used together", vim.log.levels.WARN, { title = "Aibo" })
     return
   end
 
@@ -153,7 +153,7 @@ function M.call(args, options)
   }
   if toggle then
     console.toggle_or_open(cmd, cmd_args, console_options)
-  elseif reuse then
+  elseif focus then
     console.focus_or_open(cmd, cmd_args, console_options)
   else
     console.open(cmd, cmd_args, console_options)
@@ -170,7 +170,7 @@ function M.setup()
     local args = cmd_opts.fargs
     if #args == 0 then
       vim.notify(
-        "Usage: :Aibo [-opener=<opener>] [-stay] [-toggle|-reuse] <cmd> [args...]",
+        "Usage: :Aibo [-opener=<opener>] [-stay] [-toggle|-focus] <cmd> [args...]",
         vim.log.levels.INFO,
         { title = "Aibo" }
       )
@@ -184,7 +184,7 @@ function M.setup()
       opener = true, -- -opener=value
       stay = true, -- -stay
       toggle = true, -- -toggle
-      reuse = true, -- -reuse
+      focus = true, -- -focus
     }
     local options, remaining = argparse.parse(args, { known_options = known_options })
 
@@ -192,11 +192,11 @@ function M.setup()
     local opener = options.opener
     local stay = options.stay or false
     local toggle = options.toggle or false
-    local reuse = options.reuse or false
+    local focus = options.focus or false
 
     if opener == "" then
       vim.notify(
-        "Usage: :Aibo [-opener=<opener>] [-stay] [-toggle|-reuse] <cmd> [args...]\nExample: :Aibo -opener=vsplit -stay ollama run llama3.2",
+        "Usage: :Aibo [-opener=<opener>] [-stay] [-toggle|-focus] <cmd> [args...]\nExample: :Aibo -opener=vsplit -stay ollama run llama3.2",
         vim.log.levels.INFO,
         { title = "Aibo" }
       )
@@ -205,7 +205,7 @@ function M.setup()
 
     if #remaining == 0 then
       vim.notify(
-        "Usage: :Aibo [-opener=<opener>] [-stay] [-toggle|-reuse] <cmd> [args...]",
+        "Usage: :Aibo [-opener=<opener>] [-stay] [-toggle|-focus] <cmd> [args...]",
         vim.log.levels.INFO,
         { title = "Aibo" }
       )
@@ -217,7 +217,7 @@ function M.setup()
       opener = opener,
       stay = stay,
       toggle = toggle,
-      reuse = reuse,
+      focus = focus,
     })
   end, {
     nargs = "+",
