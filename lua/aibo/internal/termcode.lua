@@ -111,18 +111,42 @@ local function parse_key(str)
   return mod_str, key:lower()
 end
 
+-- Lookup table for ASCII codes of control characters
+local CHAR_CODES = {
+  cr = 13,
+  enter = 13,
+  ["return"] = 13,
+  tab = 9,
+  esc = 27,
+  escape = 27,
+  space = 32,
+  bs = 127,
+  backspace = 127,
+}
+
 --- Get ASCII code for control characters
 local function get_char_code(key)
-  if key == "cr" or key == "enter" or key == "return" then
-    return 13
-  elseif key == "tab" then
-    return 9
-  elseif key == "esc" or key == "escape" then
-    return 27
-  elseif key == "space" then
-    return 32
-  elseif key == "bs" or key == "backspace" then
-    return 127
+  return CHAR_CODES[key]
+end
+
+--- Get xterm sequence for specific key combinations
+local function get_xterm_sequence(mod, key)
+  if mod == "S" and key == "tab" then
+    return "\27[Z" -- S-Tab
+  elseif mod == "C" and key == "space" then
+    return "\0" -- C-Space
+  elseif mod == "C" and (key == "bs" or key == "backspace") then
+    return "\8" -- C-BS
+  end
+  return nil
+end
+
+--- Get CSI n;mu sequence for modified control characters
+local function get_csi_n_sequence(mod, key)
+  local char_code = get_char_code(key)
+  if char_code then
+    local mod_code = modifiers[mod] or 0
+    return string.format("\27[%d;%du", char_code, mod_code)
   end
   return nil
 end
@@ -152,36 +176,13 @@ local function build_sequence(key, mod, mode)
   if def.type == "char" and mod ~= "" then
     if mode == "xterm" then
       -- Special xterm sequences
-      if mod == "S" and key == "tab" then
-        return "\27[Z" -- S-Tab
-      elseif mod == "C" and key == "space" then
-        return "\0" -- C-Space
-      elseif mod == "C" and (key == "bs" or key == "backspace") then
-        return "\8" -- C-BS
-      else
-        return nil -- Not representable in xterm
-      end
+      return get_xterm_sequence(mod, key) -- nil if not representable in xterm
     elseif mode == "csi-n" then
       -- CSI n;mu format for all modified control characters
-      local char_code = get_char_code(key)
-      if char_code then
-        return string.format("\27[%d;%du", char_code, mod_code)
-      end
+      return get_csi_n_sequence(mod, key)
     else -- hybrid mode (default)
       -- Use xterm sequences where available, CSI n;mu for others
-      if mod == "S" and key == "tab" then
-        return "\27[Z" -- S-Tab (xterm)
-      elseif mod == "C" and key == "space" then
-        return "\0" -- C-Space (xterm)
-      elseif mod == "C" and (key == "bs" or key == "backspace") then
-        return "\8" -- C-BS (xterm)
-      else
-        -- Fall back to CSI n;mu
-        local char_code = get_char_code(key)
-        if char_code then
-          return string.format("\27[%d;%du", char_code, mod_code)
-        end
-      end
+      return get_xterm_sequence(mod, key) or get_csi_n_sequence(mod, key)
     end
   end
 
