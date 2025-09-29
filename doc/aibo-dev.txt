@@ -118,7 +118,7 @@ PUBLIC API					*aibo-dev-api-public*
 
 Core module (`require("aibo")`):
 
-`aibo.setup({opts})`				*aibo.setup()*
+`aibo.setup({opts})`				*aibo-dev-api-setup*
 		Configure the plugin. Can be called multiple times.
 
 		Parameters: ~
@@ -132,27 +132,27 @@ Core module (`require("aibo")`):
 		    - console (table): Console buffer configuration
 		    - tools (table): Tool-specific configuration
 
-`aibo.send({data}, {bufnr})`			*aibo.send()*
+`aibo.send({data}, {bufnr})`			*aibo-dev-api-send*
 		Send raw data to terminal.
 
 		Parameters: ~
 		  {data}   (string) Data to send
 		  {bufnr}  (number) Buffer number
 
-`aibo.submit({text}, {bufnr})`			*aibo.submit()*
+`aibo.submit({text}, {bufnr})`			*aibo-dev-api-submit*
 		Submit text with automatic return key.
 
 		Parameters: ~
 		  {text}   (string) Text to submit
 		  {bufnr}  (number) Buffer number
 
-`aibo.get_config()`				*aibo.get_config()*
+`aibo.get_config()`				*aibo-dev-api-get-config*
 		Get current configuration.
 
 		Returns: ~
 		  (table) Current configuration
 
-`aibo.get_buffer_config({type})`		*aibo.get_buffer_config()*
+`aibo.get_buffer_config({type})`		*aibo-dev-api-get-buffer-config*
 		Get buffer type configuration.
 
 		Parameters: ~
@@ -161,7 +161,7 @@ Core module (`require("aibo")`):
 		Returns: ~
 		  (table) Buffer configuration
 
-`aibo.get_tool_config({tool})`		*aibo.get_tool_config()*
+`aibo.get_tool_config({tool})`		*aibo-dev-api-get-tool-config*
 		Get tool-specific configuration.
 
 		Parameters: ~
@@ -170,7 +170,7 @@ Core module (`require("aibo")`):
 		Returns: ~
 		  (table) Tool configuration
 
-`aibo.resolve({input})`			*aibo.resolve()*
+`aibo.resolve({input})`			*aibo-dev-api-resolve*
 		Convert Vim key notation to terminal escape sequences
 		using the configured termcode_mode.
 
@@ -240,7 +240,7 @@ Internal modules (not part of public API, may change):
 		IMPORTANT: Use aibo.resolve() instead of accessing this ~
 		module directly. This is an internal module that may change.
 
-`internal.integration`			*aibo-dev-integration*
+`internal.integration`			*aibo-dev-integration-module*
 		Integration module management and loading.
 
 		Functions: ~
