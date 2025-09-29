@@ -411,10 +411,6 @@ function M.submit(bufnr)
   end
 
   local lines = vim.api.nvim_buf_get_lines(bufnr, 0, -1, false)
-  -- Ensure we have at least one line (even if empty)
-  if #lines == 0 then
-    lines = { "" }
-  end
   local content = table.concat(lines, "\n")
   vim.defer_fn(function()
     local b = info.console_info.bufnr
