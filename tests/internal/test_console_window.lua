@@ -191,6 +191,26 @@ T["send successfully sends to terminal buffer"] = function()
   eq(ok, true)
 end
 
+T["send handles empty input correctly"] = function()
+  local console = require("aibo.internal.console_window")
+
+  -- Create a console buffer with proper name
+  local bufname = "aiboconsole://emptytest//8888"
+  local bufnr = vim.fn.bufadd(bufname)
+
+  -- Create terminal
+  local chan = vim.api.nvim_open_term(bufnr, {})
+  vim.b[bufnr].terminal_job_id = chan
+
+  -- Send empty string (should not be converted to v:null)
+  local ok = pcall(console.send, bufnr, "")
+  eq(ok, true)
+
+  -- Send nil (should be converted to empty string)
+  ok = pcall(console.send, bufnr, nil)
+  eq(ok, true)
+end
+
 -- follow tests
 T["follow moves cursor to last line for console buffer"] = function()
   local console = require("aibo.internal.console_window")
@@ -310,6 +330,23 @@ T["submit sends input with newline to terminal"] = function()
 
   -- Test that submit doesn't error
   local ok = pcall(console.submit, bufnr, "test input")
+  eq(ok, true)
+end
+
+T["submit handles empty input correctly"] = function()
+  local console = require("aibo.internal.console_window")
+
+  -- Create a terminal buffer
+  local bufnr = vim.api.nvim_create_buf(false, true)
+  local chan = vim.api.nvim_open_term(bufnr, {})
+  vim.b[bufnr].terminal_job_id = chan
+
+  -- Test that submit handles empty string (not v:null)
+  local ok = pcall(console.submit, bufnr, "")
+  eq(ok, true)
+
+  -- Test that submit handles nil input (should be converted to empty string)
+  ok = pcall(console.submit, bufnr, nil)
   eq(ok, true)
 end
 

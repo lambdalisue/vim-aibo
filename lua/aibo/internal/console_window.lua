@@ -526,6 +526,8 @@ function M.send(bufnr, input)
     )
     return nil
   end
+  -- Ensure input is a string (handle nil or v:null)
+  input = input or ""
   -- chansend returns the number of bytes sent, or 0 on failure
   if vim.fn.chansend(job_id, input) == 0 then
     vim.notify(
@@ -562,6 +564,9 @@ function M.submit(bufnr, input)
   local config = aibo.get_config()
   local submit_key = termcode.resolve(config.submit_key) or "\r"
   local submit_delay = config.submit_delay
+
+  -- Ensure input is a string (handle nil or v:null)
+  input = input or ""
 
   -- First send input text
   if not M.send(bufnr, input) then
