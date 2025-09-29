@@ -410,7 +410,8 @@ function M.submit(bufnr)
     return nil
   end
 
-  local content = table.concat(vim.api.nvim_buf_get_lines(bufnr, 0, -1, false), "\n")
+  local lines = vim.api.nvim_buf_get_lines(bufnr, 0, -1, false)
+  local content = table.concat(lines, "\n")
   vim.defer_fn(function()
     local b = info.console_info.bufnr
     if vim.api.nvim_buf_is_valid(b) then
