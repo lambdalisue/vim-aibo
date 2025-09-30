@@ -531,7 +531,7 @@ function M.send(bufnr, input)
   -- chansend returns the number of bytes sent, or 0 on failure
   if vim.fn.chansend(job_id, input) == 0 then
     vim.notify(
-      "Failed to send input to terminal job: " .. tostring(job_id),
+      string.format("Failed to send input to terminal job %d (Keycode: %s)", job_id, vim.fn.char2nr(input)),
       vim.log.levels.ERROR,
       { title = "Aibo console Error" }
     )
