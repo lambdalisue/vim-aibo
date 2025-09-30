@@ -1,4 +1,4 @@
-# nvim-aibo development tasks
+# Aibo development tasks
 
 # List all available tasks
 default:
