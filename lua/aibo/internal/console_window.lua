@@ -78,7 +78,7 @@ local function setup_mappings(bufnr)
     local winid = vim.api.nvim_get_current_win()
     local info = M.get_info_by_winid(winid)
     if info and info.bufnr then
-      local code = aibo.resolve(key)
+      local code = aibo.resolve(key) or key
       M.send(info.bufnr, code)
     end
   end
@@ -87,7 +87,7 @@ local function setup_mappings(bufnr)
     local winid = vim.api.nvim_get_current_win()
     local info = M.get_info_by_winid(winid)
     if info and info.bufnr then
-      local code = aibo.resolve(key)
+      local code = aibo.resolve(key) or key
       M.submit(info.bufnr, code)
     end
   end
@@ -512,6 +512,10 @@ end
 ---   local termcode = require("aibo").termcode
 ---   console.send(bufnr, termcode.resolve("<C-c>"))  -- Send Ctrl-C
 function M.send(bufnr, input)
+  -- Do nothing for empty input
+  if not input or input == "" then
+    return true
+  end
   if not M.get_info_by_bufnr(bufnr) then
     vim.notify("Invalid buffer: " .. tostring(bufnr), vim.log.levels.ERROR, { title = "Aibo console Error" })
     return
@@ -526,12 +530,10 @@ function M.send(bufnr, input)
     )
     return nil
   end
-  -- Ensure input is a string (handle nil or v:null)
-  input = input or ""
   -- chansend returns the number of bytes sent, or 0 on failure
   if vim.fn.chansend(job_id, input) == 0 then
     vim.notify(
-      "Failed to send input to terminal job: " .. tostring(job_id),
+      string.format("Failed to send input to terminal job %d (Keycode: %s)", job_id, vim.fn.char2nr(input)),
       vim.log.levels.ERROR,
       { title = "Aibo console Error" }
     )
@@ -564,9 +566,6 @@ function M.submit(bufnr, input)
   local config = aibo.get_config()
   local submit_key = termcode.resolve(config.submit_key) or "\r"
   local submit_delay = config.submit_delay
-
-  -- Ensure input is a string (handle nil or v:null)
-  input = input or ""
 
   -- First send input text
   if not M.send(bufnr, input) then

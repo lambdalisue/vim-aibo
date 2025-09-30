@@ -101,7 +101,7 @@ local function setup_mappings(bufnr)
     local winid = vim.api.nvim_get_current_win()
     local info = M.get_info_by_winid(winid)
     if info and info.console_info then
-      local code = aibo.resolve(key)
+      local code = aibo.resolve(key) or key
       console.send(info.console_info.bufnr, code)
     end
   end
