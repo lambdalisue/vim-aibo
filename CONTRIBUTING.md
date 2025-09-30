@@ -1,6 +1,6 @@
-# Contributing to nvim-aibo
+# Contributing to Aibo
 
-Thank you for your interest in contributing to nvim-aibo! This guide provides everything you need to know about contributing to the project.
+Thank you for your interest in contributing to Aibo! This guide provides everything you need to know about contributing to the project.
 
 ## Table of Contents
 
@@ -25,12 +25,14 @@ Thank you for your interest in contributing to nvim-aibo! This guide provides ev
 ### Initial Setup
 
 1. Fork and clone the repository:
+
 ```bash
 git clone https://github.com/your-username/nvim-aibo.git
 cd nvim-aibo
 ```
 
 2. Install development dependencies:
+
 ```bash
 # Install mini.test for testing (if not already installed)
 git clone https://github.com/echasnovski/mini.nvim.git /tmp/mini.nvim
@@ -38,6 +40,7 @@ cp -r /tmp/mini.nvim/lua/mini/test.lua ~/.local/share/nvim/site/pack/vendor/star
 ```
 
 3. Run health check:
+
 ```vim
 :checkhealth aibo
 ```
@@ -79,12 +82,14 @@ ftplugin/
 ### Key Architectural Principles
 
 1. **Separation of Concerns**
+
    - Command modules handle user-facing commands
    - Integration modules own their `<Plug>` mappings
    - Internal modules provide shared utilities
    - Clear boundaries between console, prompt, and controller
 
 2. **Module Responsibilities**
+
    - `command/`: User command parsing and execution
    - `integration/`: Tool-specific features and behaviors
    - `internal/`: Core functionality and utilities
@@ -100,17 +105,20 @@ ftplugin/
 ### Lua Style Guide
 
 1. **Naming Conventions**
+
    - Use `snake_case` for variables and functions
    - Use `PascalCase` for classes/modules
    - Prefix private functions with underscore `_`
    - Use descriptive names
 
 2. **Documentation**
+
    - Use LuaLS annotations for all public functions
    - Document complex logic with inline comments
    - Keep comments concise and relevant
 
 3. **Code Structure**
+
    ```lua
    -- Module header
    local M = {}
@@ -141,6 +149,7 @@ ftplugin/
 ### Linting
 
 Run luacheck before submitting:
+
 ```bash
 luacheck .
 # or
@@ -177,6 +186,7 @@ tests/
 ### Running Tests
 
 Using `just`:
+
 ```bash
 just test           # Run all tests
 just test-file aibo # Run specific test file
@@ -185,6 +195,7 @@ just check          # Run lint, format, and tests
 ```
 
 Direct execution:
+
 ```bash
 nvim --headless -c "luafile tests/test_runner.lua" -c "qa!"
 ```
@@ -233,11 +244,13 @@ return test_set
 ### Test Guidelines
 
 1. **Test Organization**
+
    - One test file per module
    - Group related tests in the same file
    - Use descriptive test names
 
 2. **Test Coverage**
+
    - Test public API thoroughly
    - Include edge cases and error conditions
    - Test integration points
@@ -307,6 +320,7 @@ To add support for a new AI tool or interactive CLI:
 5. Update documentation
 
 Example integration structure:
+
 ```lua
 -- lua/aibo/integration/myai.lua
 local M = {}
@@ -337,6 +351,7 @@ return M
 ### Development Workflow
 
 1. **Create a branch**
+
    ```bash
    git checkout -b feature/your-feature-name
    # or
@@ -344,17 +359,20 @@ return M
    ```
 
 2. **Make changes**
+
    - Follow the code style guide
    - Add tests for new functionality
    - Update documentation as needed
 
 3. **Test your changes**
+
    ```bash
    just test
    # or manually test in Neovim
    ```
 
 4. **Lint and format**
+
    ```bash
    just lint
    ```
@@ -369,6 +387,7 @@ return M
 ### Commit Message Format
 
 Use conventional commits:
+
 - `feat:` New features
 - `fix:` Bug fixes
 - `docs:` Documentation changes
@@ -392,16 +411,19 @@ Before submitting a PR, ensure:
 ### PR Process
 
 1. **Push your branch**
+
    ```bash
    git push origin feature/your-feature-name
    ```
 
 2. **Create PR on GitHub**
+
    - Use a descriptive title
    - Reference related issues
    - Provide context and examples
 
 3. **Address review feedback**
+
    - Respond to all comments
    - Push additional commits as needed
    - Request re-review when ready
@@ -429,16 +451,19 @@ just clean          # Clean temporary files
 ### Debugging Tips
 
 1. **Enable debug logging**
+
    ```lua
    vim.g.aibo_debug = true
    ```
 
 2. **Inspect terminal output**
+
    ```vim
    :terminal
    ```
 
 3. **Use vim.notify for debugging**
+
    ```lua
    vim.notify(vim.inspect(data), vim.log.levels.DEBUG)
    ```
@@ -479,4 +504,5 @@ just clean          # Clean temporary files
 - Check existing issues before creating new ones
 - Provide minimal reproducible examples for bugs
 
-Thank you for contributing to nvim-aibo!
+Thank you for contributing to Aibo!
+

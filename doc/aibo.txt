@@ -23,7 +23,7 @@ DEVELOPER DOCUMENTATION			|aibo-dev|
 =============================================================================
 INTRODUCTION					*aibo-introduction*
 
-*aibo.vim* (*aibo*) is a Neovim plugin designed as your AI companion, providing
+*Aibo* (*nvim-aibo*) is a Neovim plugin designed as your AI companion, providing
 seamless integration with AI assistants through terminal interfaces. The name
 "aibo" comes from the Japanese word for "companion," reflecting the plugin's
 role as your AI companion in Neovim. While optimized for AI tools, it also

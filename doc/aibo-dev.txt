@@ -1,4 +1,4 @@
-*aibo-dev.txt*	Developer Documentation for nvim-aibo
+*aibo-dev.txt*	Developer Documentation for Aibo
 
 Author:  lambdalisue <lambdalisue@gmail.com>
 License: MIT license
@@ -34,7 +34,7 @@ PLUGIN MAPPINGS				|aibo-dev-plug-mappings|
 =============================================================================
 INTRODUCTION					*aibo-dev-introduction*
 
-This document provides comprehensive developer documentation for nvim-aibo.
+This document provides comprehensive developer documentation for |Aibo|.
 For user documentation, see |aibo.txt|.
 
 This guide covers:
