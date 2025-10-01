@@ -247,42 +247,4 @@ function M.check_health(report)
   end
 end
 
----Setup Codex <Plug> mappings
----@param bufnr number Buffer number to set mappings for
-function M.setup_mappings(bufnr)
-  local aibo = require("aibo")
-
-  local define = function(lhs, desc, rhs)
-    vim.keymap.set({ "n", "i" }, lhs, rhs, {
-      buffer = bufnr,
-      desc = desc,
-      silent = true,
-    })
-  end
-
-  local send = function(key)
-    local code = aibo.resolve(key) or key
-    aibo.send(code, bufnr)
-  end
-
-  define("<Plug>(aibo-codex-transcript)", "Transcript (Ctrl+T)", function()
-    send("<C-t>")
-  end)
-  define("<Plug>(aibo-codex-home)", "Home", function()
-    send("<Home>")
-  end)
-  define("<Plug>(aibo-codex-end)", "End", function()
-    send("<End>")
-  end)
-  define("<Plug>(aibo-codex-page-up)", "Page up", function()
-    send("<PageUp>")
-  end)
-  define("<Plug>(aibo-codex-page-down)", "Page down", function()
-    send("<PageDown>")
-  end)
-  define("<Plug>(aibo-codex-quit)", "Quit", function()
-    send("q")
-  end)
-end
-
 return M
