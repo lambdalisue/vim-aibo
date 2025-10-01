@@ -264,48 +264,4 @@ function M.check_health(report)
   end
 end
 
----Setup Claude <Plug> mappings
----@param bufnr number Buffer number to set mappings for
-function M.setup_mappings(bufnr)
-  local aibo = require("aibo")
-
-  local define = function(lhs, desc, rhs)
-    vim.keymap.set({ "n", "i" }, lhs, rhs, {
-      buffer = bufnr,
-      desc = desc,
-      silent = true,
-    })
-  end
-
-  local send = function(key)
-    local code = aibo.resolve(key) or key
-    aibo.send(code, bufnr)
-  end
-
-  define("<Plug>(aibo-claude-mode)", "Toggle mode (Shift+Tab)", function()
-    send("<S-Tab>")
-  end)
-  define("<Plug>(aibo-claude-verbose)", "Verbose (Ctrl+O)", function()
-    send("<C-o>")
-  end)
-  define("<Plug>(aibo-claude-todo)", "Todo (Ctrl+T)", function()
-    send("<C-t>")
-  end)
-  define("<Plug>(aibo-claude-undo)", "Undo (Ctrl+Y)", function()
-    send("<C-y>")
-  end)
-  define("<Plug>(aibo-claude-paste)", "Paste (Ctrl+V)", function()
-    send("<C-v>")
-  end)
-  define("<Plug>(aibo-claude-shortcuts)", "Shortcuts (?)", function()
-    send("?")
-  end)
-  define("<Plug>(aibo-claude-bash-mode)", "Bash mode (!)", function()
-    send("!")
-  end)
-  define("<Plug>(aibo-claude-memorize)", "Memorize (#)", function()
-    send("#")
-  end)
-end
-
 return M

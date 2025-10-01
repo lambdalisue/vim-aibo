@@ -106,32 +106,17 @@ local function setup_mappings(bufnr)
     end
   end
 
-  define("<Plug>(aibo-prompt-submit)", "Submit prompt to associated console", function()
+  define("<Plug>(aibo-send)", "Get one key from user and send it to associated console", function()
+    vim.api.nvim_echo({ { "Oneshot (press any key): ", "MoreMsg" } }, false, {})
+    local ok, char = pcall(vim.fn.getchar)
+    vim.api.nvim_echo({ { "", "Normal" } }, false, {})
+    if ok and char then
+      local key = type(char) == "number" and vim.fn.nr2char(char) or vim.fn.keytrans(char)
+      send(key)
+    end
+  end)
+  define("<Plug>(aibo-submit)", "Submit prompt to associated console", function()
     vim.cmd("write")
-  end)
-  define("<Plug>(aibo-prompt-submit-close)", "Submit prompt to associated console then close", function()
-    vim.cmd("wq")
-  end)
-  define("<Plug>(aibo-prompt-esc)", "Send ESC to associated console", function()
-    send("<Esc>")
-  end)
-  define("<Plug>(aibo-prompt-interrupt)", "Send interrupt signal (original <C-c>) to associated console", function()
-    send("<C-c>")
-  end)
-  define("<Plug>(aibo-prompt-clear)", "Clear screen in associated console", function()
-    send("<C-l>")
-  end)
-  define("<Plug>(aibo-prompt-next)", "Next history in associated console", function()
-    send("<C-n>")
-  end)
-  define("<Plug>(aibo-prompt-prev)", "Previous history in associated console", function()
-    send("<C-p>")
-  end)
-  define("<Plug>(aibo-prompt-down)", "Move down in associated console", function()
-    send("<Down>")
-  end)
-  define("<Plug>(aibo-prompt-up)", "Move up in associated console", function()
-    send("<Up>")
   end)
 end
 
@@ -286,7 +271,6 @@ end
 ---   })
 function M.open(console_winid, options)
   local aibo = require("aibo")
-  local integration = require("aibo.internal.integration")
   local console = require("aibo.internal.console_window")
 
   local console_info = console.get_info_by_winid(console_winid)
@@ -318,7 +302,6 @@ function M.open(console_winid, options)
   end
 
   setup_mappings(bufnr)
-  integration.setup_mappings(console_info.jobinfo.cmd, bufnr)
   vim.bo[bufnr].buftype = "acwrite"
   vim.bo[bufnr].bufhidden = "hide"
   vim.bo[bufnr].buflisted = false

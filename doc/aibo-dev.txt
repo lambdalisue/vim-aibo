@@ -522,21 +522,21 @@ ADDING INTEGRATIONS				*aibo-dev-new-integration*
 
 To add support for a new AI tool:
 
-1. Create integration module:
+1. Create integration module (optional):
 >
 	-- lua/aibo/integration/myai.lua
 	local M = {}
 
-	-- Define <Plug> mappings
-	M.plug_mappings = {
-	  ["<Plug>(aibo-myai-action)"] = function(bufnr)
-	    -- Implementation
-	  end,
-	}
+	-- Optional: Argument completion
+	function M.get_command_completions(arglead, cmdline, cursorpos)
+	  -- Return completion candidates
+	  return {}
+	end
 
-	-- Setup function
-	function M.setup(bufnr, info)
-	  -- Setup logic
+	-- Optional: Health check
+	function M.check_health(report)
+	  report.start("MyAI Integration")
+	  -- Health check logic
 	end
 
 	return M
@@ -545,21 +545,22 @@ To add support for a new AI tool:
 2. Create ftplugin file:
 >
 	-- ftplugin/aibo-tool-myai.lua
-	local bufnr = vim.api.nvim_get_current_buf()
-
-	-- Load integration
-	local integration = require("aibo.integration.myai")
-
-	-- Set up mappings
-	for plug, handler in pairs(integration.plug_mappings) do
-	  vim.keymap.set("n", plug, function()
-	    handler(bufnr)
-	  end, { buffer = bufnr, silent = true })
+	if vim.b.loaded_aibo_tool_myai_ftplugin then
+	  return
 	end
+	vim.b.loaded_aibo_tool_myai_ftplugin = true
 
-	-- Default key mappings
-	vim.keymap.set("n", "<C-x>", "<Plug>(aibo-myai-action)",
-	  { buffer = bufnr })
+	local bufnr = vim.api.nvim_get_current_buf()
+	local aibo = require("aibo")
+
+	-- Default key mappings (unless disabled in config)
+	local cfg = aibo.get_tool_config("myai")
+	if not (cfg and cfg.no_default_mappings) then
+	  local opts = { buffer = bufnr, nowait = true, silent = true }
+	  -- Use <Plug>(aibo-send)<Key> pattern to send keys to terminal
+	  vim.keymap.set({ "n", "i" }, "<C-g>", "<Plug>(aibo-send)<C-g>", opts)
+	  vim.keymap.set({ "n", "i" }, "<F6>", "<Plug>(aibo-send)<F6>", opts)
+	end
 <
 
 3. Update command completion:
@@ -581,22 +582,26 @@ To add support for a new AI tool:
 =============================================================================
 PLUGIN MAPPINGS					*aibo-dev-plug-mappings*
 
-Creating <Plug> mappings:
+The <Plug>(aibo-send) pattern~
 
-1. Define in integration module:
+The recommended approach for tool-specific mappings is to use the
+`<Plug>(aibo-send)<Key>` pattern. This automatically converts Vim key
+notation to terminal escape sequences:
 >
-	M.plug_mappings = {
-	  ["<Plug>(aibo-tool-action)"] = handler_function,
-	}
+	-- In ftplugin/aibo-tool-*.lua
+	local opts = { buffer = bufnr, nowait = true, silent = true }
+	vim.keymap.set({ "n", "i" }, "<C-g>", "<Plug>(aibo-send)<C-g>", opts)
 <
 
-2. Register in ftplugin:
->
-	vim.keymap.set("n", "<Plug>(aibo-tool-action)", handler,
-	  { buffer = bufnr, silent = true })
-<
+This pattern:
+- Automatically handles key conversion using aibo.resolve()
+- Works in both normal and insert mode
+- Sends keys directly to the terminal process
+- Simplifies tool integration
 
-3. Create default mapping:
+For custom logic~
+
+If you need custom behavior beyond sending keys:
 >
 	vim.keymap.set("n", "<C-x>", "<Plug>(aibo-tool-action)",
 	  { buffer = bufnr })

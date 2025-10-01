@@ -92,29 +92,17 @@ local function setup_mappings(bufnr)
     end
   end
 
-  define("<Plug>(aibo-console-submit)", "Submit to the agent", function()
+  define("<Plug>(aibo-send)", "Get one key from user and send it to the tool", function()
+    vim.api.nvim_echo({ { "Oneshot (press any key): ", "MoreMsg" } }, false, {})
+    local ok, char = pcall(vim.fn.getchar)
+    vim.api.nvim_echo({ { "", "Normal" } }, false, {})
+    if ok and char then
+      local key = type(char) == "number" and vim.fn.nr2char(char) or vim.fn.keytrans(char)
+      send(key)
+    end
+  end)
+  define("<Plug>(aibo-submit)", "Submit to the tool", function()
     submit("")
-  end)
-  define("<Plug>(aibo-console-esc)", "Send ESC to agent", function()
-    send("<Esc>")
-  end)
-  define("<Plug>(aibo-console-interrupt)", "Send interrupt signal (original <C-c>) to agent", function()
-    send("<C-c>")
-  end)
-  define("<Plug>(aibo-console-clear)", "Clear screen", function()
-    send("<C-l>")
-  end)
-  define("<Plug>(aibo-console-next)", "Next history", function()
-    send("<C-n>")
-  end)
-  define("<Plug>(aibo-console-prev)", "Previous history", function()
-    send("<C-p>")
-  end)
-  define("<Plug>(aibo-console-down)", "Move down", function()
-    send("<Down>")
-  end)
-  define("<Plug>(aibo-console-up)", "Move up", function()
-    send("<Up>")
   end)
 end
 
@@ -275,7 +263,6 @@ end
 ---   })
 function M.open(cmd, args, options)
   local aibo = require("aibo")
-  local integration = require("aibo.internal.integration")
   local prompt = require("aibo.internal.prompt_window")
 
   args = args or {}
@@ -311,7 +298,6 @@ function M.open(cmd, args, options)
   vim.api.nvim_buf_set_name(bufnr, bufname)
 
   setup_mappings(bufnr)
-  integration.setup_mappings(cmd, bufnr)
   vim.b[bufnr].terminal_job_id = job_id
   vim.bo[bufnr].filetype = string.format("aibo-console.aibo-tool-%s", cmd)
 

@@ -9,11 +9,11 @@ local aibo = require("aibo")
 -- Default key mappings (unless disabled in config)
 local cfg = aibo.get_tool_config("codex")
 if not (cfg and cfg.no_default_mappings) then
-  vim.keymap.set({ "n", "i" }, "<C-t>", "<Plug>(aibo-codex-transcript)", { buffer = bufnr })
-  vim.keymap.set({ "n", "i" }, "<Home>", "<Plug>(aibo-codex-home)", { buffer = bufnr })
-  vim.keymap.set({ "n", "i" }, "<End>", "<Plug>(aibo-codex-end)", { buffer = bufnr })
-  vim.keymap.set({ "n", "i" }, "<PageUp>", "<Plug>(aibo-codex-page-up)", { buffer = bufnr })
-  vim.keymap.set({ "n", "i" }, "<PageDown>", "<Plug>(aibo-codex-page-down)", { buffer = bufnr })
-  vim.keymap.set({ "n" }, "q", "<Plug>(aibo-codex-quit)", { buffer = bufnr })
+  local opts = { buffer = bufnr, nowait = true, silent = true }
+  vim.keymap.set({ "n", "i" }, "<C-t>", "<Plug>(aibo-send)<C-t>", opts)
+  vim.keymap.set({ "n", "i" }, "<Home>", "<Plug>(aibo-send)<Home>", opts)
+  vim.keymap.set({ "n", "i" }, "<End>", "<Plug>(aibo-send)<End>", opts)
+  vim.keymap.set({ "n", "i" }, "<PageUp>", "<Plug>(aibo-send)<PageUp>", opts)
+  vim.keymap.set({ "n", "i" }, "<PageDown>", "<Plug>(aibo-send)<PageDown>", opts)
+  vim.keymap.set({ "n" }, "q", "<Plug>(aibo-send)q", opts)
 end
-

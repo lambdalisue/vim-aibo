@@ -307,24 +307,22 @@ Create your own ftplugin files in `~/.config/nvim/after/ftplugin/` to customize 
 ```lua
 -- ~/.config/nvim/after/ftplugin/aibo-prompt.lua
 local bufnr = vim.api.nvim_get_current_buf()
+local opts = { buffer = bufnr, nowait = true, silent = true }
 
--- Override specific default mappings
-vim.keymap.del('n', '<C-n>', { buffer = bufnr })
-vim.keymap.del('n', '<C-p>', { buffer = bufnr })
-
--- Add your custom mappings
-vim.keymap.set('n', '<Down>', '<Plug>(aibo-prompt-next)', { buffer = bufnr })
-vim.keymap.set('n', '<Up>', '<Plug>(aibo-prompt-prev)', { buffer = bufnr })
+-- Add your custom mappings using <Plug>(aibo-send) pattern
+vim.keymap.set({ 'n', 'i' }, '<C-j>', '<Plug>(aibo-send)<Down>', opts)
+vim.keymap.set({ 'n', 'i' }, '<C-k>', '<Plug>(aibo-send)<Up>', opts)
 ```
 
 ```lua
 -- ~/.config/nvim/after/ftplugin/aibo-tool-claude.lua
 local bufnr = vim.api.nvim_get_current_buf()
+local opts = { buffer = bufnr, nowait = true, silent = true }
 
--- Add leader-based mappings for Claude
-vim.keymap.set('n', '<leader>cm', '<Plug>(aibo-claude-mode)', { buffer = bufnr })
-vim.keymap.set('n', '<leader>cv', '<Plug>(aibo-claude-verbose)', { buffer = bufnr })
-vim.keymap.set('n', '<leader>ct', '<Plug>(aibo-claude-todo)', { buffer = bufnr })
+-- Add leader-based mappings using <Plug>(aibo-send) pattern
+vim.keymap.set({ 'n', 'i' }, '<leader>a', '<Plug>(aibo-send)<Tab>', opts)
+vim.keymap.set({ 'n', 'i' }, '<leader>m', '<Plug>(aibo-send)<S-Tab>', opts)
+vim.keymap.set({ 'n', 'i' }, '<leader>t', '<Plug>(aibo-send)<C-t>', opts)
 ```
 
 #### 2. Using on_attach callback
@@ -335,13 +333,10 @@ Configure mappings through the setup function:
 require('aibo').setup({
   prompt = {
     on_attach = function(bufnr)
-      -- Remove default mappings you don't want
-      vim.keymap.del('n', '<C-n>', { buffer = bufnr })
-      vim.keymap.del('n', '<C-p>', { buffer = bufnr })
-
-      -- Add your own
-      vim.keymap.set('n', '<Down>', '<Plug>(aibo-prompt-next)', { buffer = bufnr })
-      vim.keymap.set('n', '<Up>', '<Plug>(aibo-prompt-prev)', { buffer = bufnr })
+      local opts = { buffer = bufnr, nowait = true, silent = true }
+      -- Add your own using <Plug>(aibo-send) pattern
+      vim.keymap.set({ 'n', 'i' }, '<C-j>', '<Plug>(aibo-send)<Down>', opts)
+      vim.keymap.set({ 'n', 'i' }, '<C-k>', '<Plug>(aibo-send)<Up>', opts)
     end,
   },
 })
@@ -354,9 +349,11 @@ require('aibo').setup({
   prompt = {
     no_default_mappings = true,
     on_attach = function(bufnr)
+      local opts = { buffer = bufnr, nowait = true, silent = true }
       -- Set your own mappings using <Plug> mappings
-      vim.keymap.set('n', '<Enter>', '<Plug>(aibo-prompt-submit)', { buffer = bufnr })
-      vim.keymap.set('n', '<C-q>', '<Plug>(aibo-prompt-submit-close)', { buffer = bufnr })
+      vim.keymap.set('n', '<Enter>', '<Plug>(aibo-submit)', opts)
+      vim.keymap.set('n', '<C-q>', '<Plug>(aibo-submit)<Cmd>q<CR>', opts)
+      vim.keymap.set({ 'n', 'i' }, '<C-c>', '<Plug>(aibo-send)<Esc>', opts)
     end,
   },
 })
@@ -364,43 +361,49 @@ require('aibo').setup({
 
 ## Key Mappings
 
+> [!NOTE]
+>
+> `<C-g><C-o>` enters a special mode where you can press any single key to send it to the terminal. Useful for sending arbitrary keys not mapped by default.
+
 ### Console Buffer
 
-| Key      | Action                          |
-| -------- | ------------------------------- |
-| `<CR>`   | Submit empty line               |
-| `<C-c>`  | Send ESC to terminal            |
-| `g<C-c>` | Send interrupt signal           |
-| `<C-l>`  | Clear terminal                  |
-| `<C-n>`  | Navigate to next in history     |
-| `<C-p>`  | Navigate to previous in history |
-| `<Down>` | Send down arrow                 |
-| `<Up>`   | Send up arrow                   |
+Most keys use the `<Plug>(aibo-send)<Key>` pattern to send keys directly to the terminal:
+
+| Key          | Action                          | Implementation            |
+| ------------ | ------------------------------- | ------------------------- |
+| `<CR>`       | Submit empty line               | `<Plug>(aibo-submit)`     |
+| `<C-c>`      | Send ESC to terminal            | `<Plug>(aibo-send)<Esc>`  |
+| `g<C-c>`     | Send interrupt signal           | `<Plug>(aibo-send)<C-c>`  |
+| `<C-l>`      | Clear terminal                  | `<Plug>(aibo-send)<C-l>`  |
+| `<C-n>`      | Navigate to next in history     | `<Plug>(aibo-send)<C-n>`  |
+| `<C-p>`      | Navigate to previous in history | `<Plug>(aibo-send)<C-p>`  |
+| `<Down>`     | Send down arrow                 | `<Plug>(aibo-send)<Down>` |
+| `<Up>`       | Send up arrow                   | `<Plug>(aibo-send)<Up>`   |
+| `<C-g><C-o>` | Send any single key (n)         | `<Plug>(aibo-send)`       |
 
 ### Prompt Buffer
 
-| Key           | Action                       |
-| ------------- | ---------------------------- |
-| `<CR>`        | Submit content (normal mode) |
-| `<C-Enter>`\* | Submit and close             |
-| `<F5>`        | Submit and close             |
-| `:w`          | Submit content               |
-| `:wq`         | Submit and close             |
+| Key           | Action                    | Implementation                  |
+| ------------- | ------------------------- | ------------------------------- |
+| `<CR>`        | Submit content (n)        | `<Plug>(aibo-submit)`           |
+| `<C-Enter>`\* | Submit and close (n/i)    | `<Plug>(aibo-submit)<Cmd>q<CR>` |
+| `<F5>`        | Submit and close (n/i)    | `<Plug>(aibo-submit)<Cmd>q<CR>` |
+| `<C-g><C-o>`  | Send any single key (n/i) | `<Plug>(aibo-send)`             |
 
-Plus all console buffer mappings.
+Plus all console buffer mappings (with `<Plug>(aibo-send)<Key>` pattern).
 
 ### Tool-Specific (Claude)
 
-| Key                  | Action               |
-| -------------------- | -------------------- |
-| `<S-Tab>`\* / `<F2>` | Switch mode          |
-| `<C-o>`              | Toggle verbose       |
-| `<C-t>`              | Show todo            |
-| `<C-_>` / `<C-->`    | Undo                 |
-| `<C-v>`              | Paste                |
-| `?`                  | Show shortcuts (n)   |
-| `!`                  | Enter bash mode (n)  |
-| `#`                  | Memorize context (n) |
+All Claude-specific keys use the `<Plug>(aibo-send)` pattern to send keys directly to the Claude CLI:
+
+| Key                  | Action         |
+| -------------------- | -------------- |
+| `<Tab>`              | Toggle think   |
+| `<S-Tab>`\* / `<F2>` | Switch mode    |
+| `<C-o>`              | Toggle verbose |
+| `<C-t>`              | Show todo      |
+| `<C-_>` / `<C-->`    | Undo           |
+| `<C-v>`              | Paste          |
 
 ### Tool-Specific (Codex)
 
@@ -424,63 +427,59 @@ All functionality is exposed through `<Plug>` mappings defined in ftplugin files
 
 ```lua
 -- In your configuration or on_attach callback
-vim.keymap.set('n', '<C-j>', '<Plug>(aibo-prompt-submit)', { buffer = bufnr })
-vim.keymap.set('n', '<C-k>', '<Plug>(aibo-prompt-submit-close)', { buffer = bufnr })
+local opts = { buffer = bufnr, nowait = true, silent = true }
+vim.keymap.set('n', '<C-j>', '<Plug>(aibo-submit)', opts)
+vim.keymap.set('n', '<C-k>', '<Plug>(aibo-submit)<Cmd>q<CR>', opts)
 ```
 
 ### Available <Plug> Mappings
 
-#### Prompt Buffer
+#### Core Mappings (Console and Prompt Buffers)
 
-| <Plug> Mapping                     | Description      |
-| ---------------------------------- | ---------------- |
-| `<Plug>(aibo-prompt-submit)`       | Submit prompt    |
-| `<Plug>(aibo-prompt-submit-close)` | Submit and close |
-| `<Plug>(aibo-prompt-esc)`          | Send ESC to tool |
-| `<Plug>(aibo-prompt-interrupt)`    | Interrupt tool   |
-| `<Plug>(aibo-prompt-clear)`        | Clear screen     |
-| `<Plug>(aibo-prompt-next)`         | Next history     |
-| `<Plug>(aibo-prompt-prev)`         | Previous history |
-| `<Plug>(aibo-prompt-down)`         | Move down        |
-| `<Plug>(aibo-prompt-up)`           | Move up          |
+| <Plug> Mapping        | Description                                     |
+| --------------------- | ----------------------------------------------- |
+| `<Plug>(aibo-send)`   | Prefix for sending keys to terminal (see below) |
+| `<Plug>(aibo-submit)` | Submit content to terminal                      |
 
-#### Console Buffer
+The `<Plug>(aibo-send)` mapping is designed to be used as a prefix followed by a key:
 
-| <Plug> Mapping                   | Description          |
-| -------------------------------- | -------------------- |
-| `<Plug>(aibo-console-submit)`    | Submit empty message |
-| `<Plug>(aibo-console-close)`     | Close console        |
-| `<Plug>(aibo-console-esc)`       | Send ESC to tool     |
-| `<Plug>(aibo-console-interrupt)` | Interrupt tool       |
-| `<Plug>(aibo-console-clear)`     | Clear screen         |
-| `<Plug>(aibo-console-next)`      | Next history         |
-| `<Plug>(aibo-console-prev)`      | Previous history     |
-| `<Plug>(aibo-console-down)`      | Move down            |
-| `<Plug>(aibo-console-up)`        | Move up              |
+- `<Plug>(aibo-send)<Esc>` - Send ESC to terminal
+- `<Plug>(aibo-send)<C-c>` - Send interrupt signal
+- `<Plug>(aibo-send)<C-l>` - Send clear screen
+- `<Plug>(aibo-send)<C-n>` - Send next history
+- `<Plug>(aibo-send)<C-p>` - Send previous history
+- `<Plug>(aibo-send)<Down>` - Send down arrow
+- `<Plug>(aibo-send)<Up>` - Send up arrow
+- `<Plug>(aibo-send)<Tab>` - Send tab (Claude: accept)
+- `<Plug>(aibo-send)<S-Tab>` - Send shift-tab (Claude: mode switch)
+- And any other key you want to send to the terminal
 
 #### Claude Tool
 
-| <Plug> Mapping                  | Description      |
-| ------------------------------- | ---------------- |
-| `<Plug>(aibo-claude-mode)`      | Toggle mode      |
-| `<Plug>(aibo-claude-verbose)`   | Toggle verbose   |
-| `<Plug>(aibo-claude-todo)`      | Show todo        |
-| `<Plug>(aibo-claude-undo)`      | Undo             |
-| `<Plug>(aibo-claude-paste)`     | Paste            |
-| `<Plug>(aibo-claude-shortcuts)` | Show shortcuts   |
-| `<Plug>(aibo-claude-bash-mode)` | Enter bash mode  |
-| `<Plug>(aibo-claude-memorize)`  | Memorize context |
+Uses `<Plug>(aibo-send)<Key>` pattern (defined in `ftplugin/aibo-tool-claude.lua`):
+
+```lua
+vim.keymap.set({ "n", "i" }, "<Tab>", "<Plug>(aibo-send)<Tab>", opts)
+vim.keymap.set({ "n", "i" }, "<S-Tab>", "<Plug>(aibo-send)<S-Tab>", opts)
+vim.keymap.set({ "n", "i" }, "<F2>", "<Plug>(aibo-send)<F2>", opts)
+vim.keymap.set({ "n", "i" }, "<C-o>", "<Plug>(aibo-send)<C-o>", opts)
+vim.keymap.set({ "n", "i" }, "<C-t>", "<Plug>(aibo-send)<C-t>", opts)
+vim.keymap.set({ "n", "i" }, "<C-_>", "<Plug>(aibo-send)<C-_>", opts)
+vim.keymap.set({ "n", "i" }, "<C-v>", "<Plug>(aibo-send)<C-v>", opts)
+```
 
 #### Codex Tool
 
-| <Plug> Mapping                  | Description     |
-| ------------------------------- | --------------- |
-| `<Plug>(aibo-codex-transcript)` | Show transcript |
-| `<Plug>(aibo-codex-home)`       | Home            |
-| `<Plug>(aibo-codex-end)`        | End             |
-| `<Plug>(aibo-codex-page-up)`    | Page up         |
-| `<Plug>(aibo-codex-page-down)`  | Page down       |
-| `<Plug>(aibo-codex-quit)`       | Quit            |
+Uses `<Plug>(aibo-send)<Key>` pattern (defined in `ftplugin/aibo-tool-codex.lua`):
+
+```lua
+vim.keymap.set({ "n", "i" }, "<C-t>", "<Plug>(aibo-send)<C-t>", opts)
+vim.keymap.set({ "n", "i" }, "<Home>", "<Plug>(aibo-send)<Home>", opts)
+vim.keymap.set({ "n", "i" }, "<End>", "<Plug>(aibo-send)<End>", opts)
+vim.keymap.set({ "n", "i" }, "<PageUp>", "<Plug>(aibo-send)<PageUp>", opts)
+vim.keymap.set({ "n", "i" }, "<PageDown>", "<Plug>(aibo-send)<PageDown>", opts)
+vim.keymap.set("n", "q", "<Plug>(aibo-send)q", opts)
+```
 
 ### Tool-Specific Setup
 
@@ -492,9 +491,11 @@ require('aibo').setup({
     claude = {
       no_default_mappings = true,  -- Disable Claude-specific defaults
       on_attach = function(bufnr, info)
-        -- Set your own Claude-specific mappings
-        vim.keymap.set('n', '<leader>m', '<Plug>(aibo-claude-mode)', { buffer = bufnr })
-        vim.keymap.set('n', '<leader>v', '<Plug>(aibo-claude-verbose)', { buffer = bufnr })
+        local opts = { buffer = bufnr, nowait = true, silent = true }
+        -- Set your own Claude-specific mappings using <Plug>(aibo-send) pattern
+        vim.keymap.set({ 'n', 'i' }, '<leader>a', '<Plug>(aibo-send)<Tab>', opts)
+        vim.keymap.set({ 'n', 'i' }, '<leader>m', '<Plug>(aibo-send)<S-Tab>', opts)
+        vim.keymap.set({ 'n', 'i' }, '<leader>v', '<Plug>(aibo-send)<C-o>', opts)
       end,
     },
   },
@@ -511,9 +512,10 @@ require('aibo').setup({
     myai = {
       no_default_mappings = false,
       on_attach = function(bufnr, info)
-        vim.keymap.set('n', '<C-g>', function()
-          require('aibo').send('\007', bufnr)
-        end, { buffer = bufnr })
+        local opts = { buffer = bufnr, nowait = true, silent = true }
+        -- Use <Plug>(aibo-send) pattern to send keys to your AI tool
+        vim.keymap.set({ 'n', 'i' }, '<C-g>', '<Plug>(aibo-send)<C-g>', opts)
+        vim.keymap.set({ 'n', 'i' }, '<F6>', '<Plug>(aibo-send)<F6>', opts)
       end,
     },
   },
@@ -522,7 +524,16 @@ require('aibo').setup({
 
 ### Sending Keys to Terminal
 
-When creating custom mappings that send keys to the terminal, **you must use `aibo.resolve()` instead of `vim.api.nvim_replace_termcodes()`**.
+**Recommended approach:** Use the `<Plug>(aibo-send)<Key>` pattern for most cases:
+
+```lua
+local opts = { buffer = bufnr, nowait = true, silent = true }
+vim.keymap.set({ 'n', 'i' }, '<C-g>', '<Plug>(aibo-send)<C-g>', opts)
+```
+
+This automatically handles key conversion and sends the correct terminal sequences.
+
+**Advanced usage:** For programmatic key sending, use `aibo.resolve()` instead of `vim.api.nvim_replace_termcodes()`.
 
 The built-in `nvim_replace_termcodes()` returns Neovim's internal key representations (e.g., `\x80\x6B\x75` for `<Up>`), which terminal programs cannot understand. The `aibo.resolve()` function converts Vim key notation to actual ANSI escape sequences (e.g., `\27[A` for `<Up>`) that terminals expect.
 
