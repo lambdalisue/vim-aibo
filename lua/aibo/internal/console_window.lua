@@ -104,10 +104,23 @@ local function setup_mappings(bufnr)
   define("<Plug>(aibo-submit)", "Submit to the tool", function()
     submit("")
   end)
+
+  vim.keymap.set("n", "<C-w>j", function()
+    local prompt = require("aibo.internal.prompt_floating")
+    local winid = vim.api.nvim_get_current_win()
+    local info = prompt.get_info_by_console_winid(winid)
+    if info and info.winid and vim.api.nvim_win_is_valid(info.winid) then
+      vim.api.nvim_set_current_win(info.winid)
+    end
+  end, {
+    buffer = bufnr,
+    desc = "Move to prompt window",
+    silent = true,
+  })
 end
 
 local function BufWinEnter()
-  local prompt = require("aibo.internal.prompt_window")
+  local prompt = require("aibo.internal.prompt_floating")
   -- We need to use nvim_get_current_win() because bufwinid() may return wrong winid
   -- if multiple windows show the same buffer (e.g. :split)
   local winid = vim.api.nvim_get_current_win()
@@ -120,7 +133,7 @@ local function BufWinEnter()
 end
 
 local function TermEnter()
-  local prompt = require("aibo.internal.prompt_window")
+  local prompt = require("aibo.internal.prompt_floating")
   -- We need to use nvim_get_current_win() because bufwinid() may return wrong winid
   -- if multiple windows show the same buffer (e.g. :split)
   local winid = vim.api.nvim_get_current_win()
@@ -129,7 +142,7 @@ end
 
 ---@param ev { buf: number, file: string } Event data
 local function WinClosed(ev)
-  local prompt = require("aibo.internal.prompt_window")
+  local prompt = require("aibo.internal.prompt_floating")
   local winid = tonumber(vim.fn.expand(ev.file))
   if not winid then
     return
@@ -263,7 +276,7 @@ end
 ---   })
 function M.open(cmd, args, options)
   local aibo = require("aibo")
-  local prompt = require("aibo.internal.prompt_window")
+  local prompt = require("aibo.internal.prompt_floating")
 
   args = args or {}
   options = options or {}

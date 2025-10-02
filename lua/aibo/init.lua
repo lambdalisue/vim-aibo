@@ -41,7 +41,7 @@ local function find_console_info(bufnr)
     local console = require("aibo.internal.console_window")
     return console.get_info_by_bufnr(bufnr)
   elseif bufname:match("^aiboprompt://") then
-    local prompt = require("aibo.internal.prompt_window")
+    local prompt = require("aibo.internal.prompt_floating")
     local info = prompt.get_info_by_bufnr(bufnr)
     if not info or not info.console_info then
       return nil
