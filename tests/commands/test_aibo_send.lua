@@ -65,7 +65,7 @@ end
 T["AiboSend with single console"] = function()
   -- Create a mock console buffer
   local console_buf = vim.api.nvim_create_buf(false, true)
-  vim.api.nvim_buf_set_name(console_buf, "aiboconsole://test//single")
+  vim.api.nvim_buf_set_name(console_buf, "aiboconsole://test//12345")
   vim.bo[console_buf].filetype = "aibo-console"
   vim.b[console_buf].aibo = {
     cmd = "test",
@@ -182,7 +182,7 @@ end
 T["AiboSend -input option"] = function()
   -- Create a mock console buffer
   local console_buf = vim.api.nvim_create_buf(false, true)
-  vim.api.nvim_buf_set_name(console_buf, "aiboconsole://test//input")
+  vim.api.nvim_buf_set_name(console_buf, "aiboconsole://test//12346")
   vim.bo[console_buf].filetype = "aibo-console"
   vim.b[console_buf].aibo = {
     cmd = "test",
@@ -232,7 +232,7 @@ end
 T["AiboSend with both options works together"] = function()
   -- Create a mock console buffer
   local console_buf = vim.api.nvim_create_buf(false, true)
-  vim.api.nvim_buf_set_name(console_buf, "aiboconsole://test//both")
+  vim.api.nvim_buf_set_name(console_buf, "aiboconsole://test//12347")
   vim.bo[console_buf].filetype = "aibo-console"
   vim.b[console_buf].aibo = {
     cmd = "test",
@@ -331,7 +331,7 @@ end
 T["AiboSend appends to existing prompt content"] = function()
   -- Create a mock console buffer
   local console_buf = vim.api.nvim_create_buf(false, true)
-  vim.api.nvim_buf_set_name(console_buf, "aiboconsole://test//append")
+  vim.api.nvim_buf_set_name(console_buf, "aiboconsole://test//12348")
   vim.bo[console_buf].filetype = "aibo-console"
   vim.b[console_buf].aibo = {
     cmd = "test",
@@ -411,7 +411,7 @@ end
 T["AiboSend -replace replaces prompt content"] = function()
   -- Create a mock console buffer
   local console_buf = vim.api.nvim_create_buf(false, true)
-  vim.api.nvim_buf_set_name(console_buf, "aiboconsole://test//replace")
+  vim.api.nvim_buf_set_name(console_buf, "aiboconsole://test//12349")
   vim.bo[console_buf].filetype = "aibo-console"
   vim.b[console_buf].aibo = {
     cmd = "test",
@@ -461,7 +461,7 @@ end
 T["AiboSend -replace with range"] = function()
   -- Create a mock console buffer
   local console_buf = vim.api.nvim_create_buf(false, true)
-  vim.api.nvim_buf_set_name(console_buf, "aiboconsole://test//replrange")
+  vim.api.nvim_buf_set_name(console_buf, "aiboconsole://test//12350")
   vim.bo[console_buf].filetype = "aibo-console"
   vim.b[console_buf].aibo = {
     cmd = "test",
@@ -511,7 +511,7 @@ end
 T["AiboSend -submit option"] = function()
   -- Create a mock console buffer
   local console_buf = vim.api.nvim_create_buf(false, true)
-  vim.api.nvim_buf_set_name(console_buf, "aiboconsole://test//submit")
+  vim.api.nvim_buf_set_name(console_buf, "aiboconsole://test//12351")
   vim.bo[console_buf].filetype = "aibo-console"
   vim.b[console_buf].aibo = {
     cmd = "test",
@@ -575,7 +575,7 @@ end
 T["AiboSend with empty buffer"] = function()
   -- Create a mock console buffer
   local console_buf = vim.api.nvim_create_buf(false, true)
-  vim.api.nvim_buf_set_name(console_buf, "aiboconsole://test//empty")
+  vim.api.nvim_buf_set_name(console_buf, "aiboconsole://test//12352")
   vim.bo[console_buf].filetype = "aibo-console"
   vim.b[console_buf].aibo = {
     cmd = "test",

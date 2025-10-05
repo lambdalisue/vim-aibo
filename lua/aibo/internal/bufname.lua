@@ -32,8 +32,13 @@ function M.decode(bufname)
   if not scheme or not path then
     return nil, {}
   end
+  -- Handle empty path case
+  if path == "" then
+    return scheme, {}
+  end
   local components = {}
-  for comp in path:gmatch("([^/]+)") do
+  -- Split by / and preserve empty components
+  for comp in (path .. "/"):gmatch("([^/]*)/") do
     table.insert(components, M.decode_component(comp))
   end
   return scheme, components
