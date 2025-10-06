@@ -16,10 +16,10 @@
 ---   - Auto-closes when console closes (WinClosed)
 ---   - Submits input via :write command (BufWriteCmd)
 ---
---- @alias PromptInfo table Prompt information object with fields:
----   winid (number), bufnr (number), bufname (string), console_info (table)
 local M = {}
 local PREFIX = "aiboprompt://"
+
+---@alias PromptInfo { winid: number, bufnr: number, bufname: string, console_info: ConsoleInfo? }
 
 ---@param bufname string
 ---@return number? console_winid or nil if not a valid prompt buffer
@@ -33,20 +33,7 @@ local function parse_bufname(bufname)
 end
 
 ---@param partial { winid?: number, bufnr?: number, bufname?: string }
----@return nil or {
----  winid: number,
----  bufnr: number,
----  bufname: string,
----  console_info: nil or {
----    winid: number,
----    bufnr: number,
----    jobinfo: {
----      cmd: string,
----      args: string[],
----      job_id: number,
----    },
----  }
---- } Complete info or nil if invalid
+---@return PromptInfo? Complete info or nil if invalid
 local function build_info(partial)
   local console = require("aibo.internal.console_window")
 
@@ -153,14 +140,7 @@ end
 --- and associated console details.
 ---
 --- @param bufnr number The prompt buffer number to query
---- @return nil|table Returns nil if buffer is invalid, otherwise returns:
----   - winid: number - Window ID displaying the prompt (-1 if not displayed)
----   - bufnr: number - The prompt buffer number
----   - bufname: string - Full buffer name (aiboprompt://console_winid)
----   - console_info: table|nil - Associated console information if valid:
----     - winid: number - Console window ID
----     - bufnr: number - Console buffer number
----     - jobinfo: table - Terminal job details
+--- @return PromptInfo?
 ---
 --- @usage
 ---   local prompt = require("aibo.internal.prompt_window")
@@ -176,14 +156,7 @@ end
 --- Retrieves complete information about a prompt displayed in a specific window.
 ---
 --- @param winid number The window ID to query
---- @return nil|table Returns nil if window is invalid, otherwise returns:
----   - winid: number - The prompt window ID
----   - bufnr: number - Prompt buffer number in the window
----   - bufname: string - Full buffer name (aiboprompt://console_winid)
----   - console_info: table|nil - Associated console information if valid:
----     - winid: number - Console window ID
----     - bufnr: number - Console buffer number
----     - jobinfo: table - Terminal job details
+--- @return PromptInfo?
 ---
 --- @usage
 ---   local prompt = require("aibo.internal.prompt_window")
@@ -199,14 +172,7 @@ end
 --- Searches for a prompt buffer that is linked to a specific console window.
 ---
 --- @param console_winid number The console window ID to search for
---- @return nil|table Returns nil if no prompt found, otherwise returns:
----   - winid: number - Prompt window ID (-1 if not displayed)
----   - bufnr: number - Prompt buffer number
----   - bufname: string - Full buffer name (aiboprompt://console_winid)
----   - console_info: table|nil - Associated console information if valid:
----     - winid: number - Console window ID
----     - bufnr: number - Console buffer number
----     - jobinfo: table - Terminal job details
+--- @return PromptInfo?
 ---
 --- @usage
 ---   local prompt = require("aibo.internal.prompt_window")
@@ -227,6 +193,7 @@ function M.get_info_by_console_winid(console_winid)
 end
 
 --- Find prompt window information in the current tabpage
+---@return PromptInfo?
 function M.find_info_in_tabpage()
   local console = require("aibo.internal.console_window")
   -- We need to find the console window first while prompt windows are hidden
@@ -248,14 +215,7 @@ end
 ---   - opener?: string - Window command (default: "rightbelow 10split")
 ---                       Examples: "split", "vsplit", "leftabove split"
 ---   - startinsert?: boolean - Enter insert mode after opening (default: true)
---- @return nil|table Returns nil on failure, otherwise returns:
----   - winid: number - Prompt window ID
----   - bufnr: number - Prompt buffer number
----   - bufname: string - Full buffer name (aiboprompt://console_winid)
----   - console_info: table - Associated console information:
----     - winid: number - Console window ID
----     - bufnr: number - Console buffer number
----     - jobinfo: table - Terminal job details
+--- @return PromptInfo?
 ---
 --- @usage
 ---   local prompt = require("aibo.internal.prompt_window")

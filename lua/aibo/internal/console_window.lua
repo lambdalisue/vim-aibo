@@ -1,8 +1,11 @@
 local M = {}
 local PREFIX = "aiboconsole://"
 
+---@alias JobInfo { cmd: string, args: string[], job_id: number }
+---@alias ConsoleInfo { winid: number, bufnr: number, bufname: string, jobinfo: JobInfo }
+
 ---@param bufname string Buffer name to parse
----@return nil or { cmd: string, args: string[], job_id: number? }
+---@return JobInfo?
 local function parse_bufname(bufname)
   if string.sub(bufname, 1, #PREFIX) ~= PREFIX then
     return nil
@@ -25,12 +28,7 @@ local function parse_bufname(bufname)
 end
 
 ---@param partial { winid?: number, bufnr?: number, bufname?: string }
----@return nil or {
----   winid: number,
----   bufnr: number,
----   bufname: string,
----   jobinfo: { cmd: string, args: string[], job_id: number? }
---- } Complete info or nil if invalid
+---@return ConsoleInfo? Complete info or nil if invalid
 local function build_info(partial)
   local winid = partial.winid
   local bufnr = partial.bufnr
@@ -154,14 +152,7 @@ end
 --- job details, and associated command.
 ---
 --- @param bufnr number The buffer number to query
---- @return nil|table Returns nil if buffer is invalid, otherwise returns:
----   - winid: number - Window ID displaying the buffer (-1 if not displayed)
----   - bufnr: number - The buffer number
----   - bufname: string - Full buffer name (aiboconsole://cmd/args/job_id)
----   - jobinfo: table|nil - Job information if buffer is a valid console:
----     - cmd: string - The command being executed
----     - args: string[] - Command arguments
----     - job_id: number|nil - Terminal job ID
+--- @return ConsoleInfo?
 ---
 --- @usage
 ---   local console = require("aibo.internal.console_window")
@@ -177,14 +168,7 @@ end
 --- Retrieves complete information about a console displayed in a specific window.
 ---
 --- @param winid number The window ID to query
---- @return nil|table Returns nil if window is invalid, otherwise returns:
----   - winid: number - The window ID
----   - bufnr: number - Buffer number in the window
----   - bufname: string - Full buffer name (aiboconsole://cmd/args/job_id)
----   - jobinfo: table|nil - Job information if buffer is a valid console:
----     - cmd: string - The command being executed
----     - args: string[] - Command arguments
----     - job_id: number|nil - Terminal job ID
+--- @return ConsoleInfo?
 ---
 --- @usage
 ---   local console = require("aibo.internal.console_window")
@@ -196,6 +180,8 @@ function M.get_info_by_winid(winid)
   return build_info({ winid = winid })
 end
 
+---@param options? { cmd?: string, args?: string[] }
+---@return ConsoleInfo?
 function M.find_info_in_tabpage(options)
   options = options or {}
 
@@ -243,14 +229,7 @@ end
 --- @param options? table Optional configuration:
 ---   - opener?: string - Window command ("split", "vsplit", "tabnew", etc.)
 ---                       Default: "edit" (replaced with "enew" internally)
---- @return nil|table Returns nil on failure, otherwise returns:
----   - winid: number - Window ID of the console
----   - bufnr: number - Buffer number of the console
----   - bufname: string - Full buffer name (aiboconsole://cmd/args/job_id)
----   - jobinfo: table|nil - Job information if buffer is a valid console:
----     - cmd: string - The command being executed
----     - args: string[] - Command arguments
----     - job_id: number|nil - Terminal job ID
+--- @return ConsoleInfo?
 ---
 --- @usage
 ---   local console = require("aibo.internal.console_window")
@@ -351,14 +330,7 @@ end
 ---   - opener?: string - Window command for displaying hidden console
 ---   - on_update?: function(winid, bufnr) - Output callback (new console only)
 ---   - on_exit?: function(winid, bufnr) - Exit callback (new console only)
---- @return nil|table Returns nil on failure, otherwise returns console info:
----   - winid: number - Window ID of the console
----   - bufnr: number - Buffer number of the console
----   - bufname: string - Full buffer name
----   - jobinfo: table|nil - Job information if buffer is a valid console:
----     - cmd: string - The command being executed
----     - args: string[] - Command arguments
----     - job_id: number|nil - Terminal job ID
+--- @return ConsoleInfo?
 ---
 --- @usage
 ---   local console = require("aibo.internal.console_window")
@@ -401,14 +373,7 @@ end
 ---   - opener?: string - Window command for showing hidden console
 ---   - on_update?: function(winid, bufnr) - Output callback (new console only)
 ---   - on_exit?: function(winid, bufnr) - Exit callback (new console only)
---- @return nil|table Returns nil on failure, otherwise returns console info:
----   - winid: number - Window ID (-1 if hidden after toggle)
----   - bufnr: number - Buffer number of the console
----   - bufname: string - Full buffer name
----   - jobinfo: table|nil - Job information if buffer is a valid console:
----     - cmd: string - The command being executed
----     - args: string[] - Command arguments
----     - job_id: number|nil - Terminal job ID
+--- @return ConsoleInfo?
 ---
 --- @usage
 ---   local console = require("aibo.internal.console_window")
