@@ -135,11 +135,15 @@ local function BufWinEnter()
 end
 
 local function TermEnter()
+  local aibo = require("aibo")
   local prompt = require("aibo.internal.prompt_window")
   -- We need to use nvim_get_current_win() because bufwinid() may return wrong winid
   -- if multiple windows show the same buffer (e.g. :split)
   local winid = vim.api.nvim_get_current_win()
-  prompt.open(winid, { startinsert = true })
+  local config = aibo.get_config()
+  prompt.open(winid, {
+    startinsert = not config.disable_startinsert_on_insert,
+  })
 end
 
 ---@param ev { buf: number, file: string } Event data
@@ -328,8 +332,12 @@ function M.open(cmd, args, options)
     tool_cfg.on_attach(bufnr, info)
   end
 
+  local config = aibo.get_config()
+
   -- Open an associated prompt window with insert mode
-  prompt.open(winid, { startinsert = true })
+  prompt.open(winid, {
+    startinsert = not config.disable_startinsert_on_startup,
+  })
 
   return {
     winid = winid,
