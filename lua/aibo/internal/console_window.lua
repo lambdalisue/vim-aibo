@@ -1,5 +1,5 @@
 local M = {}
-local PREFIX = "aiboconsole://"
+local PREFIX = "aiboconsole"
 
 ---@alias JobInfo { cmd: string, args: string[], job_id: number }
 ---@alias ConsoleInfo { winid: number, bufnr: number, bufname: string, jobinfo: JobInfo }
@@ -7,19 +7,36 @@ local PREFIX = "aiboconsole://"
 ---@param bufname string Buffer name to parse
 ---@return JobInfo?
 local function parse_bufname(bufname)
-  if string.sub(bufname, 1, #PREFIX) ~= PREFIX then
+  local bufname_module = require("aibo.internal.bufname")
+  local scheme, components = bufname_module.decode(bufname)
+  if scheme ~= PREFIX then
     return nil
   end
-  local parts = vim.split(bufname:sub(#PREFIX + 1), "/")
-  local cmd = parts[1]
+  -- Note: bufname.decode skips empty components, so:
+  -- "aiboconsole://cmd//job_id" → ["cmd", "job_id"]
+  -- "aiboconsole://cmd/args/job_id" → ["cmd", "args", "job_id"]
+  local cmd = components[1] or ""
   local args = {}
   local job_id = nil
-  if #parts >= 2 and parts[2] ~= "" then
-    args = vim.split(parts[2], "+")
+
+  if #components == 2 then
+    -- No args, only cmd and job_id
+    job_id = tonumber(components[2])
+  elseif #components >= 3 then
+    -- Has args: cmd, args, job_id
+    if components[2] and components[2] ~= "" then
+      -- Split by space (which was originally + before decode_component converted it)
+      local parts = vim.split(components[2], " ")
+      -- Filter out empty strings
+      for _, part in ipairs(parts) do
+        if part ~= "" then
+          table.insert(args, part)
+        end
+      end
+    end
+    job_id = tonumber(components[3])
   end
-  if #parts >= 3 and parts[3] ~= "" then
-    job_id = tonumber(parts[3])
-  end
+
   return {
     cmd = cmd,
     args = args,
@@ -48,7 +65,9 @@ local function build_info(partial)
   else
     error("[aibo] Either winid or bufnr must be provided")
   end
-  if string.sub(bufname, 1, #PREFIX) ~= PREFIX then
+  local bufname_module = require("aibo.internal.bufname")
+  local scheme, _ = bufname_module.decode(bufname)
+  if scheme ~= PREFIX then
     return nil
   end
   local jobinfo = parse_bufname(bufname)
@@ -183,16 +202,20 @@ end
 function M.find_info_in_tabpage(options)
   options = options or {}
 
-  local cmd = options.cmd and vim.pesc(options.cmd) or ".*"
-  local args = options.args and vim.pesc(table.concat(options.args, "+")) or ".*"
+  local cmd = options.cmd
+  local args = options.args
 
-  args = args or {}
-  local pattern = string.format("%s%s/%s/", vim.pesc(PREFIX), cmd, args)
   local founds = {}
   for _, winid in ipairs(vim.api.nvim_tabpage_list_wins(0)) do
     local info = M.get_info_by_winid(winid)
-    if info and info.bufname:match("^" .. pattern) then
-      table.insert(founds, info)
+    if info and info.jobinfo then
+      -- cmd matches if not specified or equals
+      local cmd_matches = not cmd or info.jobinfo.cmd == cmd
+      -- args matches if not specified or equals
+      local args_matches = not args or vim.deep_equal(info.jobinfo.args, args)
+      if cmd_matches and args_matches then
+        table.insert(founds, info)
+      end
     end
   end
 
@@ -271,7 +294,10 @@ function M.open(cmd, args, options)
   end
   vim.cmd("stopinsert")
 
-  local bufname = string.format("%s%s/%s/%d", PREFIX, cmd, table.concat(args, "+"), job_id)
+  local bufname_module = require("aibo.internal.bufname")
+  -- Join args with space, which will be encoded as + by encode_component
+  local args_component = table.concat(args, " ")
+  local bufname = bufname_module.encode(PREFIX, { cmd, args_component, tostring(job_id) })
   vim.api.nvim_buf_set_name(bufnr, bufname)
 
   setup_mappings(bufnr)
@@ -346,11 +372,11 @@ function M.focus_or_open(cmd, args, options)
         winid = winid,
         bufnr = existing.bufnr,
         bufname = existing.bufname,
-        jobinfo = {
-          cmd = existing.cmd,
-          args = existing.args,
-          job_id = existing.job_id,
-        },
+        jobinfo = existing.jobinfo and {
+          cmd = existing.jobinfo.cmd,
+          args = existing.jobinfo.args,
+          job_id = existing.jobinfo.job_id,
+        } or nil,
       }
     else
       vim.api.nvim_set_current_win(existing.winid)
@@ -391,11 +417,11 @@ function M.toggle_or_open(cmd, args, options)
         winid = winid,
         bufnr = existing.bufnr,
         bufname = existing.bufname,
-        jobinfo = {
-          cmd = existing.cmd,
-          args = existing.args,
-          job_id = existing.job_id,
-        },
+        jobinfo = existing.jobinfo and {
+          cmd = existing.jobinfo.cmd,
+          args = existing.jobinfo.args,
+          job_id = existing.jobinfo.job_id,
+        } or nil,
       }
     else
       vim.api.nvim_win_close(existing.winid, false)
@@ -403,11 +429,11 @@ function M.toggle_or_open(cmd, args, options)
         winid = -1, -- -1 indicates "no window"
         bufnr = existing.bufnr,
         bufname = existing.bufname,
-        jobinfo = {
-          cmd = existing.cmd,
-          args = existing.args,
-          job_id = existing.job_id,
-        },
+        jobinfo = existing.jobinfo and {
+          cmd = existing.jobinfo.cmd,
+          args = existing.jobinfo.args,
+          job_id = existing.jobinfo.job_id,
+        } or nil,
       }
     end
   end
@@ -534,13 +560,13 @@ end
 local augroup = vim.api.nvim_create_augroup("aibo_console_internal", { clear = true })
 vim.api.nvim_create_autocmd("TermEnter", {
   group = augroup,
-  pattern = string.format("%s*", PREFIX),
+  pattern = string.format("%s://*", PREFIX),
   nested = true,
   callback = TermEnter,
 })
 vim.api.nvim_create_autocmd("BufWinEnter", {
   group = augroup,
-  pattern = string.format("%s*", PREFIX),
+  pattern = string.format("%s://*", PREFIX),
   nested = true,
   callback = BufWinEnter,
 })

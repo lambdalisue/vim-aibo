@@ -17,19 +17,23 @@
 ---   - Submits input via :write command (BufWriteCmd)
 ---
 local M = {}
-local PREFIX = "aiboprompt://"
+local PREFIX = "aiboprompt"
 
 ---@alias PromptInfo { winid: number, bufnr: number, bufname: string, console_info: ConsoleInfo? }
 
 ---@param bufname string
 ---@return number? console_winid or nil if not a valid prompt buffer
 local function parse_bufname(bufname)
-  local console_winid = string.match(bufname, "^" .. vim.pesc(PREFIX) .. "(%d+)$")
-  if console_winid then
-    return tonumber(console_winid)
-  else
+  local bufname_module = require("aibo.internal.bufname")
+  local scheme, components = bufname_module.decode(bufname)
+  if scheme ~= PREFIX then
     return nil
   end
+  -- components[1]: console_winid
+  if components[1] and components[1] ~= "" then
+    return tonumber(components[1])
+  end
+  return nil
 end
 
 ---@param partial { winid?: number, bufnr?: number, bufname?: string }
@@ -55,7 +59,9 @@ local function build_info(partial)
   else
     error("[aibo] Either winid or bufnr must be provided")
   end
-  if string.sub(bufname, 1, #PREFIX) ~= PREFIX then
+  local bufname_module = require("aibo.internal.bufname")
+  local scheme, _ = bufname_module.decode(bufname)
+  if scheme ~= PREFIX then
     return nil
   end
   local console_info = nil
@@ -125,9 +131,11 @@ local function WinLeave()
 end
 
 local function QuitPre()
+  local bufname_module = require("aibo.internal.bufname")
   local bufinfos = vim.fn.getbufinfo({ bufloaded = 1 })
   for _, bufinfo in ipairs(bufinfos) do
-    if string.sub(bufinfo.name, 1, #PREFIX) == PREFIX then
+    local scheme, _ = bufname_module.decode(bufinfo.name)
+    if scheme == PREFIX then
       vim.bo[bufinfo.bufnr].modified = false
     end
   end
@@ -182,7 +190,8 @@ end
 ---     end
 ---   end
 function M.get_info_by_console_winid(console_winid)
-  local bufname = string.format("%s%s", PREFIX, console_winid)
+  local bufname_module = require("aibo.internal.bufname")
+  local bufname = bufname_module.encode(PREFIX, { tostring(console_winid) })
   local bufnr = vim.fn.bufnr(bufname)
   if bufnr == -1 then
     return nil
@@ -246,7 +255,8 @@ function M.open(console_winid, options)
   local opener = options.opener or string.format("rightbelow %dsplit", config.prompt_height)
 
   -- Check if the prompt window for the console already exists
-  local bufname = string.format("%s%s", PREFIX, console_winid)
+  local bufname_module = require("aibo.internal.bufname")
+  local bufname = bufname_module.encode(PREFIX, { tostring(console_winid) })
   local bufnr = vim.fn.bufnr(bufname)
   local winid = vim.fn.bufwinid(bufnr)
   if winid == -1 then
@@ -372,19 +382,19 @@ end
 local augroup = vim.api.nvim_create_augroup("aibo_prompt_internal", { clear = true })
 vim.api.nvim_create_autocmd("BufWritePre", {
   group = augroup,
-  pattern = string.format("%s*", PREFIX),
+  pattern = string.format("%s://*", PREFIX),
   nested = false,
   callback = BufWritePre,
 })
 vim.api.nvim_create_autocmd("BufWriteCmd", {
   group = augroup,
-  pattern = string.format("%s*", PREFIX),
+  pattern = string.format("%s://*", PREFIX),
   nested = true,
   callback = BufWriteCmd,
 })
 vim.api.nvim_create_autocmd("WinLeave", {
   group = augroup,
-  pattern = string.format("%s*", PREFIX),
+  pattern = string.format("%s://*", PREFIX),
   nested = true,
   callback = WinLeave,
 })
