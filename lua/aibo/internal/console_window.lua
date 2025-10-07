@@ -91,11 +91,9 @@ local function setup_mappings(bufnr)
   end
 
   define("<Plug>(aibo-send)", "Get one key from user and send it to the tool", function()
-    vim.api.nvim_echo({ { "Oneshot (press any key): ", "MoreMsg" } }, false, {})
-    local ok, char = pcall(vim.fn.getchar)
-    vim.api.nvim_echo({ { "", "Normal" } }, false, {})
-    if ok and char then
-      local key = type(char) == "number" and vim.fn.nr2char(char) or vim.fn.keytrans(char)
+    local keycode = require("aibo.internal.keycode")
+    local key = keycode.get_single_keycode({ prompt = "Oneshot (press any key): ", highlight = "MoreMsg" })
+    if key then
       send(key)
     end
   end)
