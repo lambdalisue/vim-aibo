@@ -12,8 +12,8 @@ local M = {}
 ---@field submit_delay? integer Delay before submit in ms (default: 100)
 ---@field prompt_height? integer Height of prompt window (default: 10)
 ---@field termcode_mode? string Terminal escape sequence mode: "hybrid", "xterm", or "csi-n" (default: "hybrid")
----@field disable_startinsert_on_startup? boolean Disable auto startinsert on startup (default: false)
----@field disable_startinsert_on_insert? boolean Disable auto startinsert on insert mode (default: false)
+---@field disable_startinsert_on_startup? boolean Disable auto insert mode in prompt window when first opened (default: false)
+---@field disable_startinsert_on_insert? boolean Disable auto insert mode in prompt window when entering insert mode from console (default: false)
 
 ---@type AiboConfig
 local DEFAULTS = {

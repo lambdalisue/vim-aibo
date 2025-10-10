@@ -2,11 +2,8 @@ local M = {}
 
 ---@param char string | number
 function M.translate(char)
-  if type(char) == "number" then
-    return vim.fn.nr2char(char)
-  else
-    return vim.fn.keytrans(char)
-  end
+  local s = type(char) == "number" and vim.fn.nr2char(char) or char
+  return vim.fn.keytrans(s)
 end
 
 ---@param options? {prompt?: string, highlight?: string}
@@ -20,7 +17,7 @@ function M.get_single_keycode(options)
   end
   local ok, char = pcall(vim.fn.getchar)
   if prompt then
-    vim.api.nvim_echo({ { "", "Normal" } }, false, {})
+    vim.api.nvim_echo({}, false, {})
   end
   if ok and char then
     return M.translate(char)

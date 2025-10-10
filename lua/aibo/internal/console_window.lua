@@ -230,19 +230,16 @@ function M.find_info_in_tabpage(options)
     return founds[1]
   end
 
-  local item = nil
-  vim.ui.select(founds, {
-    prompt = "Multiple Aibo console windows found. Select one:",
-    format_item = function(v)
-      return string.format("%s (bufnr: %d, winid: %d)", v.bufname, v.bufnr, v.winid)
-    end,
-  }, function(choice)
-    if not choice then
-      return
-    end
-    item = choice
-  end)
-  return item
+  -- Use synchronous inputlist since vim.ui.select is asynchronous
+  local choices = { "Multiple Aibo console windows found. Select one:" }
+  for i, v in ipairs(founds) do
+    choices[#choices + 1] = string.format("%d. %s (bufnr: %d, winid: %d)", i, v.bufname, v.bufnr, v.winid)
+  end
+  local idx = vim.fn.inputlist(choices)
+  if idx >= 1 and idx <= #founds then
+    return founds[idx]
+  end
+  return nil
 end
 
 --- Open a new console window and start an agent process.
@@ -475,7 +472,10 @@ function M.follow(bufnr)
     vim.notify("Invalid buffer: " .. tostring(bufnr), vim.log.levels.ERROR, { title = "Aibo console Error" })
     return
   end
-  vim.api.nvim_win_set_cursor(info.winid, { vim.api.nvim_buf_line_count(bufnr), 0 })
+  -- Only move cursor if window is valid
+  if info.winid ~= -1 and vim.api.nvim_win_is_valid(info.winid) then
+    vim.api.nvim_win_set_cursor(info.winid, { vim.api.nvim_buf_line_count(bufnr), 0 })
+  end
 end
 
 --- Send raw input to a console's terminal job.
