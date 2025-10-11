@@ -1,14 +1,23 @@
 local eq = MiniTest.expect.equality
 local helpers = require("tests.helpers")
 
--- Store original vim.ui.select
+-- Store original functions
 local original_select = vim.ui.select
+local original_inputlist = vim.fn.inputlist
 
 local T = helpers.new_set({
   hooks = {
     pre_case = function()
       -- Setup the AiboSend command
       require("aibo.command.aibo_send").setup()
+      -- Mock vim.fn.inputlist to always select first option (avoid blocking in tests)
+      vim.fn.inputlist = function(items)
+        return 1
+      end
+    end,
+    post_case = function()
+      -- Restore original inputlist
+      vim.fn.inputlist = original_inputlist
     end,
   },
 })
