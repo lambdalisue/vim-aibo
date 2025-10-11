@@ -242,6 +242,63 @@ function M.find_info_in_tabpage(options)
   return nil
 end
 
+--- Find console info matching the specified conditions across all tabpages.
+--- Searches through all buffers globally to find matching Aibo consoles.
+---
+--- @param options? { cmd?: string, args?: string[] }
+--- @return ConsoleInfo?
+function M.find_info_globally(options)
+  options = options or {}
+
+  local cmd = options.cmd
+  local args = options.args
+
+  local founds = {}
+  for _, bufinfo in ipairs(vim.fn.getbufinfo({ bufloaded = 1 })) do
+    local bufnr = bufinfo.bufnr
+    local bufname = vim.api.nvim_buf_get_name(bufnr)
+
+    local bufname_module = require("aibo.internal.bufname")
+    local scheme, _ = bufname_module.decode(bufname)
+    if scheme == PREFIX then
+      local jobinfo = parse_bufname(bufname)
+      if jobinfo then
+        local cmd_matches = not cmd or jobinfo.cmd == cmd
+        local args_matches = not args or vim.deep_equal(jobinfo.args, args)
+
+        if cmd_matches and args_matches then
+          local winids = vim.fn.win_findbuf(bufnr)
+          local winid = #winids > 0 and winids[1] or -1
+
+          table.insert(founds, {
+            winid = winid,
+            bufnr = bufnr,
+            bufname = bufname,
+            jobinfo = jobinfo,
+          })
+        end
+      end
+    end
+  end
+
+  if not founds or #founds == 0 then
+    return nil
+  elseif #founds == 1 then
+    return founds[1]
+  end
+
+  local choices = { "Multiple Aibo console buffers found. Select one:" }
+  for i, v in ipairs(founds) do
+    local win_status = v.winid == -1 and "hidden" or string.format("winid: %d", v.winid)
+    choices[#choices + 1] = string.format("%d. %s (bufnr: %d, %s)", i, v.bufname, v.bufnr, win_status)
+  end
+  local idx = vim.fn.inputlist(choices)
+  if idx >= 1 and idx <= #founds then
+    return founds[idx]
+  end
+  return nil
+end
+
 --- Open a new console window and start an agent process.
 --- Creates a terminal buffer, executes the specified command, and sets up
 --- all necessary autocmds, mappings, and callbacks.
@@ -368,7 +425,7 @@ end
 function M.focus_or_open(cmd, args, options)
   options = options or {}
 
-  local existing = M.find_info_in_tabpage({ cmd = cmd, args = args })
+  local existing = M.find_info_globally({ cmd = cmd, args = args })
   if existing then
     if existing.winid == -1 then
       vim.cmd(string.format("%s %s", options.opener or "edit", vim.fn.fnameescape(existing.bufname)))
@@ -413,7 +470,7 @@ end
 function M.toggle_or_open(cmd, args, options)
   options = options or {}
 
-  local existing = M.find_info_in_tabpage({ cmd = cmd, args = args })
+  local existing = M.find_info_globally({ cmd = cmd, args = args })
   if existing then
     if existing.winid == -1 then
       vim.cmd(string.format("%s %s", options.opener or "edit", vim.fn.fnameescape(existing.bufname)))
