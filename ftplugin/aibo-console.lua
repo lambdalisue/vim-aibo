@@ -6,10 +6,10 @@ vim.b.loaded_aibo_console_ftplugin = true
 local bufnr = vim.api.nvim_get_current_buf()
 local aibo = require("aibo")
 
--- Window settings (these apply to the current window)
-vim.wo.number = false
-vim.wo.relativenumber = false
-vim.wo.signcolumn = "no"
+-- Window settings (buffer-local, apply to all windows showing this buffer)
+vim.opt_local.number = false
+vim.opt_local.relativenumber = false
+vim.opt_local.signcolumn = "no"
 
 -- Avoid "Cannot make changes, 'modifiable' is off" errors on o/O
 vim.keymap.set("n", "o", "i", { buffer = bufnr, desc = "Enter insert mode" })

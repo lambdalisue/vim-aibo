@@ -6,11 +6,11 @@ vim.b.loaded_aibo_prompt_ftplugin = true
 local bufnr = vim.api.nvim_get_current_buf()
 local aibo = require("aibo")
 
--- Window settings (these apply to the current window)
-vim.wo.number = false
-vim.wo.relativenumber = false
-vim.wo.signcolumn = "no"
-vim.wo.winfixheight = true
+-- Window settings (buffer-local, apply to all windows showing this buffer)
+vim.opt_local.number = false
+vim.opt_local.relativenumber = false
+vim.opt_local.signcolumn = "no"
+vim.opt_local.winfixheight = true
 
 -- Default key mappings (unless disabled in config)
 local cfg = aibo.get_buffer_config("prompt")
